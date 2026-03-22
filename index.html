@@ -1,63 +1,1107 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
-    <title>SE-PREPARER-AU-TEF</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>KFC 111 — Schedule Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --red:#D4001A;--red2:#A80015;--red-lt:#fff0f1;
+  --ink:#111;--ink2:#333;--muted:#777;
+  --border:#e0e0e0;--bg:#f7f7f7;--white:#fff;
+  --green:#1a7f37;--green-lt:#edfaf2;
+  --blue:#1d6db5;--blue-lt:#eff6ff;
+  --r:10px;--rl:16px;
+  --sh:0 1px 4px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:14px}
+body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+
+/* HEADER */
+.hdr{background:var(--red);color:#fff;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:200;box-shadow:0 2px 10px rgba(212,0,26,.35)}
+.hdr-l{display:flex;align-items:center;gap:10px}
+.hdr-badge{background:#fff;color:var(--red);font-weight:800;font-size:12px;padding:3px 8px;border-radius:6px}
+.hdr-title{font-size:15px;font-weight:700}
+.hdr-r{display:flex;gap:8px}
+
+/* TABS */
+.tabs{background:#fff;border-bottom:1px solid var(--border);display:flex;padding:0 20px;position:sticky;top:56px;z-index:190;overflow-x:auto}
+.tab{padding:13px 18px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border:none;background:none;font-family:'Syne',sans-serif;border-bottom:2.5px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.tab.on{color:var(--red);border-bottom-color:var(--red)}
+.tab-n{background:var(--red);color:#fff;border-radius:20px;padding:1px 6px;font-size:10px;font-weight:700}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:8px;font-family:'Syne',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;white-space:nowrap}
+.btn-red{background:var(--red);color:#fff}.btn-red:hover{background:var(--red2)}
+.btn-wh{background:#fff;color:var(--red)}.btn-wh:hover{background:#ffe8ea}
+.btn-ow{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.5)}.btn-ow:hover{background:rgba(255,255,255,.12)}
+.btn-gl{background:transparent;color:var(--muted);border:1.5px solid var(--border)}.btn-gl:hover{border-color:var(--ink);color:var(--ink)}
+.btn-sm{padding:5px 10px;font-size:12px}
+
+/* PAGE */
+.page{display:none;padding:20px;max-width:1160px;margin:0 auto}
+.page.on{display:block}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.ph-l .pt{font-size:19px;font-weight:800;letter-spacing:-.02em}
+.ph-l .ps{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* TEAM GRID */
+.team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.emp-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--rl);padding:14px;transition:border-color .2s,box-shadow .2s}
+.emp-card:hover{border-color:#f5a0aa;box-shadow:var(--sh)}
+.emp-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff;flex-shrink:0}
+.en{font-weight:700;font-size:14px}
+.eb{display:inline-flex;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-top:3px}
+.es{font-size:11px;color:var(--muted);margin-top:2px}
+.emp-acts{display:flex;gap:6px;padding-top:10px;border-top:1px solid var(--border)}
+.add-card{background:var(--red-lt);border:2px dashed #f5a0aa;border-radius:var(--rl);min-height:116px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:all .2s}
+.add-card:hover{background:#ffe0e3;border-color:var(--red)}
+.add-card-icon{font-size:26px;color:var(--red)}
+.add-card-lbl{font-size:13px;font-weight:600;color:var(--red)}
+
+/* WEEK BAR */
+.wk-bar{background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:20px;display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.wk-f{display:flex;flex-direction:column;gap:4px}
+.wk-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.wk-inp{padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:'Syne',sans-serif;font-size:13px;color:var(--ink);background:#fff}
+.wk-inp:focus{outline:none;border-color:var(--blue)}
+.wk-range{font-size:13px;font-weight:700;color:var(--ink2);background:var(--bg);padding:8px 12px;border-radius:8px;border:1px solid var(--border);align-self:flex-end}
+
+/* AVAIL CARDS */
+.av-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--rl);margin-bottom:16px;overflow:hidden}
+.av-head{background:var(--bg);padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.av-info{display:flex;align-items:center;gap:10px}
+.av-table-wrap{overflow-x:auto}
+.av-table{width:100%;border-collapse:collapse;min-width:600px}
+.av-table th{background:#f3f3f3;padding:7px 10px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:center;border-bottom:1px solid var(--border)}
+.av-table th:first-child{text-align:left;width:70px}
+.av-table td{padding:5px 8px;border-bottom:1px solid #f2f2f2;text-align:center;vertical-align:middle}
+.av-table td:first-child{text-align:left;font-size:11px;font-weight:600;color:var(--muted);padding-left:14px}
+.av-table tr:last-child td{border-bottom:none}
+.tog{width:26px;height:26px;border-radius:6px;border:1.5px solid var(--border);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;margin:0 auto;transition:all .15s}
+.tog.on{background:var(--green-lt);border-color:#86efac;color:var(--green)}
+.tog.off{color:transparent}
+.ti{width:72px;padding:4px 6px;border:1.5px solid var(--border);border-radius:6px;font-family:'DM Mono',monospace;font-size:11px;text-align:center;color:var(--ink);background:#fff}
+.ti:focus{outline:none;border-color:var(--blue);background:var(--blue-lt)}
+.ti:disabled{opacity:.35;cursor:not-allowed}
+
+/* SCHEDULE */
+.sch-wrap{background:#fff;border:1.5px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:20px}
+.sch-scroll{overflow-x:auto}
+.sch-table{width:100%;border-collapse:collapse;min-width:860px}
+.sch-table th{background:var(--ink);color:#fff;padding:9px 10px;font-size:10px;font-weight:600;text-align:center;letter-spacing:.04em}
+.sch-table th:first-child{text-align:left;min-width:160px}
+.sch-table td{padding:7px 9px;border-bottom:1px solid #f2f2f2;font-size:12px;text-align:center;vertical-align:middle}
+.sch-table td:first-child{font-weight:700;text-align:left}
+.sch-group td{background:var(--bg);font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding:7px 10px}
+.sch-total td{background:#f9f9f9;font-weight:700;font-size:11px;color:var(--muted)}
+.sc{background:var(--blue-lt);color:var(--blue);border-radius:5px;padding:2px 5px;font-family:'DM Mono',monospace;font-size:10px;font-weight:500;white-space:nowrap}
+.off{color:#ccc;font-size:11px}
+.hrs{font-weight:700;font-family:'DM Mono',monospace;font-size:12px}
+
+/* MODAL OVERLAY */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);z-index:500;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
+.ov.on{display:flex}
+
+/* EDIT MODAL */
+.mdl{background:#fff;border-radius:var(--rl);width:100%;max-width:780px;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.2);animation:mi .2s ease;margin:auto}
+@keyframes mi{from{opacity:0;transform:scale(.96) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.mdl-hd{background:var(--ink);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-radius:var(--rl) var(--rl) 0 0;flex-shrink:0}
+.mdl-ht{font-size:15px;font-weight:700}
+.mdl-cl{background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:20px;line-height:1;padding:0 2px}
+.mdl-cl:hover{color:#fff}
+.mdl-bd{padding:20px}
+.mdl-ft{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+
+/* FORM */
+.fg{margin-bottom:14px}
+.fl{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
+.fi{width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:8px;font-family:'Syne',sans-serif;font-size:13px;color:var(--ink);background:#fff}
+.fi:focus{outline:none;border-color:var(--red)}
+.fsel{width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:8px;font-family:'Syne',sans-serif;font-size:13px;color:var(--ink);background:#fff;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%23777' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center}
+.fsel:focus{outline:none;border-color:var(--red)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cp-row{display:flex;gap:8px;flex-wrap:wrap}
+.cdot{width:28px;height:28px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all .15s}
+.cdot.sel{border-color:var(--ink)}
+.cdot:hover{transform:scale(1.12)}
+
+/* DAY ROWS inside modal */
+.week-sched{margin-top:20px;padding-top:18px;border-top:1px solid var(--border)}
+.ws-hd{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px}
+.day-row{border-radius:10px;border:1.5px solid var(--border);background:#fff;margin-bottom:8px;overflow:hidden;transition:border-color .15s}
+.day-row.day-on{border-color:#86efac;background:var(--green-lt)}
+.day-row-top{display:flex;align-items:center;gap:10px;padding:10px 12px}
+.day-tog{width:38px;height:22px;border-radius:11px;border:none;cursor:pointer;position:relative;flex-shrink:0;transition:background .15s}
+.day-tog.on{background:var(--green)}
+.day-tog.off{background:#ccc}
+.day-tog::after{content:'';position:absolute;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.day-tog.on::after{left:18px}
+.day-tog.off::after{left:2px}
+.day-name{font-weight:800;font-size:14px;min-width:36px}
+.day-date{font-size:11px;color:var(--muted);min-width:40px}
+.day-hrs{font-size:12px;color:var(--green);font-weight:700;margin-left:auto;font-family:'DM Mono',monospace}
+.day-off{font-size:12px;color:#bbb;margin-left:auto;font-weight:600}
+.day-body{padding:0 12px 12px}
+/* Preset shift buttons */
+.shift-presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.sp{padding:6px 12px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;color:var(--ink2)}
+.sp:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-lt)}
+.sp.active{border-color:var(--green);color:var(--green);background:var(--green-lt)}
+.sp.custom-sp{border-style:dashed;color:var(--muted)}
+.sp.custom-sp.active{border-color:var(--blue);color:var(--blue);background:var(--blue-lt);border-style:solid}
+/* custom time row */
+.custom-times{display:flex;align-items:center;gap:8px;margin-top:4px}
+.custom-lbl{font-size:11px;color:var(--muted);font-weight:600;min-width:32px}
+.day-sep{font-size:13px;color:var(--muted);font-weight:700}
+.wk-tot-row{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--bg);border-radius:8px;margin-top:4px;border:1px solid var(--border)}
+.wk-tot-lbl{font-size:12px;font-weight:700;color:var(--muted)}
+.wk-tot-val{font-size:16px;font-weight:800;color:var(--green);font-family:'DM Mono',monospace}
+
+/* SETTINGS */
+.set-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--rl);padding:16px;margin-bottom:14px}
+.set-title{font-size:13px;font-weight:700;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.set-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* TOAST */
+.tst{position:fixed;bottom:20px;right:20px;padding:10px 16px;border-radius:10px;color:#fff;font-weight:600;font-size:13px;z-index:9999;display:flex;align-items:center;gap:8px;font-family:'Syne',sans-serif;box-shadow:0 4px 20px rgba(0,0,0,.2);animation:tsin .25s ease}
+.tst.ok{background:var(--green)}.tst.er{background:var(--red)}.tst.nf{background:var(--blue)}
+@keyframes tsin{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+.empty{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty-ic{font-size:2.5rem;display:block;margin-bottom:10px;opacity:.35}
+
+@media(max-width:640px){
+  html{font-size:13px}
+  .page{padding:10px}
+  .hdr{padding:0 12px;height:52px}
+  .hdr-title{display:none}
+  .tabs{padding:0 6px}
+  .tab{padding:11px 10px;font-size:12px}
+  .form-row,.set-row{grid-template-columns:1fr}
+  .mdl-bd{padding:14px}
+  .mdl-ft{padding:12px 14px}
+  .shift-presets{gap:5px}
+  .sp{padding:5px 9px;font-size:11px}
+  .custom-times{flex-wrap:wrap;gap:6px}
+  .wk-bar{gap:10px}
+  .wk-range{width:100%;text-align:center}
+  .emp-acts{flex-wrap:wrap}
+  .ov{padding:8px;align-items:flex-start}
+  .team-grid{grid-template-columns:1fr}
+  .av-table th,.av-table td{padding:4px 5px}
+  .ti{width:60px;font-size:10px}
+  .btn-ow{display:none}
+}
+</style>
 </head>
 <body>
 
-    <div class="main">
-        <div class="navbar">
-            <div class="icon">
-                <h2 class="logo">TEF CANADA</h2>
-            </div>
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-l">
+    <div class="hdr-badge">KFC</div>
+    <span class="hdr-title">Store 111 — Schedule Builder</span>
+  </div>
+  <div class="hdr-r">
+    <button class="btn btn-ow btn-sm" onclick="exportPDF()">⬇ PDF</button>
+    <button class="btn btn-wh btn-sm" onclick="saveData()">💾 Save</button>
+  </div>
+</header>
 
-            <div class="menu">
-                <ul>
-                    <li><a href="#">ACCEUIL</a></li>
-                    <li><a href="#">INFO</a></li>
-                    <li><a href="service.html">SERVICES</a></li>
-                    <li><a href="#">COURS</a></li>
-                    <li><a href="#">CONTACTE</a></li>
-                </ul>
-            </div>
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab on" id="tb-team" onclick="go('team')">👥 Team <span class="tab-n" id="tc">0</span></button>
+  <button class="tab" id="tb-avail" onclick="go('avail')">📅 Availability</button>
+  <button class="tab" id="tb-sched" onclick="go('sched')">📋 Schedule</button>
+  <button class="tab" id="tb-set" onclick="go('set')">⚙️ Settings</button>
+</div>
 
-            <div class="search">
-                <input class="srch" type="search" name="" placeholder="Ecrivez ici...">
-                <a href="#"> <button class="btn">Search</button></a>
-            </div>
+<!-- TEAM PAGE -->
+<div class="page on" id="pg-team">
+  <div class="ph">
+    <div class="ph-l"><div class="pt">Team Members</div><div class="ps">Click Edit & Schedule to set info and weekly hours</div></div>
+    <button class="btn btn-red" onclick="openAdd()">+ Add Employee</button>
+  </div>
+  <div class="team-grid" id="team-grid"></div>
+</div>
 
-        </div> 
-        <div class="content">
-            <h1>Se Preparer  <br><span>Au TEF</span> <br>Platforme</h1>
-            <p class="par">C'est une platforme qui semule les meme condition de l'exmain TEF Canada <br> Aussi propose des exemples des textes longs  
-                <br> pour démarrer, cliquez sur Service</p>
-
-                <button class="cn"><a href="#">Nous Joindres</a></button>
-
-                <div class="form">
-                    <h2>Connectez-Vous ici</h2>
-                    <input type="email" name="email" placeholder="Entrez l’e-mail ici">
-                    <input type="password" name="" placeholder="Entrez le mot de passe ici">
-                    <button class="btnn"><a href="#">Connectez-Vous</a></button>
-
-                    <p class="link">Vous n’avez pas de compte<br>
-                    <a href="#">S’Enregistrer </a> ici</a></p>
-                    <p class="liw">Connectez-vous avec</p>
-
-                    <div class="icons">
-                        <a href="#"><ion-icon name="logo-facebook"></ion-icon></a>
-                        <a href="#"><ion-icon name="logo-instagram"></ion-icon></a>
-                        <a href="#"><ion-icon name="logo-twitter"></ion-icon></a>
-                        <a href="#"><ion-icon name="logo-google"></ion-icon></a>
-                        <a href="#"><ion-icon name="logo-skype"></ion-icon></a>
-                    </div>
-
-                </div>
-                    </div>
-                </div>
-        </div>
+<!-- AVAILABILITY PAGE -->
+<div class="page" id="pg-avail">
+  <div class="ph">
+    <div class="ph-l"><div class="pt">Weekly Availability</div><div class="ps">Set week dates below, then click "Edit Schedule" on each employee</div></div>
+    <button class="btn btn-red btn-sm" onclick="go('sched')">Build Schedule →</button>
+  </div>
+  <div class="wk-bar">
+    <div class="wk-f">
+      <div class="wk-lbl">Week Start (Monday)</div>
+      <input type="date" class="wk-inp" id="wkStart" onchange="onWkChange()">
     </div>
-    <script src="https://unpkg.com/ionicons@5.4.0/dist/ionicons.js"></script>
+    <div class="wk-f">
+      <div class="wk-lbl">Fiscal Period</div>
+      <input type="text" class="wk-inp" id="wkPeriod" placeholder="e.g. Period 10 Week 2" style="width:190px" oninput="onWkChange()">
+    </div>
+    <div class="wk-f">
+      <div class="wk-lbl">Fiscal Year</div>
+      <input type="text" class="wk-inp" id="wkYear" placeholder="2026" style="width:90px" oninput="onWkChange()">
+    </div>
+    <div class="wk-range" id="wkRange">Select a Monday to start</div>
+  </div>
+  <div id="avail-list"></div>
+</div>
+
+<!-- SCHEDULE PAGE -->
+<div class="page" id="pg-sched">
+  <div class="ph">
+    <div class="ph-l"><div class="pt">Generated Schedule</div><div class="ps" id="sch-sub">Fill availability first</div></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-gl btn-sm" onclick="buildSched()">🔄 Refresh</button>
+      <button class="btn btn-red btn-sm" onclick="exportPDF()">⬇ Export PDF</button>
+    </div>
+  </div>
+  <div class="sch-wrap" id="sch-out">
+    <div class="empty"><span class="empty-ic">📋</span>Click Refresh to generate</div>
+  </div>
+</div>
+
+<!-- SETTINGS PAGE -->
+<div class="page" id="pg-set">
+  <div class="ph"><div class="ph-l"><div class="pt">Settings</div><div class="ps">Store info and data management</div></div></div>
+  <div class="set-card">
+    <div class="set-title">🏪 Store Information</div>
+    <div class="set-row">
+      <div class="fg"><label class="fl">Store Number</label><input type="text" class="fi" id="sNum" placeholder="111" oninput="saveSet()"></div>
+      <div class="fg"><label class="fl">Brand / Name</label><input type="text" class="fi" id="sName" placeholder="KFC" oninput="saveSet()"></div>
+      <div class="fg" style="grid-column:1/-1"><label class="fl">Manager Name</label><input type="text" class="fi" id="sMgr" placeholder="Manager Name" oninput="saveSet()"></div>
+    </div>
+  </div>
+  <div class="set-card">
+    <div class="set-title">📁 Data Management</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-gl btn-sm" onclick="saveData()">💾 Save</button>
+      <button class="btn btn-gl btn-sm" onclick="exportJSON()">📤 Export JSON</button>
+      <button class="btn btn-gl btn-sm" onclick="document.getElementById('imp').click()">📥 Import JSON</button>
+      <input type="file" id="imp" accept=".json" style="display:none" onchange="importJSON(event)">
+      <button class="btn btn-gl btn-sm" style="color:var(--red)" onclick="resetAll()">🗑 Reset All</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL (info + full week schedule) -->
+<div class="ov" id="editOv">
+  <div class="mdl">
+    <div class="mdl-hd">
+      <span class="mdl-ht" id="mdl-title">Edit Employee</span>
+      <button class="mdl-cl" onclick="closeEdit()">✕</button>
+    </div>
+    <div class="mdl-bd">
+      <div class="form-row">
+        <div class="fg">
+          <label class="fl">Full Name (Last, First)</label>
+          <input type="text" class="fi" id="eN" placeholder="e.g. Doe, John">
+        </div>
+        <div class="fg">
+          <label class="fl">Position</label>
+          <select class="fsel" id="eP" onchange="buildDayRows()">
+            <option>Assistant General Manager</option>
+            <option>Customer Service Team Member</option>
+            <option>Food Service Team Member</option>
+            <option>Shift Manager</option>
+            <option>Shift Manager in Training</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fg">
+          <label class="fl">Station / Notes (optional)</label>
+          <input type="text" class="fi" id="eSt" placeholder="e.g. Drive-Thru">
+        </div>
+        <div class="fg">
+          <label class="fl">Avatar Color</label>
+          <div class="cp-row" id="cp"></div>
+        </div>
+      </div>
+
+      <!-- WEEK SCHEDULE SECTION -->
+      <div class="week-sched">
+        <div class="ws-hd">📅 Weekly Schedule — toggle days on/off and set shift times</div>
+        <div id="day-rows"></div>
+        <div class="wk-tot-row">
+          <span class="wk-tot-lbl">Total Hours This Week</span>
+          <span class="wk-tot-val" id="wk-total">0.00</span>
+        </div>
+      </div>
+    </div>
+    <div class="mdl-ft">
+      <button class="btn btn-gl" onclick="closeEdit()">Cancel</button>
+      <button class="btn btn-red" id="savebtn" onclick="saveEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+//  CONSTANTS
+// ════════════════════════════════════════
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const POSITIONS = [
+  'Assistant General Manager',
+  'Customer Service Team Member',
+  'Food Service Team Member',
+  'Shift Manager',
+  'Shift Manager in Training'
+];
+const COLORS = ['#D4001A','#1d6db5','#1a7f37','#b45309','#7c3aed','#0891b2','#be185d','#374151','#0f766e','#c2410c'];
+const PS = {
+  'Assistant General Manager':    {bg:'#fff0f1',tx:'#a80015'},
+  'Customer Service Team Member': {bg:'#eff6ff',tx:'#1d6db5'},
+  'Food Service Team Member':     {bg:'#edfaf2',tx:'#1a7f37'},
+  'Shift Manager':                {bg:'#fffbeb',tx:'#b45309'},
+  'Shift Manager in Training':    {bg:'#f5f3ff',tx:'#7c3aed'},
+};
+
+// ════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════
+let D = {
+  employees: [],
+  week: { start:'', period:'', year:'2026' },
+  settings: { num:'111', name:'KFC', mgr:'Bouhoula, Mohamed Hedi' }
+};
+let editId = null;
+let editColor = COLORS[0];
+let editAvail = [];   // working copy inside modal
+
+// ════════════════════════════════════════
+//  SEED
+// ════════════════════════════════════════
+function seed() {
+  const T = [
+    ['Bouhoula, Mohamed Hedi',      'Assistant General Manager',    '',COLORS[0]],
+    ['Adedunye, Damiola Priscilla', 'Customer Service Team Member', '',COLORS[1]],
+    ['Appidi, Nandakishore',        'Customer Service Team Member', '',COLORS[4]],
+    ['Hashim, Agil',                'Customer Service Team Member', '',COLORS[5]],
+    ['Legault-Agil, Alyza',         'Customer Service Team Member', '',COLORS[6]],
+    ['Sagji, Brinio',               'Customer Service Team Member', '',COLORS[8]],
+    ['Aghwach, Adam',               'Food Service Team Member',     '',COLORS[9]],
+    ['Belarbii, Anes Abdelmalek',   'Food Service Team Member',     '',COLORS[3]],
+    ['Figueroa Padron, Jorge',       'Food Service Team Member',     '',COLORS[7]],
+    ['Khandelwal, Sunny',           'Food Service Team Member',     '',COLORS[2]],
+    ['Shaheen, Ghazala',            'Shift Manager',                '',COLORS[0]],
+    ['Tiwari, Balveer',             'Shift Manager',                '',COLORS[1]],
+    ['Gilotra, Arjun',              'Shift Manager in Training',    '',COLORS[4]],
+  ];
+  D.employees = T.map((r,i) => ({ id:'e'+i, name:r[0], position:r[1], station:r[2], color:r[3], avail:blankAvail() }));
+}
+
+function blankAvail() {
+  return DAYS.map(() => ({ on:false, s:'09:00', e:'17:00' }));
+}
+
+function fixAvail(emp) {
+  if (!emp.avail || emp.avail.length !== 7) emp.avail = blankAvail();
+}
+
+// ════════════════════════════════════════
+//  PERSIST
+// ════════════════════════════════════════
+function saveData() {
+  localStorage.setItem('kfc4', JSON.stringify(D));
+  toast('Saved', 'ok');
+}
+function loadData() {
+  try {
+    const s = localStorage.getItem('kfc4');
+    if (s) D = JSON.parse(s);
+    else seed();
+  } catch(e) { seed(); }
+  D.employees.forEach(fixAvail);
+}
+function exportJSON() {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(D, null, 2)], { type:'application/json' }));
+  a.download = 'kfc_schedule.json';
+  a.click();
+  toast('Exported', 'nf');
+}
+function importJSON(ev) {
+  const f = ev.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      D = JSON.parse(e.target.result);
+      D.employees.forEach(fixAvail);
+      renderAll();
+      saveData();
+      toast('Imported', 'ok');
+    } catch { toast('Bad file', 'er'); }
+  };
+  r.readAsText(f);
+  ev.target.value = '';
+}
+function resetAll() {
+  if (!confirm('Reset ALL data? Cannot be undone.')) return;
+  localStorage.removeItem('kfc4');
+  seed();
+  renderAll();
+  toast('Reset complete', 'nf');
+}
+function saveSet() {
+  D.settings.num  = document.getElementById('sNum').value  || '111';
+  D.settings.name = document.getElementById('sName').value || 'KFC';
+  D.settings.mgr  = document.getElementById('sMgr').value  || '';
+  localStorage.setItem('kfc4', JSON.stringify(D));
+}
+
+// ════════════════════════════════════════
+//  TABS
+// ════════════════════════════════════════
+function go(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.getElementById('pg-'+name).classList.add('on');
+  document.getElementById('tb-'+name).classList.add('on');
+  if (name === 'avail') renderAvail();
+  if (name === 'sched') buildSched();
+  if (name === 'set')   loadSet();
+}
+
+// ════════════════════════════════════════
+//  WEEK HELPERS
+// ════════════════════════════════════════
+function initWeek() {
+  // default to current Monday
+  const t = new Date();
+  const dow = t.getDay();
+  const diff = t.getDate() - dow + (dow === 0 ? -6 : 1);
+  const mon = new Date(t); mon.setDate(diff);
+  if (!D.week.start) D.week.start = mon.toISOString().split('T')[0];
+  document.getElementById('wkStart').value  = D.week.start;
+  document.getElementById('wkPeriod').value = D.week.period || '';
+  document.getElementById('wkYear').value   = D.week.year   || '2026';
+  refreshWkRange();
+}
+function onWkChange() {
+  D.week.start  = document.getElementById('wkStart').value;
+  D.week.period = document.getElementById('wkPeriod').value;
+  D.week.year   = document.getElementById('wkYear').value;
+  refreshWkRange();
+  localStorage.setItem('kfc4', JSON.stringify(D));
+}
+function refreshWkRange() {
+  const el = document.getElementById('wkRange');
+  if (!D.week.start) { el.textContent = 'Select a Monday'; return; }
+  const s = new Date(D.week.start+'T00:00:00');
+  const e = new Date(s); e.setDate(e.getDate()+6);
+  const f = d => `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;
+  el.textContent = f(s)+' – '+f(e);
+}
+function getWeekDates() {
+  if (!D.week.start) return DAYS.map(d => d);
+  const s = new Date(D.week.start+'T00:00:00');
+  return DAYS.map((_, i) => {
+    const d = new Date(s); d.setDate(d.getDate()+i);
+    return `${d.getMonth()+1}/${d.getDate()}`;
+  });
+}
+
+// ════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════
+function initials(name) {
+  return name.split(',').map(p => p.trim()).map(p => p[0]||'').join('').slice(0,2).toUpperCase();
+}
+function calcH(s, e) {
+  if (!s || !e) return 0;
+  const [sh, sm] = s.split(':').map(Number);
+  const [eh, em] = e.split(':').map(Number);
+  let d = (eh*60+em) - (sh*60+sm);
+  if (d < 0) d += 1440;
+  return Math.round(d/60*100)/100;
+}
+function f12(t) {
+  if (!t) return '—';
+  const [h, m] = t.split(':').map(Number);
+  return `${h%12||12}:${String(m).padStart(2,'0')}${h<12?'A':'P'}`;
+}
+function toast(msg, type='nf') {
+  document.querySelectorAll('.tst').forEach(t => t.remove());
+  const t = document.createElement('div');
+  t.className = 'tst '+type;
+  t.innerHTML = (type==='ok'?'✅':type==='er'?'❌':'ℹ️')+' '+msg;
+  document.body.appendChild(t);
+  setTimeout(() => {
+    t.style.transition = 'all .4s';
+    t.style.opacity = '0';
+    t.style.transform = 'translateY(16px)';
+    setTimeout(() => t.remove(), 400);
+  }, 2800);
+}
+
+// ════════════════════════════════════════
+//  TEAM RENDER
+// ════════════════════════════════════════
+function renderTeam() {
+  const grid = document.getElementById('team-grid');
+  document.getElementById('tc').textContent = D.employees.length;
+
+  const byPos = {};
+  POSITIONS.forEach(p => byPos[p] = []);
+  D.employees.forEach(e => { if (byPos[e.position]) byPos[e.position].push(e); });
+
+  let html = '';
+  POSITIONS.forEach(pos => {
+    byPos[pos].forEach(emp => {
+      fixAvail(emp);
+      const init = initials(emp.name);
+      const ps = PS[emp.position] || {bg:'#f5f5f5',tx:'#444'};
+      const days = emp.avail.filter(d => d.on).length;
+      const hrs  = emp.avail.reduce((s, d) => s + (d.on ? calcH(d.s, d.e) : 0), 0);
+      html += `
+      <div class="emp-card">
+        <div class="emp-top">
+          <div class="av" style="background:${emp.color}">${init}</div>
+          <div>
+            <div class="en">${emp.name}</div>
+            <div class="eb" style="background:${ps.bg};color:${ps.tx}">${emp.position}</div>
+            ${emp.station ? `<div class="es">${emp.station}</div>` : ''}
+            <div style="font-size:11px;color:var(--muted);margin-top:4px">${days} days · ${hrs.toFixed(1)}h / week</div>
+          </div>
+        </div>
+        <div class="emp-acts">
+          <button class="btn btn-red btn-sm" onclick="openEdit('${emp.id}')">✏️ Edit &amp; Schedule</button>
+          <button class="btn btn-gl btn-sm" style="color:var(--red)" onclick="delEmp('${emp.id}')">🗑</button>
+        </div>
+      </div>`;
+    });
+  });
+
+  html += `<div class="add-card" onclick="openAdd()">
+    <span class="add-card-icon">+</span>
+    <span class="add-card-lbl">Add Employee</span>
+  </div>`;
+
+  grid.innerHTML = html;
+}
+
+// ════════════════════════════════════════
+//  AVAILABILITY PAGE
+// ════════════════════════════════════════
+function renderAvail() {
+  const list   = document.getElementById('avail-list');
+  const dates  = getWeekDates();
+
+  if (!D.employees.length) {
+    list.innerHTML = '<div class="empty"><span class="empty-ic">👥</span>Add employees on the Team tab first</div>';
+    return;
+  }
+
+  const byPos = {};
+  POSITIONS.forEach(p => byPos[p] = []);
+  D.employees.forEach(e => { if (byPos[e.position]) byPos[e.position].push(e); });
+
+  let html = '';
+  POSITIONS.forEach(pos => {
+    byPos[pos].forEach(emp => {
+      fixAvail(emp);
+      const init = initials(emp.name);
+      const ps   = PS[emp.position] || {bg:'#f5f5f5',tx:'#444'};
+      const hrs  = emp.avail.reduce((s, d) => s + (d.on ? calcH(d.s, d.e) : 0), 0);
+
+      html += `
+      <div class="av-card">
+        <div class="av-head">
+          <div class="av-info">
+            <div class="av" style="background:${emp.color};width:34px;height:34px;font-size:12px">${init}</div>
+            <div>
+              <div style="font-weight:700;font-size:13px">${emp.name}</div>
+              <div class="eb" style="background:${ps.bg};color:${ps.tx};font-size:10px;padding:2px 7px">${emp.position}</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:12px;font-weight:700;color:var(--green);font-family:'DM Mono',monospace">${hrs.toFixed(1)}h</span>
+            <button class="btn btn-red btn-sm" onclick="openEdit('${emp.id}')">✏️ Edit Schedule</button>
+          </div>
+        </div>
+        <div class="av-table-wrap">
+          <table class="av-table">
+            <thead><tr>
+              <th></th>
+              ${DAYS.map((d, i) => `<th><div style="display:flex;flex-direction:column;align-items:center;gap:1px"><span>${d}</span><span style="font-weight:400;font-size:9px;opacity:.7">${dates[i]}</span></div></th>`).join('')}
+            </tr></thead>
+            <tbody>
+              <tr>
+                <td>Working</td>
+                ${emp.avail.map((av, i) => `<td><div class="tog ${av.on?'on':'off'}" onclick="quickTogDay('${emp.id}',${i})" style="display:flex;align-items:center;justify-content:center">✓</div></td>`).join('')}
+              </tr>
+              <tr>
+                <td>Start</td>
+                ${emp.avail.map((av, i) => `<td><input class="ti" type="time" value="${av.s}" ${av.on?'':'disabled'} onchange="quickUpdTime('${emp.id}',${i},'s',this.value)"></td>`).join('')}
+              </tr>
+              <tr>
+                <td>End</td>
+                ${emp.avail.map((av, i) => `<td><input class="ti" type="time" value="${av.e}" ${av.on?'':'disabled'} onchange="quickUpdTime('${emp.id}',${i},'e',this.value)"></td>`).join('')}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    });
+  });
+
+  list.innerHTML = html;
+}
+
+function quickTogDay(empId, idx) {
+  const emp = D.employees.find(e => e.id === empId); if (!emp) return;
+  emp.avail[idx].on = !emp.avail[idx].on;
+  localStorage.setItem('kfc4', JSON.stringify(D));
+  renderAvail();
+}
+function quickUpdTime(empId, idx, field, val) {
+  const emp = D.employees.find(e => e.id === empId); if (!emp) return;
+  emp.avail[idx][field] = val;
+  localStorage.setItem('kfc4', JSON.stringify(D));
+}
+
+// ════════════════════════════════════════
+//  EDIT MODAL
+// ════════════════════════════════════════
+function openAdd() {
+  editId    = null;
+  editAvail = blankAvail();
+  document.getElementById('mdl-title').textContent = 'Add Employee';
+  document.getElementById('eN').value  = '';
+  document.getElementById('eP').value  = POSITIONS[1];
+  document.getElementById('eSt').value = '';
+  document.getElementById('savebtn').textContent = 'Add Employee';
+  buildCP(COLORS[Math.floor(Math.random()*COLORS.length)]);
+  buildDayRows();
+  document.getElementById('editOv').classList.add('on');
+}
+
+function openEdit(id) {
+  const emp = D.employees.find(e => e.id === id); if (!emp) return;
+  fixAvail(emp);
+  editId    = id;
+  editAvail = emp.avail.map(d => ({...d}));
+  document.getElementById('mdl-title').textContent = 'Edit: '+emp.name;
+  document.getElementById('eN').value  = emp.name;
+  document.getElementById('eP').value  = emp.position;
+  document.getElementById('eSt').value = emp.station || '';
+  document.getElementById('savebtn').textContent = 'Save Changes';
+  buildCP(emp.color || COLORS[0]);
+  buildDayRows();
+  document.getElementById('editOv').classList.add('on');
+}
+
+function closeEdit() {
+  document.getElementById('editOv').classList.remove('on');
+}
+document.getElementById('editOv').addEventListener('click', e => {
+  if (e.target === document.getElementById('editOv')) closeEdit();
+});
+
+function buildCP(sel) {
+  editColor = sel;
+  document.getElementById('cp').innerHTML = COLORS.map(c =>
+    `<div class="cdot ${c===sel?'sel':''}" style="background:${c}" onclick="pickC('${c}')"></div>`
+  ).join('');
+}
+function pickC(c) {
+  editColor = c;
+  document.querySelectorAll('.cdot').forEach(d => {
+    // compare rgb
+    const bg = d.style.background || d.style.backgroundColor;
+    d.classList.toggle('sel', bg === c);
+  });
+  // re-render to fix CSS specificity
+  buildCP(c);
+}
+
+// Preset shifts per position
+// Each preset: { label, s, e }  — 'custom' is always appended automatically
+function getPresets(position) {
+  switch(position) {
+    case 'Food Service Team Member':
+      return [
+        { label:'9:30A – 5:00P', s:'09:30', e:'17:00' },
+        { label:'5:00P – 11:30P', s:'17:00', e:'23:30' },
+      ];
+    case 'Customer Service Team Member':
+      return [
+        { label:'9:30A – 5:00P',  s:'09:30', e:'17:00' },
+        { label:'4:00P – 8:00P',  s:'16:00', e:'20:00' },
+        { label:'5:00P – 10:00P', s:'17:00', e:'22:00' },
+        { label:'12:00P – 8:00P', s:'12:00', e:'20:00' },
+      ];
+    case 'Shift Manager':
+    case 'Shift Manager in Training':
+      return [
+        { label:'9:30A – 5:00P',  s:'09:30', e:'17:00' },
+        { label:'5:00P – 11:30P', s:'17:00', e:'23:30' },
+      ];
+    default: // AGM and others
+      return [
+        { label:'10:00A – 7:00P', s:'10:00', e:'19:00' },
+        { label:'5:00P – 11:30P', s:'17:00', e:'23:30' },
+      ];
+  }
+}
+
+function matchPreset(presets, s, e) {
+  return presets.findIndex(p => p.s === s && p.e === e);
+}
+
+function buildDayRows() {
+  const dates    = getWeekDates();
+  const pos      = document.getElementById('eP').value;
+  const presets  = getPresets(pos);
+  let html = '';
+  DAYS.forEach((d, i) => {
+    const av  = editAvail[i];
+    const hrs = av.on ? calcH(av.s, av.e) : 0;
+    const activePreset = av.on ? matchPreset(presets, av.s, av.e) : -1;
+    const isCustom = av.on && activePreset === -1;
+
+    html += `<div class="day-row ${av.on?'day-on':''}" id="dr-${i}">
+      <div class="day-row-top">
+        <button class="day-tog ${av.on?'on':'off'}" onclick="modTog(${i})" type="button"></button>
+        <span class="day-name">${d}</span>
+        <span class="day-date">${dates[i]}</span>
+        ${av.on
+          ? `<span class="day-hrs" id="dh-${i}">${hrs.toFixed(1)}h</span>`
+          : `<span class="day-off">Day off</span>`
+        }
+      </div>
+      ${av.on ? `
+      <div class="day-body">
+        <div class="shift-presets">
+          ${presets.map((p, pi) =>
+            `<button type="button" class="sp ${activePreset===pi?'active':''}" onclick="applyPreset(${i},${pi})">${p.label}</button>`
+          ).join('')}
+          <button type="button" class="sp custom-sp ${isCustom?'active':''}" onclick="showCustom(${i})">Custom…</button>
+        </div>
+        <div class="custom-times" id="ct-${i}" style="${isCustom?'':'display:none'}">
+          <span class="custom-lbl">From</span>
+          <input class="ti" type="time" id="ds-${i}" value="${av.s}" oninput="modTime(${i},'s',this.value)">
+          <span class="day-sep">→</span>
+          <span class="custom-lbl">To</span>
+          <input class="ti" type="time" id="de-${i}" value="${av.e}" oninput="modTime(${i},'e',this.value)">
+        </div>
+      </div>` : ''}
+    </div>`;
+  });
+  document.getElementById('day-rows').innerHTML = html;
+  calcWkTotal();
+}
+
+function modTog(i) {
+  editAvail[i].on = !editAvail[i].on;
+  if (editAvail[i].on) {
+    // auto-apply first preset when turning day on
+    const pos = document.getElementById('eP').value;
+    const presets = getPresets(pos);
+    if (presets.length) { editAvail[i].s = presets[0].s; editAvail[i].e = presets[0].e; }
+  }
+  buildDayRows();
+}
+
+function applyPreset(dayIdx, presetIdx) {
+  const pos = document.getElementById('eP').value;
+  const p = getPresets(pos)[presetIdx];
+  if (!p) return;
+  editAvail[dayIdx].s = p.s;
+  editAvail[dayIdx].e = p.e;
+  buildDayRows();
+}
+
+function showCustom(dayIdx) {
+  // Just toggle the custom time inputs open (keep current times)
+  buildDayRows(); // re-render so custom-sp gets active class via isCustom flag logic
+  // Force: unset match by making times unique if still matching a preset
+  const pos = document.getElementById('eP').value;
+  const presets = getPresets(pos);
+  const idx = matchPreset(presets, editAvail[dayIdx].s, editAvail[dayIdx].e);
+  if (idx !== -1) {
+    // leave times as-is but show the time pickers by marking as custom
+    // slightly nudge end by 1 min so it no longer matches
+    editAvail[dayIdx].e = editAvail[dayIdx].e; // no-op — just show pickers
+  }
+  const ct = document.getElementById('ct-'+dayIdx);
+  if (ct) ct.style.display = '';
+  // mark custom button active
+  const btns = document.querySelectorAll(`#dr-${dayIdx} .sp`);
+  btns.forEach((b, bi) => {
+    b.classList.toggle('active', bi === presets.length);
+  });
+}
+
+function modTime(i, field, val) {
+  editAvail[i][field] = val;
+  const hrs = calcH(editAvail[i].s, editAvail[i].e);
+  const el  = document.getElementById('dh-'+i);
+  if (el) el.textContent = hrs.toFixed(1)+'h';
+  calcWkTotal();
+}
+function calcWkTotal() {
+  const total = editAvail.reduce((s, d) => s + (d.on ? calcH(d.s, d.e) : 0), 0);
+  document.getElementById('wk-total').textContent = total.toFixed(2);
+}
+
+function saveEdit() {
+  const name = document.getElementById('eN').value.trim();
+  const pos  = document.getElementById('eP').value;
+  const sta  = document.getElementById('eSt').value.trim();
+  if (!name) { toast('Enter a name', 'er'); return; }
+
+  if (editId) {
+    const emp = D.employees.find(e => e.id === editId);
+    if (emp) {
+      emp.name     = name;
+      emp.position = pos;
+      emp.station  = sta;
+      emp.color    = editColor;
+      emp.avail    = editAvail.map(d => ({...d}));
+    }
+    toast('Saved', 'ok');
+  } else {
+    D.employees.push({
+      id: 'e'+Date.now(),
+      name, position:pos, station:sta,
+      color: editColor,
+      avail: editAvail.map(d => ({...d}))
+    });
+    toast('Employee added', 'ok');
+  }
+  closeEdit();
+  renderTeam();
+  saveData();
+}
+
+function delEmp(id) {
+  if (!confirm('Remove this employee?')) return;
+  D.employees = D.employees.filter(e => e.id !== id);
+  renderTeam();
+  saveData();
+  toast('Removed', 'nf');
+}
+
+// ════════════════════════════════════════
+//  SCHEDULE BUILD
+// ════════════════════════════════════════
+function buildSched() {
+  const out   = document.getElementById('sch-out');
+  const dates = getWeekDates();
+
+  // Period label
+  let pl = '';
+  if (D.week.start) {
+    const s = new Date(D.week.start+'T00:00:00');
+    pl = 'Week of '+s.toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'});
+  }
+  if (D.week.period) pl += ' · '+D.week.period;
+  if (D.week.year)   pl += ' · FY'+D.week.year;
+  document.getElementById('sch-sub').textContent = pl || 'Fill availability first';
+
+  if (!D.employees.length) {
+    out.innerHTML = '<div class="empty"><span class="empty-ic">👥</span>No employees yet</div>';
+    return;
+  }
+
+  const byPos = {};
+  POSITIONS.forEach(p => byPos[p] = []);
+  D.employees.forEach(e => { if (byPos[e.position]) byPos[e.position].push(e); });
+
+  let grand = 0, rows = '';
+
+  POSITIONS.forEach(pos => {
+    const emps = byPos[pos]; if (!emps.length) return;
+    let posTotal = 0;
+    rows += `<tr class="sch-group"><td colspan="9">${pos}</td></tr>`;
+    emps.forEach(emp => {
+      fixAvail(emp);
+      let wk = 0;
+      const cells = emp.avail.map(av => {
+        if (av.on) { const h = calcH(av.s, av.e); wk += h; return `<td><span class="sc">${f12(av.s)}–${f12(av.e)}</span></td>`; }
+        return `<td><span class="off">—</span></td>`;
+      }).join('');
+      posTotal += wk; grand += wk;
+      rows += `<tr><td>${emp.name}</td>${cells}<td class="hrs">${wk.toFixed(2)}</td></tr>`;
+    });
+    rows += `<tr class="sch-total"><td colspan="8" style="padding-left:10px">Total hours</td><td class="hrs">${posTotal.toFixed(2)}</td></tr>`;
+  });
+
+  const thd = DAYS.map((d, i) =>
+    `<th>${d}<br><span style="font-weight:400;opacity:.6;font-size:9px">${dates[i]}</span></th>`
+  ).join('');
+
+  out.innerHTML = `
+    <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:14px;font-weight:800">${D.settings.name||'KFC'} Store ${D.settings.num||'111'} — Weekly Time Sheet</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">${pl}</div>
+      </div>
+      <div style="font-size:13px">Total: <strong>${grand.toFixed(2)} hrs</strong></div>
+    </div>
+    <div class="sch-scroll">
+      <table class="sch-table">
+        <thead><tr><th>Name</th>${thd}<th>Total</th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr style="background:var(--ink)">
+          <td colspan="8" style="color:#fff;font-weight:700;font-size:11px;padding:10px;text-transform:uppercase;letter-spacing:.06em">Total Scheduled Hours</td>
+          <td style="color:#fff;font-weight:800;font-size:14px;text-align:center;font-family:'DM Mono',monospace;padding:10px">${grand.toFixed(2)}</td>
+        </tr></tfoot>
+      </table>
+    </div>`;
+}
+
+// ════════════════════════════════════════
+//  PDF EXPORT
+// ════════════════════════════════════════
+function exportPDF() {
+  if (!window.jspdf) { toast('PDF library loading…', 'nf'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+  const pw = doc.internal.pageSize.getWidth();
+  const ph = doc.internal.pageSize.getHeight();
+  const mg = 10;
+  const dates = getWeekDates();
+
+  // Header bar
+  doc.setFillColor(212,0,26);
+  doc.rect(0,0,pw,16,'F');
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(11);
+  doc.setTextColor(255,255,255);
+  doc.text(`${D.settings.name||'KFC'} Store ${D.settings.num||'111'} — Weekly Time Sheet`, mg, 10);
+
+  let pl = '';
+  if (D.week.start) {
+    const s = new Date(D.week.start+'T00:00:00');
+    const e = new Date(s); e.setDate(e.getDate()+6);
+    const f = d => `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;
+    pl = f(s)+' – '+f(e);
+  }
+  if (D.week.period) pl += '   '+D.week.period;
+  if (D.week.year)   pl += '   FY'+D.week.year;
+  doc.setFontSize(7.5); doc.setFont('helvetica','normal');
+  doc.text(pl, pw-mg, 10, {align:'right'});
+
+  let y = 22;
+  const cw = [46,27,27,27,27,27,27,27,18];
+  const tw = cw.reduce((a,b) => a+b, 0);
+  const byPos = {};
+  POSITIONS.forEach(p => byPos[p] = []);
+  D.employees.forEach(e => { if (byPos[e.position]) byPos[e.position].push(e); });
+  let grand = 0;
+
+  POSITIONS.forEach(pos => {
+    const emps = byPos[pos]; if (!emps.length) return;
+    if (y+36 > ph-10) { doc.addPage(); y = 12; }
+
+    // Group header
+    doc.setFillColor(238,238,238);
+    doc.rect(mg, y-4, tw, 6, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(80,80,80);
+    doc.text(pos.toUpperCase(), mg+2, y);
+    y += 5;
+
+    // Col headers
+    doc.setFillColor(25,25,25);
+    doc.rect(mg, y-4, tw, 7, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(255,255,255);
+    let x = mg;
+    ['Name',...DAYS.map((d,i)=>d+'\n'+dates[i]),'Total'].forEach((h, ci) => {
+      const pts = h.split('\n');
+      if (pts.length > 1) {
+        doc.text(pts[0], x+cw[ci]/2, y-1, {align:'center'});
+        doc.setFontSize(5.5);
+        doc.text(pts[1], x+cw[ci]/2, y+2, {align:'center'});
+        doc.setFontSize(6.5);
+      } else {
+        doc.text(h, x+(ci===0?2:cw[ci]/2), y, {align:ci===0?'left':'center'});
+      }
+      x += cw[ci];
+    });
+    y += 5;
+
+    let posT = 0;
+    emps.forEach((emp, ri) => {
+      if (y+7 > ph-10) { doc.addPage(); y = 12; }
+      fixAvail(emp);
+      let wk = 0;
+      const cells = emp.avail.map(av => {
+        if (av.on) { wk += calcH(av.s, av.e); return f12(av.s)+'-'+f12(av.e); }
+        return '';
+      });
+      posT += wk; grand += wk;
+
+      if (ri%2===0) { doc.setFillColor(251,251,251); doc.rect(mg, y-3.5, tw, 7, 'F'); }
+      doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(20,20,20);
+      x = mg;
+      const nm = emp.name.length>26 ? emp.name.slice(0,24)+'…' : emp.name;
+      doc.text(nm, x+2, y); x += cw[0];
+      doc.setFont('helvetica','normal');
+      cells.forEach((c, ci) => {
+        if (c) { doc.setTextColor(29,109,181); doc.text(c, x+cw[ci+1]/2, y, {align:'center'}); }
+        else   { doc.setTextColor(190,190,190); doc.text('—', x+cw[ci+1]/2, y, {align:'center'}); }
+        x += cw[ci+1];
+      });
+      doc.setFont('helvetica','bold'); doc.setTextColor(20,20,20);
+      doc.text(wk.toFixed(2), x+cw[8]/2, y, {align:'center'});
+      doc.setDrawColor(232,232,232);
+      doc.line(mg, y+3, mg+tw, y+3);
+      y += 7;
+    });
+
+    if (y+7 > ph-10) { doc.addPage(); y = 12; }
+    doc.setFillColor(244,244,244); doc.rect(mg, y-4, tw, 7, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(90,90,90);
+    doc.text('Total Hours', mg+2, y);
+    doc.setTextColor(20,20,20);
+    doc.text(posT.toFixed(2), mg+tw-cw[8]/2, y, {align:'center'});
+    y += 9;
+  });
+
+  // Grand total bar
+  if (y+10 > ph-8) { doc.addPage(); y = 12; }
+  doc.setFillColor(212,0,26); doc.rect(mg, y-4, tw, 9, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(255,255,255);
+  doc.text('TOTAL SCHEDULED HOURS', mg+2, y+1);
+  doc.text(grand.toFixed(2), mg+tw-cw[8]/2, y+1, {align:'center'});
+
+  doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(160,160,160);
+  doc.text('Generated: '+new Date().toLocaleString('en-US'), mg, ph-4);
+  doc.text('Page 1', pw-mg, ph-4, {align:'right'});
+  doc.save(`KFC_Store${D.settings.num||'111'}_Schedule.pdf`);
+  toast('PDF saved', 'ok');
+}
+
+// ════════════════════════════════════════
+//  SETTINGS LOAD
+// ════════════════════════════════════════
+function loadSet() {
+  document.getElementById('sNum').value  = D.settings.num  || '111';
+  document.getElementById('sName').value = D.settings.name || 'KFC';
+  document.getElementById('sMgr').value  = D.settings.mgr  || '';
+}
+
+// ════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════
+function renderAll() {
+  renderTeam();
+  loadSet();
+}
+
+loadData();
+renderAll();
+initWeek();
+</script>
 </body>
 </html>
