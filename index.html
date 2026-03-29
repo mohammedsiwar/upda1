@@ -40,6 +40,8 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .btn-ow{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.5)}.btn-ow:hover{background:rgba(255,255,255,.12)}
 .btn-gl{background:transparent;color:var(--muted);border:1.5px solid var(--border)}.btn-gl:hover{border-color:var(--ink);color:var(--ink)}
 .btn-sm{padding:5px 10px;font-size:12px}
+.btn-green{background:var(--green);color:#fff}.btn-green:hover{background:#155f2a}
+.btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{background:#155a9a}
 
 /* PAGE */
 .page{display:none;padding:20px;max-width:1160px;margin:0 auto}
@@ -57,11 +59,15 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .en{font-weight:700;font-size:14px}
 .eb{display:inline-flex;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-top:3px}
 .es{font-size:11px;color:var(--muted);margin-top:2px}
-.emp-acts{display:flex;gap:6px;padding-top:10px;border-top:1px solid var(--border)}
+.emp-acts{display:flex;gap:6px;padding-top:10px;border-top:1px solid var(--border);flex-wrap:wrap}
 .add-card{background:var(--red-lt);border:2px dashed #f5a0aa;border-radius:var(--rl);min-height:116px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:all .2s}
 .add-card:hover{background:#ffe0e3;border-color:var(--red)}
 .add-card-icon{font-size:26px;color:var(--red)}
 .add-card-lbl{font-size:13px;font-weight:600;color:var(--red)}
+
+/* PENDING BADGE */
+.pending-dot{width:8px;height:8px;background:var(--green);border-radius:50%;display:inline-block;margin-left:4px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.3)}}
 
 /* WEEK BAR */
 .wk-bar{background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:20px;display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
@@ -147,14 +153,12 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .day-hrs{font-size:12px;color:var(--green);font-weight:700;margin-left:auto;font-family:'DM Mono',monospace}
 .day-off{font-size:12px;color:#bbb;margin-left:auto;font-weight:600}
 .day-body{padding:0 12px 12px}
-/* Preset shift buttons */
 .shift-presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
 .sp{padding:6px 12px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;color:var(--ink2)}
 .sp:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-lt)}
 .sp.active{border-color:var(--green);color:var(--green);background:var(--green-lt)}
 .sp.custom-sp{border-style:dashed;color:var(--muted)}
 .sp.custom-sp.active{border-color:var(--blue);color:var(--blue);background:var(--blue-lt);border-style:solid}
-/* custom time row */
 .custom-times{display:flex;align-items:center;gap:8px;margin-top:4px}
 .custom-lbl{font-size:11px;color:var(--muted);font-weight:600;min-width:32px}
 .day-sep{font-size:13px;color:var(--muted);font-weight:700}
@@ -167,6 +171,15 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .set-title{font-size:13px;font-weight:700;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
 .set-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 
+/* SHARE LINK MODAL */
+.link-box{display:flex;gap:8px;align-items:center;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;margin-top:8px}
+.link-url{font-family:'DM Mono',monospace;font-size:11px;color:var(--blue);word-break:break-all;flex:1;line-height:1.5}
+.pending-card{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;position:relative;transition:border-color .2s}
+.pending-card.has-sub{border-color:#86efac}
+.pending-badge{position:absolute;top:10px;right:12px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px}
+.pending-badge.submitted{background:var(--green-lt);color:var(--green)}
+.pending-badge.waiting{background:#fef9c3;color:#92400e}
+
 /* TOAST */
 .tst{position:fixed;bottom:20px;right:20px;padding:10px 16px;border-radius:10px;color:#fff;font-weight:600;font-size:13px;z-index:9999;display:flex;align-items:center;gap:8px;font-family:'Syne',sans-serif;box-shadow:0 4px 20px rgba(0,0,0,.2);animation:tsin .25s ease}
 .tst.ok{background:var(--green)}.tst.er{background:var(--red)}.tst.nf{background:var(--blue)}
@@ -174,6 +187,31 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 
 .empty{text-align:center;padding:40px 20px;color:var(--muted)}
 .empty-ic{font-size:2.5rem;display:block;margin-bottom:10px;opacity:.35}
+
+/* ══════════════════════════════════
+   EMPLOYEE SELF-SERVICE AVAILABILITY FORM
+   ══════════════════════════════════ */
+.emp-form-wrap{min-height:100vh;background:#f7f7f7;display:flex;flex-direction:column}
+.emp-form-hdr{background:var(--red);color:#fff;padding:16px 20px;display:flex;align-items:center;gap:12px}
+.emp-form-body{max-width:640px;margin:24px auto;padding:0 16px;width:100%}
+.emp-form-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--rl);padding:20px;margin-bottom:16px}
+.emp-form-title{font-size:18px;font-weight:800;margin-bottom:4px}
+.emp-form-sub{font-size:12px;color:var(--muted)}
+.emp-day-row{border:1.5px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden;transition:border-color .15s}
+.emp-day-row.day-on{border-color:#86efac;background:var(--green-lt)}
+.emp-day-top{display:flex;align-items:center;gap:10px;padding:10px 14px}
+.emp-day-body{padding:0 14px 12px}
+.emp-day-tog{width:42px;height:24px;border-radius:12px;border:none;cursor:pointer;position:relative;flex-shrink:0;transition:background .15s}
+.emp-day-tog.on{background:var(--green)}
+.emp-day-tog.off{background:#ccc}
+.emp-day-tog::after{content:'';position:absolute;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.emp-day-tog.on::after{left:21px}
+.emp-day-tog.off::after{left:3px}
+.saved-notice{background:var(--green-lt);border:1.5px solid #86efac;border-radius:10px;padding:12px 16px;font-size:13px;color:var(--green);font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:16px}
+.submitted-screen{text-align:center;padding:48px 20px}
+.submitted-ic{font-size:3rem;margin-bottom:12px}
+.submitted-title{font-size:20px;font-weight:800;margin-bottom:8px}
+.submitted-sub{font-size:13px;color:var(--muted)}
 
 @media(max-width:640px){
   html{font-size:13px}
@@ -201,6 +239,50 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 </head>
 <body>
 
+<!-- ════════════════════════════════
+     EMPLOYEE AVAILABILITY FORM
+     Shown when ?token=xxx is in URL
+     ════════════════════════════════ -->
+<div id="emp-form-page" style="display:none">
+  <div class="emp-form-wrap">
+    <div class="emp-form-hdr">
+      <div class="hdr-badge" style="background:#fff;color:var(--red)">KFC</div>
+      <div>
+        <div style="font-weight:800;font-size:15px" id="ef-store-name">Store 111 — Availability Form</div>
+        <div style="font-size:11px;opacity:.8" id="ef-week-range">Loading...</div>
+      </div>
+    </div>
+    <div class="emp-form-body">
+      <div id="ef-saved-notice" class="saved-notice" style="display:none">
+        ✅ Your availability is saved — you can update it anytime before the deadline.
+      </div>
+      <div class="emp-form-card">
+        <div class="emp-form-title" id="ef-emp-name">Loading...</div>
+        <div class="emp-form-sub" id="ef-emp-pos"></div>
+      </div>
+      <div class="emp-form-card">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px">Your Availability This Week</div>
+        <div id="ef-days"></div>
+        <div class="wk-tot-row" style="margin-top:12px">
+          <span class="wk-tot-lbl">Total Hours</span>
+          <span class="wk-tot-val" id="ef-total">0.00</span>
+        </div>
+      </div>
+      <button class="btn btn-green" style="width:100%;justify-content:center;padding:12px;font-size:14px" onclick="submitEmpAvail()">
+        ✅ Submit My Availability
+      </button>
+      <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:12px">
+        Your response is saved automatically. You can return to this link and update it before the deadline.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     MANAGER APP
+     ════════════════════════════════ -->
+<div id="manager-app" style="display:none">
+
 <!-- HEADER -->
 <header class="hdr">
   <div class="hdr-l">
@@ -217,6 +299,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 <div class="tabs">
   <button class="tab on" id="tb-team" onclick="go('team')">👥 Team <span class="tab-n" id="tc">0</span></button>
   <button class="tab" id="tb-avail" onclick="go('avail')">📅 Availability</button>
+  <button class="tab" id="tb-share" onclick="go('share')">🔗 Share Links <span class="tab-n" id="pending-count" style="background:var(--green);display:none">0</span></button>
   <button class="tab" id="tb-sched" onclick="go('sched')">📋 Schedule</button>
   <button class="tab" id="tb-set" onclick="go('set')">⚙️ Settings</button>
 </div>
@@ -252,6 +335,33 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
     <div class="wk-range" id="wkRange">Select a Monday to start</div>
   </div>
   <div id="avail-list"></div>
+</div>
+
+<!-- SHARE LINKS PAGE -->
+<div class="page" id="pg-share">
+  <div class="ph">
+    <div class="ph-l">
+      <div class="pt">Share Availability Links</div>
+      <div class="ps">Send each employee their personal link — they fill it in, and you sync it here</div>
+    </div>
+    <button class="btn btn-green" onclick="syncAll()" id="sync-btn">
+      🔄 Sync All Submissions
+    </button>
+  </div>
+
+  <!-- Pending submissions banner -->
+  <div id="pending-banner" style="display:none;background:var(--green-lt);border:1.5px solid #86efac;border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:1.4rem">📬</span>
+      <div>
+        <div style="font-weight:800;font-size:14px;color:var(--green)" id="pending-banner-text">New submissions waiting</div>
+        <div style="font-size:12px;color:var(--muted)">Click "Sync All Submissions" to apply them to the schedule</div>
+      </div>
+    </div>
+    <button class="btn btn-green btn-sm" onclick="syncAll()">Sync Now</button>
+  </div>
+
+  <div id="share-list"></div>
 </div>
 
 <!-- SCHEDULE PAGE -->
@@ -291,6 +401,8 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
   </div>
 </div>
 
+</div><!-- end #manager-app -->
+
 <!-- EDIT MODAL (info + full week schedule) -->
 <div class="ov" id="editOv">
   <div class="mdl">
@@ -326,7 +438,6 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
         </div>
       </div>
 
-      <!-- WEEK SCHEDULE SECTION -->
       <div class="week-sched">
         <div class="ws-hd">📅 Weekly Schedule — toggle days on/off and set shift times</div>
         <div id="day-rows"></div>
@@ -339,6 +450,43 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
     <div class="mdl-ft">
       <button class="btn btn-gl" onclick="closeEdit()">Cancel</button>
       <button class="btn btn-red" id="savebtn" onclick="saveEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHARE LINK MODAL -->
+<div class="ov" id="shareOv">
+  <div class="mdl" style="max-width:560px">
+    <div class="mdl-hd">
+      <span class="mdl-ht">📤 Share Availability Link</span>
+      <button class="mdl-cl" onclick="closeShare()">✕</button>
+    </div>
+    <div class="mdl-bd">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <div class="av" id="share-av" style="width:44px;height:44px;font-size:14px"></div>
+        <div>
+          <div style="font-weight:700;font-size:14px" id="share-name"></div>
+          <div style="font-size:11px;color:var(--muted)" id="share-pos"></div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">Personal Availability Link</div>
+      <div class="link-box">
+        <span class="link-url" id="share-url"></span>
+        <button class="btn btn-blue btn-sm" onclick="copyLink()">📋 Copy</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.6">
+        ✅ This link is unique to this employee.<br>
+        ✅ Their submission is saved — they can update it anytime.<br>
+        ✅ Use the "Sync" button on the Share Links page to pull responses into the schedule.
+      </div>
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Current Submitted Availability</div>
+        <div id="share-preview"></div>
+      </div>
+    </div>
+    <div class="mdl-ft">
+      <button class="btn btn-gl" onclick="closeShare()">Close</button>
+      <button class="btn btn-blue" onclick="copyLink()">📋 Copy Link</button>
     </div>
   </div>
 </div>
@@ -374,7 +522,384 @@ let D = {
 };
 let editId = null;
 let editColor = COLORS[0];
-let editAvail = [];   // working copy inside modal
+let editAvail = [];
+let shareEmpId = null;
+
+// ════════════════════════════════════════
+//  ENTRY POINT — detect employee link vs manager app
+// ════════════════════════════════════════
+function init() {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  if (token) {
+    showEmpForm(token);
+  } else {
+    loadData();
+    renderAll();
+    initWeek();
+    document.getElementById('manager-app').style.display = '';
+  }
+}
+
+// ════════════════════════════════════════
+//  TOKEN SYSTEM
+// ════════════════════════════════════════
+// Token format: empId_weekStart  (URL-safe)
+function makeToken(empId) {
+  const weekStart = D.week.start || getDefaultMonday();
+  return btoa(empId + '|' + weekStart).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+}
+
+function parseToken(token) {
+  try {
+    // restore base64 padding
+    let b = token.replace(/-/g,'+').replace(/_/g,'/');
+    while (b.length % 4 !== 0) b += '=';
+    const decoded = atob(b);
+    const [empId, weekStart] = decoded.split('|');
+    return { empId, weekStart };
+  } catch(e) { return null; }
+}
+
+function getSubmissionKey(token) {
+  return 'kfc_sub_' + token;
+}
+
+function getDefaultMonday() {
+  const t = new Date();
+  const dow = t.getDay();
+  const diff = t.getDate() - dow + (dow === 0 ? -6 : 1);
+  const mon = new Date(t); mon.setDate(diff);
+  return mon.toISOString().split('T')[0];
+}
+
+function getShareLink(empId) {
+  const token = makeToken(empId);
+  const base = window.location.href.split('?')[0];
+  return base + '?token=' + token;
+}
+
+// ════════════════════════════════════════
+//  EMPLOYEE SELF-SERVICE FORM
+// ════════════════════════════════════════
+let efAvail = [];
+let efToken = '';
+let efEmpId = '';
+
+function showEmpForm(token) {
+  document.getElementById('emp-form-page').style.display = '';
+  efToken = token;
+
+  const parsed = parseToken(token);
+  if (!parsed) {
+    document.getElementById('emp-form-body').innerHTML = '<div class="submitted-screen"><div class="submitted-ic">❌</div><div class="submitted-title">Invalid Link</div><div class="submitted-sub">This link is not valid. Please ask your manager for a new one.</div></div>';
+    return;
+  }
+
+  efEmpId = parsed.empId;
+  const weekStart = parsed.weekStart;
+
+  // Load manager data from localStorage to get employee info
+  loadData();
+
+  const emp = D.employees.find(e => e.id === efEmpId);
+  if (!emp) {
+    document.getElementById('ef-emp-name').textContent = 'Employee not found';
+    document.getElementById('ef-emp-pos').textContent = 'Ask your manager to regenerate your link.';
+    return;
+  }
+
+  // Week range display
+  const s = new Date(weekStart + 'T00:00:00');
+  const e = new Date(s); e.setDate(e.getDate() + 6);
+  const f = d => `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
+  document.getElementById('ef-week-range').textContent = 'Week of ' + f(s) + ' – ' + f(e) + (D.week.period ? ' · ' + D.week.period : '');
+  document.getElementById('ef-store-name').textContent = (D.settings.name||'KFC') + ' Store ' + (D.settings.num||'111') + ' — Availability Form';
+  document.getElementById('ef-emp-name').textContent = emp.name;
+  const ps = PS[emp.position] || {bg:'#f5f5f5',tx:'#444'};
+  document.getElementById('ef-emp-pos').innerHTML = `<span class="eb" style="background:${ps.bg};color:${ps.tx}">${emp.position}</span>`;
+
+  // Load existing submission if any
+  const subKey = getSubmissionKey(token);
+  const saved = localStorage.getItem(subKey);
+  if (saved) {
+    try {
+      efAvail = JSON.parse(saved);
+      document.getElementById('ef-saved-notice').style.display = 'flex';
+    } catch(err) {
+      efAvail = blankAvail();
+    }
+  } else {
+    efAvail = blankAvail();
+  }
+
+  renderEfDays(weekStart);
+}
+
+function renderEfDays(weekStart) {
+  const s = new Date(weekStart + 'T00:00:00');
+  const dates = DAYS.map((_, i) => {
+    const d = new Date(s); d.setDate(d.getDate() + i);
+    return `${d.getMonth()+1}/${d.getDate()}`;
+  });
+
+  let html = '';
+  DAYS.forEach((day, i) => {
+    const av = efAvail[i];
+    const hrs = av.on ? calcH(av.s, av.e) : 0;
+    html += `<div class="emp-day-row ${av.on?'day-on':''}" id="edr-${i}">
+      <div class="emp-day-top">
+        <button type="button" class="emp-day-tog ${av.on?'on':'off'}" onclick="efTogDay(${i})"></button>
+        <span style="font-weight:800;font-size:15px;min-width:38px">${day}</span>
+        <span style="font-size:12px;color:var(--muted)">${dates[i]}</span>
+        ${av.on
+          ? `<span style="margin-left:auto;font-size:13px;font-weight:700;color:var(--green);font-family:'DM Mono',monospace" id="efdh-${i}">${hrs.toFixed(1)}h</span>`
+          : `<span style="margin-left:auto;font-size:12px;color:#bbb;font-weight:600">Day off</span>`}
+      </div>
+      ${av.on ? `
+      <div class="emp-day-body">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <label style="font-size:12px;font-weight:600;color:var(--muted)">From</label>
+          <input class="ti" type="time" value="${av.s}" oninput="efTime(${i},'s',this.value)" style="width:80px;font-size:13px;padding:6px 8px">
+          <span style="color:var(--muted);font-weight:700">→</span>
+          <label style="font-size:12px;font-weight:600;color:var(--muted)">To</label>
+          <input class="ti" type="time" value="${av.e}" oninput="efTime(${i},'e',this.value)" style="width:80px;font-size:13px;padding:6px 8px">
+        </div>
+      </div>` : ''}
+    </div>`;
+  });
+
+  document.getElementById('ef-days').innerHTML = html;
+  efUpdateTotal();
+}
+
+function efTogDay(i) {
+  efAvail[i].on = !efAvail[i].on;
+  if (efAvail[i].on) { efAvail[i].s = '09:00'; efAvail[i].e = '17:00'; }
+  // auto-save draft
+  localStorage.setItem(getSubmissionKey(efToken), JSON.stringify(efAvail));
+  const parsed = parseToken(efToken);
+  renderEfDays(parsed.weekStart);
+}
+
+function efTime(i, field, val) {
+  efAvail[i][field] = val;
+  const hrs = calcH(efAvail[i].s, efAvail[i].e);
+  const el = document.getElementById('efdh-'+i);
+  if (el) el.textContent = hrs.toFixed(1)+'h';
+  efUpdateTotal();
+  // auto-save draft
+  localStorage.setItem(getSubmissionKey(efToken), JSON.stringify(efAvail));
+}
+
+function efUpdateTotal() {
+  const total = efAvail.reduce((s, d) => s + (d.on ? calcH(d.s, d.e) : 0), 0);
+  const el = document.getElementById('ef-total');
+  if (el) el.textContent = total.toFixed(2);
+}
+
+function submitEmpAvail() {
+  // Save submission with a "submitted" flag so manager knows it's ready
+  const subData = {
+    avail: efAvail,
+    submittedAt: new Date().toISOString(),
+    submitted: true
+  };
+  localStorage.setItem(getSubmissionKey(efToken), JSON.stringify(subData));
+  document.getElementById('ef-saved-notice').style.display = 'flex';
+  toast('Availability submitted! ✅', 'ok');
+
+  // Show confirmation
+  document.querySelector('.emp-form-body').innerHTML = `
+    <div class="submitted-screen">
+      <div class="submitted-ic">✅</div>
+      <div class="submitted-title">Availability Submitted!</div>
+      <div class="submitted-sub" style="margin-bottom:16px">Your availability has been saved. You can return to this link anytime to update it before your manager finalizes the schedule.</div>
+      <button class="btn btn-green" style="margin:0 auto" onclick="location.reload()">✏️ Update My Availability</button>
+    </div>`;
+}
+
+// ════════════════════════════════════════
+//  SHARE LINKS PAGE
+// ════════════════════════════════════════
+function renderSharePage() {
+  const list = document.getElementById('share-list');
+  if (!D.employees.length) {
+    list.innerHTML = '<div class="empty"><span class="empty-ic">👥</span>Add employees on the Team tab first</div>';
+    return;
+  }
+
+  let pendingCount = 0;
+  let html = '';
+
+  const byPos = {};
+  POSITIONS.forEach(p => byPos[p] = []);
+  D.employees.forEach(e => { if (byPos[e.position]) byPos[e.position].push(e); });
+
+  POSITIONS.forEach(pos => {
+    byPos[pos].forEach(emp => {
+      const token = makeToken(emp.id);
+      const subKey = getSubmissionKey(token);
+      const rawSub = localStorage.getItem(subKey);
+      let subStatus = 'none';
+      let subData = null;
+      if (rawSub) {
+        try {
+          subData = JSON.parse(rawSub);
+          subStatus = subData.submitted ? 'submitted' : 'draft';
+          if (subData.submitted) pendingCount++;
+        } catch(e) {}
+      }
+
+      const ps = PS[emp.position] || {bg:'#f5f5f5',tx:'#444'};
+      const init = initials(emp.name);
+      const link = getShareLink(emp.id);
+
+      let statusBadge = '';
+      if (subStatus === 'submitted') statusBadge = '<span class="pending-badge submitted">📬 Submitted</span>';
+      else if (subStatus === 'draft') statusBadge = '<span class="pending-badge waiting">✏️ In Progress</span>';
+      else statusBadge = '<span class="pending-badge waiting" style="background:#f3f4f6;color:#6b7280">⏳ Waiting</span>';
+
+      html += `<div class="pending-card ${subStatus==='submitted'?'has-sub':''}">
+        ${statusBadge}
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div class="av" style="background:${emp.color};width:36px;height:36px;font-size:12px">${init}</div>
+          <div>
+            <div style="font-weight:700;font-size:13px">${emp.name}</div>
+            <div class="eb" style="background:${ps.bg};color:${ps.tx};font-size:10px">${emp.position}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-blue btn-sm" onclick="openShare('${emp.id}')">🔗 View / Copy Link</button>
+          ${subStatus==='submitted' ? `<button class="btn btn-green btn-sm" onclick="syncOne('${emp.id}')">⬇️ Apply Submission</button>` : ''}
+          ${subData ? `<button class="btn btn-gl btn-sm" style="color:var(--red)" onclick="clearSub('${emp.id}')">🗑 Clear</button>` : ''}
+        </div>
+      </div>`;
+    });
+  });
+
+  list.innerHTML = html;
+
+  // Update pending count badge
+  const pc = document.getElementById('pending-count');
+  if (pendingCount > 0) {
+    pc.textContent = pendingCount;
+    pc.style.display = '';
+    document.getElementById('pending-banner').style.display = 'flex';
+    document.getElementById('pending-banner-text').textContent = `${pendingCount} new submission${pendingCount>1?'s':''} waiting`;
+  } else {
+    pc.style.display = 'none';
+    document.getElementById('pending-banner').style.display = 'none';
+  }
+}
+
+function openShare(empId) {
+  const emp = D.employees.find(e => e.id === empId);
+  if (!emp) return;
+  shareEmpId = empId;
+
+  const ps = PS[emp.position] || {bg:'#f5f5f5',tx:'#444'};
+  const init = initials(emp.name);
+
+  document.getElementById('share-av').style.background = emp.color;
+  document.getElementById('share-av').textContent = init;
+  document.getElementById('share-name').textContent = emp.name;
+  document.getElementById('share-pos').textContent = emp.position;
+
+  const link = getShareLink(emp.id);
+  document.getElementById('share-url').textContent = link;
+
+  // Preview current submission
+  const token = makeToken(emp.id);
+  const subKey = getSubmissionKey(token);
+  const rawSub = localStorage.getItem(subKey);
+  let preview = '<div style="font-size:12px;color:var(--muted);font-style:italic">No submission yet.</div>';
+  if (rawSub) {
+    try {
+      const sub = JSON.parse(rawSub);
+      const avail = sub.avail || sub;
+      const dates = getWeekDates();
+      let rows = '';
+      DAYS.forEach((d, i) => {
+        const av = avail[i];
+        if (av && av.on) {
+          rows += `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f0f0f0;font-size:12px">
+            <span style="font-weight:600">${d} ${dates[i]}</span>
+            <span class="sc">${f12(av.s)} – ${f12(av.e)}</span>
+          </div>`;
+        }
+      });
+      if (!rows) rows = '<div style="font-size:12px;color:var(--muted)">All days off</div>';
+      const submittedAt = sub.submittedAt ? `<div style="font-size:10px;color:var(--muted);margin-top:8px">Submitted: ${new Date(sub.submittedAt).toLocaleString()}</div>` : '';
+      preview = rows + submittedAt;
+    } catch(e) {}
+  }
+  document.getElementById('share-preview').innerHTML = preview;
+
+  document.getElementById('shareOv').classList.add('on');
+}
+
+function closeShare() {
+  document.getElementById('shareOv').classList.remove('on');
+}
+
+function copyLink() {
+  const url = document.getElementById('share-url').textContent;
+  navigator.clipboard.writeText(url).then(() => toast('Link copied!', 'ok')).catch(() => {
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = url; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove();
+    toast('Link copied!', 'ok');
+  });
+}
+
+function syncOne(empId) {
+  const emp = D.employees.find(e => e.id === empId);
+  if (!emp) return;
+  const token = makeToken(emp.id);
+  const subKey = getSubmissionKey(token);
+  const rawSub = localStorage.getItem(subKey);
+  if (!rawSub) { toast('No submission found', 'er'); return; }
+  try {
+    const sub = JSON.parse(rawSub);
+    const avail = sub.avail || sub;
+    emp.avail = avail.map(d => ({...d}));
+    saveData();
+    toast(`Applied ${emp.name.split(',')[0]}'s availability ✅`, 'ok');
+    renderSharePage();
+  } catch(e) { toast('Error reading submission', 'er'); }
+}
+
+function syncAll() {
+  let count = 0;
+  D.employees.forEach(emp => {
+    const token = makeToken(emp.id);
+    const subKey = getSubmissionKey(token);
+    const rawSub = localStorage.getItem(subKey);
+    if (!rawSub) return;
+    try {
+      const sub = JSON.parse(rawSub);
+      if (!sub.submitted) return; // only sync explicitly submitted ones
+      const avail = sub.avail || sub;
+      emp.avail = avail.map(d => ({...d}));
+      count++;
+    } catch(e) {}
+  });
+  if (count === 0) { toast('No new submissions to sync', 'nf'); return; }
+  saveData();
+  renderTeam();
+  renderSharePage();
+  toast(`Synced ${count} submission${count>1?'s':''}! ✅`, 'ok');
+}
+
+function clearSub(empId) {
+  if (!confirm('Clear this employee\'s submission?')) return;
+  const token = makeToken(empId);
+  localStorage.removeItem(getSubmissionKey(token));
+  renderSharePage();
+  toast('Submission cleared', 'nf');
+}
 
 // ════════════════════════════════════════
 //  SEED
@@ -468,13 +993,13 @@ function go(name) {
   if (name === 'avail') renderAvail();
   if (name === 'sched') buildSched();
   if (name === 'set')   loadSet();
+  if (name === 'share') renderSharePage();
 }
 
 // ════════════════════════════════════════
 //  WEEK HELPERS
 // ════════════════════════════════════════
 function initWeek() {
-  // default to current Monday
   const t = new Date();
   const dow = t.getDay();
   const diff = t.getDate() - dow + (dow === 0 ? -6 : 1);
@@ -561,12 +1086,24 @@ function renderTeam() {
       const ps = PS[emp.position] || {bg:'#f5f5f5',tx:'#444'};
       const days = emp.avail.filter(d => d.on).length;
       const hrs  = emp.avail.reduce((s, d) => s + (d.on ? calcH(d.s, d.e) : 0), 0);
+
+      // check if submission pending
+      const token = makeToken(emp.id);
+      const rawSub = localStorage.getItem(getSubmissionKey(token));
+      let pendingDot = '';
+      if (rawSub) {
+        try {
+          const sub = JSON.parse(rawSub);
+          if (sub.submitted) pendingDot = '<span class="pending-dot" title="Availability submitted"></span>';
+        } catch(e) {}
+      }
+
       html += `
       <div class="emp-card">
         <div class="emp-top">
           <div class="av" style="background:${emp.color}">${init}</div>
           <div>
-            <div class="en">${emp.name}</div>
+            <div class="en">${emp.name}${pendingDot}</div>
             <div class="eb" style="background:${ps.bg};color:${ps.tx}">${emp.position}</div>
             ${emp.station ? `<div class="es">${emp.station}</div>` : ''}
             <div style="font-size:11px;color:var(--muted);margin-top:4px">${days} days · ${hrs.toFixed(1)}h / week</div>
@@ -574,6 +1111,7 @@ function renderTeam() {
         </div>
         <div class="emp-acts">
           <button class="btn btn-red btn-sm" onclick="openEdit('${emp.id}')">✏️ Edit &amp; Schedule</button>
+          <button class="btn btn-blue btn-sm" onclick="openShare('${emp.id}')">🔗 Share</button>
           <button class="btn btn-gl btn-sm" style="color:var(--red)" onclick="delEmp('${emp.id}')">🗑</button>
         </div>
       </div>`;
@@ -705,6 +1243,9 @@ function closeEdit() {
 document.getElementById('editOv').addEventListener('click', e => {
   if (e.target === document.getElementById('editOv')) closeEdit();
 });
+document.getElementById('shareOv').addEventListener('click', e => {
+  if (e.target === document.getElementById('shareOv')) closeShare();
+});
 
 function buildCP(sel) {
   editColor = sel;
@@ -714,17 +1255,9 @@ function buildCP(sel) {
 }
 function pickC(c) {
   editColor = c;
-  document.querySelectorAll('.cdot').forEach(d => {
-    // compare rgb
-    const bg = d.style.background || d.style.backgroundColor;
-    d.classList.toggle('sel', bg === c);
-  });
-  // re-render to fix CSS specificity
   buildCP(c);
 }
 
-// Preset shifts per position
-// Each preset: { label, s, e }  — 'custom' is always appended automatically
 function getPresets(position) {
   switch(position) {
     case 'Food Service Team Member':
@@ -745,7 +1278,7 @@ function getPresets(position) {
         { label:'9:30A – 5:00P',  s:'09:30', e:'17:00' },
         { label:'5:00P – 11:30P', s:'17:00', e:'23:30' },
       ];
-    default: // AGM and others
+    default:
       return [
         { label:'10:00A – 7:00P', s:'10:00', e:'19:00' },
         { label:'5:00P – 11:30P', s:'17:00', e:'23:30' },
@@ -803,7 +1336,6 @@ function buildDayRows() {
 function modTog(i) {
   editAvail[i].on = !editAvail[i].on;
   if (editAvail[i].on) {
-    // auto-apply first preset when turning day on
     const pos = document.getElementById('eP').value;
     const presets = getPresets(pos);
     if (presets.length) { editAvail[i].s = presets[0].s; editAvail[i].e = presets[0].e; }
@@ -821,24 +1353,12 @@ function applyPreset(dayIdx, presetIdx) {
 }
 
 function showCustom(dayIdx) {
-  // Just toggle the custom time inputs open (keep current times)
-  buildDayRows(); // re-render so custom-sp gets active class via isCustom flag logic
-  // Force: unset match by making times unique if still matching a preset
-  const pos = document.getElementById('eP').value;
-  const presets = getPresets(pos);
-  const idx = matchPreset(presets, editAvail[dayIdx].s, editAvail[dayIdx].e);
-  if (idx !== -1) {
-    // leave times as-is but show the time pickers by marking as custom
-    // slightly nudge end by 1 min so it no longer matches
-    editAvail[dayIdx].e = editAvail[dayIdx].e; // no-op — just show pickers
-  }
   const ct = document.getElementById('ct-'+dayIdx);
   if (ct) ct.style.display = '';
-  // mark custom button active
+  const pos = document.getElementById('eP').value;
+  const presets = getPresets(pos);
   const btns = document.querySelectorAll(`#dr-${dayIdx} .sp`);
-  btns.forEach((b, bi) => {
-    b.classList.toggle('active', bi === presets.length);
-  });
+  btns.forEach((b, bi) => { b.classList.toggle('active', bi === presets.length); });
 }
 
 function modTime(i, field, val) {
@@ -898,7 +1418,6 @@ function buildSched() {
   const out   = document.getElementById('sch-out');
   const dates = getWeekDates();
 
-  // Period label
   let pl = '';
   if (D.week.start) {
     const s = new Date(D.week.start+'T00:00:00');
@@ -972,7 +1491,6 @@ function exportPDF() {
   const mg = 10;
   const dates = getWeekDates();
 
-  // Header bar
   doc.setFillColor(212,0,26);
   doc.rect(0,0,pw,16,'F');
   doc.setFont('helvetica','bold');
@@ -1004,14 +1522,12 @@ function exportPDF() {
     const emps = byPos[pos]; if (!emps.length) return;
     if (y+36 > ph-10) { doc.addPage(); y = 12; }
 
-    // Group header
     doc.setFillColor(238,238,238);
     doc.rect(mg, y-4, tw, 6, 'F');
     doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(80,80,80);
     doc.text(pos.toUpperCase(), mg+2, y);
     y += 5;
 
-    // Col headers
     doc.setFillColor(25,25,25);
     doc.rect(mg, y-4, tw, 7, 'F');
     doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(255,255,255);
@@ -1068,7 +1584,6 @@ function exportPDF() {
     y += 9;
   });
 
-  // Grand total bar
   if (y+10 > ph-8) { doc.addPage(); y = 12; }
   doc.setFillColor(212,0,26); doc.rect(mg, y-4, tw, 9, 'F');
   doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(255,255,255);
@@ -1099,9 +1614,7 @@ function renderAll() {
   loadSet();
 }
 
-loadData();
-renderAll();
-initWeek();
+init();
 </script>
 </body>
 </html>
