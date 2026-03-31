@@ -3,10 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>KFC 111 — Schedule Builder</title>
+<title>KFC 111 — Complete Schedule Builder</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
+/* All your existing styles remain the same */
 :root{
   --red:#D4001A;--red2:#A80015;--red-lt:#fff0f1;
   --ink:#111;--ink2:#333;--muted:#777;
@@ -20,17 +21,20 @@
 html{font-size:14px}
 body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
 
+/* Header */
 .hdr{background:var(--red);color:#fff;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:200;box-shadow:0 2px 10px rgba(212,0,26,.35)}
 .hdr-l{display:flex;align-items:center;gap:10px}
 .hdr-badge{background:#fff;color:var(--red);font-weight:800;font-size:12px;padding:3px 8px;border-radius:6px}
 .hdr-title{font-size:15px;font-weight:700}
 .hdr-r{display:flex;gap:8px}
 
+/* Tabs */
 .tabs{background:#fff;border-bottom:1px solid var(--border);display:flex;padding:0 20px;position:sticky;top:56px;z-index:190;overflow-x:auto}
 .tab{padding:13px 18px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border:none;background:none;font-family:'Syne',sans-serif;border-bottom:2.5px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:6px}
 .tab.on{color:var(--red);border-bottom-color:var(--red)}
 .tab-n{background:var(--red);color:#fff;border-radius:20px;padding:1px 6px;font-size:10px;font-weight:700}
 
+/* Buttons */
 .btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:8px;font-family:'Syne',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;white-space:nowrap}
 .btn-red{background:var(--red);color:#fff}.btn-red:hover{background:var(--red2)}
 .btn-wh{background:#fff;color:var(--red)}.btn-wh:hover{background:#ffe8ea}
@@ -40,12 +44,14 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .btn-green{background:var(--green);color:#fff}.btn-green:hover{background:#155f2a}
 .btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{background:#155a9a}
 
+/* Pages */
 .page{display:none;padding:20px;max-width:1160px;margin:0 auto}
 .page.on{display:block}
 .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
 .ph-l .pt{font-size:19px;font-weight:800;letter-spacing:-.02em}
 .ph-l .ps{font-size:12px;color:var(--muted);margin-top:2px}
 
+/* Team Grid */
 .team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
 .emp-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--rl);padding:14px;transition:border-color .2s,box-shadow .2s}
 .emp-card:hover{border-color:#f5a0aa;box-shadow:var(--sh)}
@@ -60,9 +66,11 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .add-card-icon{font-size:26px;color:var(--red)}
 .add-card-lbl{font-size:13px;font-weight:600;color:var(--red)}
 
+/* Pending Dot */
 .pending-dot{width:8px;height:8px;background:var(--green);border-radius:50%;display:inline-block;margin-left:4px;animation:pulse 1.5s infinite}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.3)}}
 
+/* Week Bar */
 .wk-bar{background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:20px;display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
 .wk-f{display:flex;flex-direction:column;gap:4px}
 .wk-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
@@ -70,6 +78,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .wk-inp:focus{outline:none;border-color:var(--blue)}
 .wk-range{font-size:13px;font-weight:700;color:var(--ink2);background:var(--bg);padding:8px 12px;border-radius:8px;border:1px solid var(--border);align-self:flex-end}
 
+/* Availability Cards */
 .av-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--rl);margin-bottom:16px;overflow:hidden}
 .av-head{background:var(--bg);padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
 .av-info{display:flex;align-items:center;gap:10px}
@@ -79,7 +88,6 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .av-table th:first-child{text-align:left;width:70px}
 .av-table td{padding:5px 8px;border-bottom:1px solid #f2f2f2;text-align:center;vertical-align:middle}
 .av-table td:first-child{text-align:left;font-size:11px;font-weight:600;color:var(--muted);padding-left:14px}
-.av-table tr:last-child td{border-bottom:none}
 .tog{width:26px;height:26px;border-radius:6px;border:1.5px solid var(--border);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;margin:0 auto;transition:all .15s}
 .tog.on{background:var(--green-lt);border-color:#86efac;color:var(--green)}
 .tog.off{color:transparent}
@@ -87,6 +95,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .ti:focus{outline:none;border-color:var(--blue);background:var(--blue-lt)}
 .ti:disabled{opacity:.35;cursor:not-allowed}
 
+/* Schedule Table */
 .sch-wrap{background:#fff;border:1.5px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:20px}
 .sch-scroll{overflow-x:auto}
 .sch-table{width:100%;border-collapse:collapse;min-width:860px}
@@ -100,9 +109,9 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .off{color:#ccc;font-size:11px}
 .hrs{font-weight:700;font-family:'DM Mono',monospace;font-size:12px}
 
+/* Modal */
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);z-index:500;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
 .ov.on{display:flex}
-
 .mdl{background:#fff;border-radius:var(--rl);width:100%;max-width:780px;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.2);animation:mi .2s ease;margin:auto}
 @keyframes mi{from{opacity:0;transform:scale(.96) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .mdl-hd{background:var(--ink);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-radius:var(--rl) var(--rl) 0 0;flex-shrink:0}
@@ -112,6 +121,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .mdl-bd{padding:20px}
 .mdl-ft{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
 
+/* Form Elements */
 .fg{margin-bottom:14px}
 .fl{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
 .fi{width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:8px;font-family:'Syne',sans-serif;font-size:13px;color:var(--ink);background:#fff}
@@ -124,6 +134,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .cdot.sel{border-color:var(--ink)}
 .cdot:hover{transform:scale(1.12)}
 
+/* Day Schedule Editor */
 .week-sched{margin-top:20px;padding-top:18px;border-top:1px solid var(--border)}
 .ws-hd{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px}
 .day-row{border-radius:10px;border:1.5px solid var(--border);background:#fff;margin-bottom:8px;overflow:hidden;transition:border-color .15s}
@@ -153,18 +164,37 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .wk-tot-lbl{font-size:12px;font-weight:700;color:var(--muted)}
 .wk-tot-val{font-size:16px;font-weight:800;color:var(--green);font-family:'DM Mono',monospace}
 
+/* Settings Card */
 .set-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--rl);padding:16px;margin-bottom:14px}
 .set-title{font-size:13px;font-weight:700;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
 .set-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 
-.link-box{display:flex;gap:8px;align-items:center;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;margin-top:8px}
-.link-url{font-family:'DM Mono',monospace;font-size:11px;color:var(--blue);word-break:break-all;flex:1;line-height:1.5}
+/* Share Link */
+.share-link-wrap{background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;margin-top:8px}
+.share-link-text{font-family:'DM Mono',monospace;font-size:11px;color:var(--blue);word-break:break-all;line-height:1.6;display:block;margin-bottom:10px}
+.share-btns{display:flex;gap:6px;flex-wrap:wrap}
+
+/* Pending Card */
 .pending-card{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;position:relative;transition:border-color .2s}
 .pending-card.has-sub{border-color:#86efac}
 .pending-badge{position:absolute;top:10px;right:12px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px}
 .pending-badge.submitted{background:var(--green-lt);color:var(--green)}
 .pending-badge.waiting{background:#fef9c3;color:#92400e}
 
+/* Notification Panel */
+.notif-ring{position:relative;display:inline-flex}
+.notif-ring .badge{position:absolute;top:-5px;right:-5px;background:var(--green);color:#fff;border-radius:20px;padding:1px 6px;font-size:10px;font-weight:700;min-width:18px;text-align:center;border:2px solid #fff;animation:pulse 1.5s infinite}
+.notif-panel{background:#fff;border:1.5px solid var(--border);border-radius:var(--rl);margin-bottom:14px}
+.notif-row{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:1px solid #f5f5f5}
+.notif-row:last-child{border-bottom:none}
+.notif-row.unread{background:#f0fdf4}
+.notif-dot{width:8px;height:8px;background:var(--green);border-radius:50%;flex-shrink:0;margin-top:4px}
+.notif-dot.read{background:#ddd}
+.notif-text{font-size:13px;font-weight:600;color:var(--ink);flex:1}
+.notif-time{font-size:11px;color:var(--muted)}
+.notif-meta{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* Toast */
 .tst{position:fixed;bottom:20px;right:20px;padding:10px 16px;border-radius:10px;color:#fff;font-weight:600;font-size:13px;z-index:9999;display:flex;align-items:center;gap:8px;font-family:'Syne',sans-serif;box-shadow:0 4px 20px rgba(0,0,0,.2);animation:tsin .25s ease}
 .tst.ok{background:var(--green)}.tst.er{background:var(--red)}.tst.nf{background:var(--blue)}
 @keyframes tsin{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
@@ -172,11 +202,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .empty{text-align:center;padding:40px 20px;color:var(--muted)}
 .empty-ic{font-size:2.5rem;display:block;margin-bottom:10px;opacity:.35}
 
-/* ══ NOTIF BADGE ══ */
-.notif-ring{position:relative;display:inline-flex}
-.notif-ring .badge{position:absolute;top:-5px;right:-5px;background:var(--green);color:#fff;border-radius:20px;padding:1px 6px;font-size:10px;font-weight:700;min-width:18px;text-align:center;border:2px solid #fff;animation:pulse 1.5s infinite}
-
-/* ══ EMPLOYEE FORM ══ */
+/* Employee Form (Dark Theme) */
 .ef-wrap{min-height:100vh;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);display:flex;flex-direction:column;align-items:center;padding:0 0 40px}
 .ef-hdr{width:100%;background:var(--red);display:flex;align-items:center;gap:14px;padding:14px 20px;margin-bottom:32px;box-shadow:0 4px 20px rgba(212,0,26,.4)}
 .ef-hdr-badge{background:#fff;color:var(--red);font-weight:800;font-size:13px;padding:4px 10px;border-radius:6px}
@@ -184,8 +210,6 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .ef-hdr-title{font-weight:800;font-size:16px;color:#fff}
 .ef-hdr-sub{font-size:11px;color:rgba(255,255,255,.7);margin-top:2px}
 .ef-body{width:100%;max-width:600px;padding:0 16px}
-
-/* Name picker screen */
 .name-picker-card{background:rgba(255,255,255,.05);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:28px;margin-bottom:16px}
 .name-picker-title{font-size:22px;font-weight:800;color:#fff;margin-bottom:6px;letter-spacing:-.02em}
 .name-picker-sub{font-size:13px;color:rgba(255,255,255,.55);margin-bottom:24px}
@@ -202,11 +226,8 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .name-item .ni-badge{margin-left:auto;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px}
 .ni-badge.done{background:rgba(26,127,55,.3);color:#6ee7a0;border:1px solid rgba(26,127,55,.4)}
 .ni-badge.open{background:rgba(255,200,0,.15);color:#fcd34d;border:1px solid rgba(255,200,0,.2)}
-
-/* Availability form screen */
 .avail-card{background:rgba(255,255,255,.05);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:22px;margin-bottom:14px}
 .avail-card-title{font-size:12px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px}
-
 .emp-day-row{border:1.5px solid rgba(255,255,255,.1);border-radius:12px;margin-bottom:8px;overflow:hidden;transition:all .15s;background:rgba(255,255,255,.04)}
 .emp-day-row.day-on{border-color:rgba(134,239,172,.4);background:rgba(26,127,55,.12)}
 .emp-day-top{display:flex;align-items:center;gap:10px;padding:10px 14px}
@@ -226,16 +247,11 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .dark-time-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .dark-lbl{font-size:12px;font-weight:600;color:rgba(255,255,255,.45)}
 .dark-sep{font-size:14px;color:rgba(255,255,255,.35);font-weight:700}
-
 .tot-row{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(255,255,255,.06);border-radius:10px;border:1px solid rgba(255,255,255,.1);margin-top:4px}
 .tot-lbl{font-size:13px;font-weight:700;color:rgba(255,255,255,.6)}
 .tot-val{font-size:18px;font-weight:800;color:#6ee7a0;font-family:'DM Mono',monospace}
-
 .submit-btn{width:100%;padding:14px;border-radius:12px;background:var(--green);color:#fff;font-family:'Syne',sans-serif;font-size:15px;font-weight:800;border:none;cursor:pointer;transition:all .2s;letter-spacing:.01em}
 .submit-btn:hover{background:#155f2a;transform:translateY(-1px);box-shadow:0 8px 24px rgba(26,127,55,.35)}
-.submit-btn:active{transform:translateY(0)}
-
-/* Already submitted screen */
 .submitted-wrap{text-align:center;padding:40px 20px}
 .submitted-icon{font-size:3.5rem;margin-bottom:16px;display:block}
 .submitted-h{font-size:22px;font-weight:800;color:#fff;margin-bottom:8px}
@@ -247,22 +263,6 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .sub-time{color:#6ee7a0;font-family:'DM Mono',monospace;font-size:11px}
 .update-btn{padding:11px 24px;border-radius:10px;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.25);color:#fff;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s}
 .update-btn:hover{background:rgba(255,255,255,.18)}
-
-/* Notification panel */
-.notif-panel{background:#fff;border:1.5px solid var(--border);border-radius:var(--rl);margin-bottom:14px}
-.notif-row{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:1px solid #f5f5f5}
-.notif-row:last-child{border-bottom:none}
-.notif-row.unread{background:#f0fdf4}
-.notif-dot{width:8px;height:8px;background:var(--green);border-radius:50%;flex-shrink:0;margin-top:4px}
-.notif-dot.read{background:#ddd}
-.notif-text{font-size:13px;font-weight:600;color:var(--ink);flex:1}
-.notif-time{font-size:11px;color:var(--muted)}
-.notif-meta{font-size:11px;color:var(--muted);margin-top:2px}
-
-/* Share link - WhatsApp safe copy */
-.share-link-wrap{background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;margin-top:8px}
-.share-link-text{font-family:'DM Mono',monospace;font-size:11px;color:var(--blue);word-break:break-all;line-height:1.6;display:block;margin-bottom:10px}
-.share-btns{display:flex;gap:6px;flex-wrap:wrap}
 
 @media(max-width:640px){
   html{font-size:13px}
@@ -280,7 +280,6 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
   .wk-bar{gap:10px}
   .wk-range{width:100%;text-align:center}
   .emp-acts{flex-wrap:wrap}
-  .ov{padding:8px;align-items:flex-start}
   .team-grid{grid-template-columns:1fr}
   .av-table th,.av-table td{padding:4px 5px}
   .ti{width:60px;font-size:10px}
@@ -291,10 +290,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 </head>
 <body>
 
-<!-- ════════════════════════════
-     EMPLOYEE AVAILABILITY FORM
-     Shown at ?avail=1 or ?avail=true
-     ════════════════════════════ -->
+<!-- EMPLOYEE AVAILABILITY FORM (DARK THEME) -->
 <div id="emp-form-page" style="display:none">
   <div class="ef-wrap">
     <div class="ef-hdr">
@@ -305,8 +301,6 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
       </div>
     </div>
     <div class="ef-body">
-
-      <!-- Step 1: pick your name -->
       <div id="ef-step-pick">
         <div class="name-picker-card">
           <div class="name-picker-title">👋 Hi there!</div>
@@ -315,8 +309,6 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
           <div class="name-list" id="ef-name-list"></div>
         </div>
       </div>
-
-      <!-- Step 2: fill availability -->
       <div id="ef-step-avail" style="display:none">
         <div class="avail-card">
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
@@ -339,8 +331,6 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
           You can come back and update until your manager finalizes the schedule.
         </div>
       </div>
-
-      <!-- Step 3: already submitted / success -->
       <div id="ef-step-done" style="display:none">
         <div class="avail-card">
           <div class="submitted-wrap">
@@ -352,161 +342,153 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
           </div>
         </div>
       </div>
-
     </div>
   </div>
 </div>
 
-<!-- ════════════════════════════
-     MANAGER APP
-     ════════════════════════════ -->
+<!-- MANAGER APP -->
 <div id="manager-app" style="display:none">
-
-<header class="hdr">
-  <div class="hdr-l">
-    <div class="hdr-badge">KFC</div>
-    <span class="hdr-title">Store 111 — Schedule Builder</span>
-  </div>
-  <div class="hdr-r">
-    <button class="btn btn-ow btn-sm" onclick="exportPDF()">⬇ PDF</button>
-    <button class="btn btn-wh btn-sm" onclick="saveData()">💾 Save</button>
-  </div>
-</header>
-
-<div class="tabs">
-  <button class="tab on" id="tb-team" onclick="go('team')">👥 Team <span class="tab-n" id="tc">0</span></button>
-  <button class="tab" id="tb-avail" onclick="go('avail')">📅 Availability</button>
-  <button class="tab" id="tb-share" onclick="go('share')">🔗 Share Link</button>
-  <button class="tab" id="tb-notif" onclick="go('notif')">
-    <div class="notif-ring">
-      🔔 Notifications
-      <span class="badge" id="notif-badge" style="display:none">0</span>
+  <header class="hdr">
+    <div class="hdr-l">
+      <div class="hdr-badge">KFC</div>
+      <span class="hdr-title">Store 111 — Complete Schedule Builder</span>
     </div>
-  </button>
-  <button class="tab" id="tb-sched" onclick="go('sched')">📋 Schedule</button>
-  <button class="tab" id="tb-set" onclick="go('set')">⚙️ Settings</button>
-</div>
+    <div class="hdr-r">
+      <button class="btn btn-ow btn-sm" onclick="exportPDF()">⬇ PDF</button>
+      <button class="btn btn-wh btn-sm" onclick="saveData()">💾 Save</button>
+    </div>
+  </header>
 
-<!-- TEAM PAGE -->
-<div class="page on" id="pg-team">
-  <div class="ph">
-    <div class="ph-l"><div class="pt">Team Members</div><div class="ps">Manage your team — click Edit to set schedule manually</div></div>
-    <button class="btn btn-red" onclick="openAdd()">+ Add Employee</button>
-  </div>
-  <div class="team-grid" id="team-grid"></div>
-</div>
-
-<!-- AVAILABILITY PAGE -->
-<div class="page" id="pg-avail">
-  <div class="ph">
-    <div class="ph-l"><div class="pt">Weekly Availability</div><div class="ps">View and edit each employee's availability</div></div>
-    <button class="btn btn-red btn-sm" onclick="go('sched')">Build Schedule →</button>
-  </div>
-  <div class="wk-bar">
-    <div class="wk-f">
-      <div class="wk-lbl">Week Start (Monday)</div>
-      <input type="date" class="wk-inp" id="wkStart" onchange="onWkChange()">
-    </div>
-    <div class="wk-f">
-      <div class="wk-lbl">Fiscal Period</div>
-      <input type="text" class="wk-inp" id="wkPeriod" placeholder="e.g. Period 10 Week 2" style="width:190px" oninput="onWkChange()">
-    </div>
-    <div class="wk-f">
-      <div class="wk-lbl">Fiscal Year</div>
-      <input type="text" class="wk-inp" id="wkYear" placeholder="2026" style="width:90px" oninput="onWkChange()">
-    </div>
-    <div class="wk-range" id="wkRange">Select a Monday to start</div>
-  </div>
-  <div id="avail-list"></div>
-</div>
-
-<!-- SHARE LINK PAGE -->
-<div class="page" id="pg-share">
-  <div class="ph">
-    <div class="ph-l">
-      <div class="pt">Staff Availability Link</div>
-      <div class="ps">One universal link — staff pick their own name and submit availability</div>
-    </div>
-    <button class="btn btn-green" onclick="syncAll()">🔄 Sync All Submissions</button>
+  <div class="tabs">
+    <button class="tab on" id="tb-team" onclick="go('team')">👥 Team <span class="tab-n" id="tc">0</span></button>
+    <button class="tab" id="tb-avail" onclick="go('avail')">📅 Availability</button>
+    <button class="tab" id="tb-share" onclick="go('share')">🔗 Share Link</button>
+    <button class="tab" id="tb-notif" onclick="go('notif')">
+      <div class="notif-ring">
+        🔔 Notifications
+        <span class="badge" id="notif-badge" style="display:none">0</span>
+      </div>
+    </button>
+    <button class="tab" id="tb-sched" onclick="go('sched')">📋 Schedule</button>
+    <button class="tab" id="tb-set" onclick="go('set')">⚙️ Settings</button>
   </div>
 
-  <div class="set-card">
-    <div class="set-title">🔗 Universal Availability Link</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.6">
-      Share <strong>one link</strong> with your whole team. Each person picks their name and submits their availability.
+  <!-- TEAM PAGE -->
+  <div class="page on" id="pg-team">
+    <div class="ph">
+      <div class="ph-l"><div class="pt">Team Members</div><div class="ps">Manage your team — click Edit to set schedule manually</div></div>
+      <button class="btn btn-red" onclick="openAdd()">+ Add Employee</button>
     </div>
-    <div class="share-link-wrap">
-      <span class="share-link-text" id="main-link-url"></span>
-      <div class="share-btns">
-        <button class="btn btn-blue btn-sm" onclick="copyMainLink()">📋 Copy Link</button>
-        <button class="btn btn-green btn-sm" onclick="shareWhatsApp()">💬 Share via WhatsApp</button>
-        <button class="btn btn-gl btn-sm" onclick="shareNative()">📤 Share…</button>
+    <div class="team-grid" id="team-grid"></div>
+  </div>
+
+  <!-- AVAILABILITY PAGE -->
+  <div class="page" id="pg-avail">
+    <div class="ph">
+      <div class="ph-l"><div class="pt">Weekly Availability</div><div class="ps">View and edit each employee's availability</div></div>
+      <button class="btn btn-red btn-sm" onclick="go('sched')">Build Schedule →</button>
+    </div>
+    <div class="wk-bar">
+      <div class="wk-f">
+        <div class="wk-lbl">Week Start (Monday)</div>
+        <input type="date" class="wk-inp" id="wkStart" onchange="onWkChange()">
+      </div>
+      <div class="wk-f">
+        <div class="wk-lbl">Fiscal Period</div>
+        <input type="text" class="wk-inp" id="wkPeriod" placeholder="e.g. Period 10 Week 2" style="width:190px" oninput="onWkChange()">
+      </div>
+      <div class="wk-f">
+        <div class="wk-lbl">Fiscal Year</div>
+        <input type="text" class="wk-inp" id="wkYear" placeholder="2026" style="width:90px" oninput="onWkChange()">
+      </div>
+      <div class="wk-range" id="wkRange">Select a Monday to start</div>
+    </div>
+    <div id="avail-list"></div>
+  </div>
+
+  <!-- SHARE LINK PAGE -->
+  <div class="page" id="pg-share">
+    <div class="ph">
+      <div class="ph-l">
+        <div class="pt">Staff Availability Link</div>
+        <div class="ps">One universal link — staff pick their own name and submit availability</div>
+      </div>
+      <button class="btn btn-green" onclick="syncAll()">🔄 Sync All Submissions</button>
+    </div>
+    <div class="set-card">
+      <div class="set-title">🔗 Universal Availability Link</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.6">
+        Share <strong>one link</strong> with your whole team. Each person picks their name and submits their availability.
+      </div>
+      <div class="share-link-wrap">
+        <span class="share-link-text" id="main-link-url"></span>
+        <div class="share-btns">
+          <button class="btn btn-blue btn-sm" onclick="copyMainLink()">📋 Copy Link</button>
+          <button class="btn btn-green btn-sm" onclick="shareWhatsApp()">💬 Share via WhatsApp</button>
+          <button class="btn btn-gl btn-sm" onclick="shareNative()">📤 Share…</button>
+        </div>
+      </div>
+    </div>
+    <div id="pending-banner" style="display:none;background:var(--green-lt);border:1.5px solid #86efac;border-radius:12px;padding:14px 18px;margin-bottom:20px;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:1.4rem">📬</span>
+        <div>
+          <div style="font-weight:800;font-size:14px;color:var(--green)" id="pending-banner-text">New submissions waiting</div>
+          <div style="font-size:12px;color:var(--muted)">Click "Sync All" to apply to schedule</div>
+        </div>
+      </div>
+      <button class="btn btn-green btn-sm" onclick="syncAll()">Sync Now</button>
+    </div>
+    <div class="ph-l" style="margin-bottom:12px"><div class="pt" style="font-size:15px">Submission Status</div></div>
+    <div id="share-list"></div>
+  </div>
+
+  <!-- NOTIFICATIONS PAGE -->
+  <div class="page" id="pg-notif">
+    <div class="ph">
+      <div class="ph-l"><div class="pt">Notifications</div><div class="ps">Staff availability submissions</div></div>
+      <button class="btn btn-gl btn-sm" onclick="markAllRead()">✓ Mark all read</button>
+    </div>
+    <div id="notif-list"></div>
+  </div>
+
+  <!-- SCHEDULE PAGE -->
+  <div class="page" id="pg-sched">
+    <div class="ph">
+      <div class="ph-l"><div class="pt">Generated Schedule</div><div class="ps" id="sch-sub">Fill availability first</div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-gl btn-sm" onclick="buildSched()">🔄 Refresh</button>
+        <button class="btn btn-red btn-sm" onclick="exportPDF()">⬇ Export PDF</button>
+      </div>
+    </div>
+    <div class="sch-wrap" id="sch-out">
+      <div class="empty"><span class="empty-ic">📋</span>Click Refresh to generate</div>
+    </div>
+  </div>
+
+  <!-- SETTINGS PAGE -->
+  <div class="page" id="pg-set">
+    <div class="ph"><div class="ph-l"><div class="pt">Settings</div><div class="ps">Store info and data management</div></div></div>
+    <div class="set-card">
+      <div class="set-title">🏪 Store Information</div>
+      <div class="set-row">
+        <div class="fg"><label class="fl">Store Number</label><input type="text" class="fi" id="sNum" placeholder="111" oninput="saveSet()"></div>
+        <div class="fg"><label class="fl">Brand / Name</label><input type="text" class="fi" id="sName" placeholder="KFC" oninput="saveSet()"></div>
+        <div class="fg" style="grid-column:1/-1"><label class="fl">Manager Name</label><input type="text" class="fi" id="sMgr" placeholder="Manager Name" oninput="saveSet()"></div>
+      </div>
+    </div>
+    <div class="set-card">
+      <div class="set-title">📁 Data Management</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-gl btn-sm" onclick="saveData()">💾 Save</button>
+        <button class="btn btn-gl btn-sm" onclick="exportJSON()">📤 Export JSON</button>
+        <button class="btn btn-gl btn-sm" onclick="document.getElementById('imp').click()">📥 Import JSON</button>
+        <input type="file" id="imp" accept=".json" style="display:none" onchange="importJSON(event)">
+        <button class="btn btn-gl btn-sm" style="color:var(--red)" onclick="resetAll()">🗑 Reset All</button>
       </div>
     </div>
   </div>
-
-  <div id="pending-banner" style="display:none;background:var(--green-lt);border:1.5px solid #86efac;border-radius:12px;padding:14px 18px;margin-bottom:20px;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-    <div style="display:flex;align-items:center;gap:10px">
-      <span style="font-size:1.4rem">📬</span>
-      <div>
-        <div style="font-weight:800;font-size:14px;color:var(--green)" id="pending-banner-text">New submissions waiting</div>
-        <div style="font-size:12px;color:var(--muted)">Click "Sync All" to apply to schedule</div>
-      </div>
-    </div>
-    <button class="btn btn-green btn-sm" onclick="syncAll()">Sync Now</button>
-  </div>
-
-  <div class="ph-l" style="margin-bottom:12px"><div class="pt" style="font-size:15px">Submission Status</div></div>
-  <div id="share-list"></div>
 </div>
-
-<!-- NOTIFICATIONS PAGE -->
-<div class="page" id="pg-notif">
-  <div class="ph">
-    <div class="ph-l"><div class="pt">Notifications</div><div class="ps">Staff availability submissions</div></div>
-    <button class="btn btn-gl btn-sm" onclick="markAllRead()">✓ Mark all read</button>
-  </div>
-  <div id="notif-list"></div>
-</div>
-
-<!-- SCHEDULE PAGE -->
-<div class="page" id="pg-sched">
-  <div class="ph">
-    <div class="ph-l"><div class="pt">Generated Schedule</div><div class="ps" id="sch-sub">Fill availability first</div></div>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-gl btn-sm" onclick="buildSched()">🔄 Refresh</button>
-      <button class="btn btn-red btn-sm" onclick="exportPDF()">⬇ Export PDF</button>
-    </div>
-  </div>
-  <div class="sch-wrap" id="sch-out">
-    <div class="empty"><span class="empty-ic">📋</span>Click Refresh to generate</div>
-  </div>
-</div>
-
-<!-- SETTINGS PAGE -->
-<div class="page" id="pg-set">
-  <div class="ph"><div class="ph-l"><div class="pt">Settings</div><div class="ps">Store info and data management</div></div></div>
-  <div class="set-card">
-    <div class="set-title">🏪 Store Information</div>
-    <div class="set-row">
-      <div class="fg"><label class="fl">Store Number</label><input type="text" class="fi" id="sNum" placeholder="111" oninput="saveSet()"></div>
-      <div class="fg"><label class="fl">Brand / Name</label><input type="text" class="fi" id="sName" placeholder="KFC" oninput="saveSet()"></div>
-      <div class="fg" style="grid-column:1/-1"><label class="fl">Manager Name</label><input type="text" class="fi" id="sMgr" placeholder="Manager Name" oninput="saveSet()"></div>
-    </div>
-  </div>
-  <div class="set-card">
-    <div class="set-title">📁 Data Management</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-gl btn-sm" onclick="saveData()">💾 Save</button>
-      <button class="btn btn-gl btn-sm" onclick="exportJSON()">📤 Export JSON</button>
-      <button class="btn btn-gl btn-sm" onclick="document.getElementById('imp').click()">📥 Import JSON</button>
-      <input type="file" id="imp" accept=".json" style="display:none" onchange="importJSON(event)">
-      <button class="btn btn-gl btn-sm" style="color:var(--red)" onclick="resetAll()">🗑 Reset All</button>
-    </div>
-  </div>
-</div>
-
-</div><!-- end manager-app -->
 
 <!-- EDIT MODAL -->
 <div class="ov" id="editOv">
@@ -549,9 +531,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 </div>
 
 <script>
-// ═══════════════════════════
-//  CONSTANTS
-// ═══════════════════════════
+// ==================== CONSTANTS ====================
 const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const POSITIONS = [
   'Assistant General Manager',
@@ -569,9 +549,7 @@ const PS = {
   'Shift Manager in Training':    {bg:'#f5f3ff',tx:'#7c3aed'},
 };
 
-// ═══════════════════════════
-//  STATE
-// ═══════════════════════════
+// ==================== STATE ====================
 let D = {
   employees: [],
   week: { start:'', period:'', year:'2026' },
@@ -581,14 +559,10 @@ let D = {
 let editId = null;
 let editColor = COLORS[0];
 let editAvail = [];
-
-// Employee form state
 let efEmpId = '';
 let efAvail = [];
 
-// ═══════════════════════════
-//  ENTRY POINT
-// ═══════════════════════════
+// ==================== INITIALIZATION ====================
 function init() {
   const params = new URLSearchParams(window.location.search);
   const isAvail = params.get('avail');
@@ -603,9 +577,86 @@ function init() {
   }
 }
 
-// ═══════════════════════════
-//  UNIVERSAL AVAIL LINK
-// ═══════════════════════════
+function seed() {
+  const T = [
+    ['Bouhoula, Mohamed Hedi',      'Assistant General Manager',    COLORS[0]],
+    ['Adedunye, Damiola Priscilla', 'Customer Service Team Member', COLORS[1]],
+    ['Appidi, Nandakishore',        'Customer Service Team Member', COLORS[4]],
+    ['Hashim, Agil',                'Customer Service Team Member', COLORS[5]],
+    ['Legault-Agil, Alyza',         'Customer Service Team Member', COLORS[6]],
+    ['Sagji, Brinio',               'Customer Service Team Member', COLORS[8]],
+    ['Aghwach, Adam',               'Food Service Team Member',     COLORS[9]],
+    ['Belarbii, Anes Abdelmalek',   'Food Service Team Member',     COLORS[3]],
+    ['Figueroa Padron, Jorge',      'Food Service Team Member',     COLORS[7]],
+    ['Khandelwal, Sunny',           'Food Service Team Member',     COLORS[2]],
+    ['Shaheen, Ghazala',            'Shift Manager',                COLORS[0]],
+    ['Tiwari, Balveer',             'Shift Manager',                COLORS[1]],
+    ['Gilotra, Arjun',              'Shift Manager in Training',    COLORS[4]],
+  ];
+  D.employees = T.map((r,i) => ({ id:'e'+i, name:r[0], position:r[1], station:'', color:r[2], avail:blankAvail() }));
+  D.notifications = [];
+}
+
+function blankAvail() {
+  return DAYS.map(() => ({ on:false, s:'09:00', e:'17:00' }));
+}
+
+function fixAvail(emp) {
+  if (!emp.avail || emp.avail.length !== 7) emp.avail = blankAvail();
+}
+
+function loadData() {
+  try {
+    const s = localStorage.getItem('kfc4');
+    if (s) D = JSON.parse(s);
+    else seed();
+  } catch(e) { seed(); }
+  if (!D.notifications) D.notifications = [];
+  D.employees.forEach(fixAvail);
+}
+
+function saveData() {
+  if (!D.notifications) D.notifications = [];
+  localStorage.setItem('kfc4', JSON.stringify(D));
+  toast('Saved', 'ok');
+}
+
+// ==================== WEEK HELPERS ====================
+function initWeek() {
+  const t = new Date();
+  const dow = t.getDay();
+  const diff = t.getDate() - dow + (dow===0?-6:1);
+  const mon = new Date(t); mon.setDate(diff);
+  if (!D.week.start) D.week.start = mon.toISOString().split('T')[0];
+  document.getElementById('wkStart').value  = D.week.start;
+  document.getElementById('wkPeriod').value = D.week.period || '';
+  document.getElementById('wkYear').value   = D.week.year   || '2026';
+  refreshWkRange();
+}
+
+function onWkChange() {
+  D.week.start  = document.getElementById('wkStart').value;
+  D.week.period = document.getElementById('wkPeriod').value;
+  D.week.year   = document.getElementById('wkYear').value;
+  refreshWkRange();
+  localStorage.setItem('kfc4',JSON.stringify(D));
+}
+
+function refreshWkRange() {
+  const el = document.getElementById('wkRange');
+  if (!D.week.start) { el.textContent='Select a Monday'; return; }
+  const s = new Date(D.week.start+'T00:00:00');
+  const e = new Date(s); e.setDate(e.getDate()+6);
+  const f = d => `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;
+  el.textContent = f(s)+' – '+f(e);
+}
+
+function getWeekDates() {
+  if (!D.week.start) return DAYS.map(d => d);
+  const s = new Date(D.week.start+'T00:00:00');
+  return DAYS.map((_,i) => { const d=new Date(s); d.setDate(d.getDate()+i); return `${d.getMonth()+1}/${d.getDate()}`; });
+}
+
 function getAvailLink() {
   const base = window.location.href.split('?')[0];
   return base + '?avail=1';
@@ -615,17 +666,41 @@ function getSubKey(empId) {
   return 'kfc_sub_' + empId + '_' + (D.week.start || 'noweek');
 }
 
-// ═══════════════════════════
-//  EMPLOYEE FORM
-// ═══════════════════════════
+// ==================== HELPERS ====================
+function initials(name) {
+  return name.split(',').map(p=>p.trim()).map(p=>p[0]||'').join('').slice(0,2).toUpperCase();
+}
+
+function calcH(s,e) {
+  if (!s||!e) return 0;
+  const [sh,sm]=s.split(':').map(Number);
+  const [eh,em]=e.split(':').map(Number);
+  let d=(eh*60+em)-(sh*60+sm);
+  if(d<0)d+=1440;
+  return Math.round(d/60*100)/100;
+}
+
+function f12(t) {
+  if (!t) return '—';
+  const [h,m]=t.split(':').map(Number);
+  return `${h%12||12}:${String(m).padStart(2,'0')}${h<12?'A':'P'}`;
+}
+
+function toast(msg,type='nf') {
+  document.querySelectorAll('.tst').forEach(t=>t.remove());
+  const t=document.createElement('div');
+  t.className='tst '+type;
+  t.innerHTML=(type==='ok'?'✅':type==='er'?'❌':'ℹ️')+' '+msg;
+  document.body.appendChild(t);
+  setTimeout(()=>{ t.style.transition='all .4s'; t.style.opacity='0'; t.style.transform='translateY(16px)'; setTimeout(()=>t.remove(),400); },2800);
+}
+
+// ==================== EMPLOYEE FORM ====================
 function showEmpForm() {
   document.getElementById('emp-form-page').style.display = '';
-
-  // Week info
   const sn = D.settings.name || 'KFC';
   const num = D.settings.num || '111';
   document.getElementById('ef-store-name').textContent = sn + ' Store ' + num + ' — Availability';
-
   if (D.week.start) {
     const s = new Date(D.week.start + 'T00:00:00');
     const e = new Date(s); e.setDate(e.getDate() + 6);
@@ -633,10 +708,7 @@ function showEmpForm() {
     let range = 'Week of ' + f(s) + ' – ' + f(e);
     if (D.week.period) range += ' · ' + D.week.period;
     document.getElementById('ef-week-range').textContent = range;
-  } else {
-    document.getElementById('ef-week-range').textContent = 'Contact your manager to set the week';
   }
-
   renderNamePicker();
 }
 
@@ -648,15 +720,12 @@ function renderNamePicker(filter='') {
   const list = document.getElementById('ef-name-list');
   const fl = filter.trim().toLowerCase();
   const emps = D.employees.filter(e => !fl || e.name.toLowerCase().includes(fl));
-
   if (!emps.length) {
     list.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(255,255,255,.35);font-size:13px">No employees found</div>';
     return;
   }
-
   list.innerHTML = emps.map(emp => {
     const init = initials(emp.name);
-    const ps = PS[emp.position] || {bg:'#eee',tx:'#444'};
     const subKey = getSubKey(emp.id);
     const rawSub = localStorage.getItem(subKey);
     let isSubmitted = false;
@@ -666,7 +735,6 @@ function renderNamePicker(filter='') {
     const badge = isSubmitted
       ? '<span class="ni-badge done">✓ Submitted</span>'
       : '<span class="ni-badge open">⏳ Pending</span>';
-
     return `<div class="name-item" onclick="efSelectEmp('${emp.id}')">
       <div class="ni-av" style="background:${emp.color}">${init}</div>
       <div class="ni-info">
@@ -683,15 +751,12 @@ function efSelectEmp(empId) {
   if (!emp) return;
   efEmpId = empId;
   fixAvail(emp);
-
-  // Check if already submitted
   const subKey = getSubKey(empId);
   const rawSub = localStorage.getItem(subKey);
   if (rawSub) {
     try {
       const sub = JSON.parse(rawSub);
       if (sub.submitted) {
-        // Show submitted screen
         efAvail = sub.avail || blankAvail();
         efShowDone(emp);
         return;
@@ -703,7 +768,6 @@ function efSelectEmp(empId) {
   } else {
     efAvail = emp.avail.map(d => ({...d}));
   }
-
   efShowAvailForm(emp);
 }
 
@@ -711,61 +775,13 @@ function efShowAvailForm(emp) {
   document.getElementById('ef-step-pick').style.display = 'none';
   document.getElementById('ef-step-avail').style.display = '';
   document.getElementById('ef-step-done').style.display = 'none';
-
   const init = initials(emp.name);
   document.getElementById('ef-av').style.background = emp.color;
   document.getElementById('ef-av').textContent = init;
   document.getElementById('ef-emp-name-h').textContent = emp.name;
   const ps = PS[emp.position] || {bg:'#eee',tx:'#ccc'};
-  document.getElementById('ef-emp-pos-h').innerHTML =
-    `<span style="background:${ps.bg}22;color:${ps.tx};font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid ${ps.tx}44">${emp.position}</span>`;
-
+  document.getElementById('ef-emp-pos-h').innerHTML = `<span style="background:${ps.bg}22;color:${ps.tx};font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid ${ps.tx}44">${emp.position}</span>`;
   renderEfDays();
-}
-
-function efShowDone(emp) {
-  document.getElementById('ef-step-pick').style.display = 'none';
-  document.getElementById('ef-step-avail').style.display = 'none';
-  document.getElementById('ef-step-done').style.display = '';
-
-  // Build summary
-  const dates = getWeekDates();
-  let rows = '';
-  DAYS.forEach((d, i) => {
-    const av = efAvail[i];
-    if (av && av.on) {
-      rows += `<div class="sub-row">
-        <span class="sub-day">${d} ${dates[i]}</span>
-        <span class="sub-time">${f12(av.s)} – ${f12(av.e)}</span>
-      </div>`;
-    }
-  });
-  if (!rows) rows = '<div style="font-size:12px;color:rgba(255,255,255,.35);text-align:center;padding:10px">No days selected</div>';
-  document.getElementById('ef-sub-summary').innerHTML = rows;
-}
-
-function efEditAgain() {
-  // Allow re-editing even if submitted
-  const emp = D.employees.find(e => e.id === efEmpId);
-  if (!emp) return;
-  const subKey = getSubKey(efEmpId);
-  const rawSub = localStorage.getItem(subKey);
-  if (rawSub) {
-    try {
-      const sub = JSON.parse(rawSub);
-      efAvail = sub.avail || emp.avail.map(d => ({...d}));
-    } catch(e) { efAvail = emp.avail.map(d => ({...d})); }
-  } else {
-    efAvail = emp.avail.map(d => ({...d}));
-  }
-  efShowAvailForm(emp);
-}
-
-function efBackToPick() {
-  efEmpId = '';
-  document.getElementById('ef-step-pick').style.display = '';
-  document.getElementById('ef-step-avail').style.display = 'none';
-  document.getElementById('ef-step-done').style.display = 'none';
 }
 
 function renderEfDays() {
@@ -779,12 +795,9 @@ function renderEfDays() {
         <button type="button" class="emp-day-tog ${av.on?'on':'off'}" onclick="efTogDay(${i})"></button>
         <span class="emp-day-name">${d}</span>
         <span class="emp-day-date">${dates[i]}</span>
-        ${av.on
-          ? `<span class="emp-day-hrs" id="efdh-${i}">${hrs.toFixed(1)}h</span>`
-          : `<span class="emp-day-off">Day off</span>`}
+        ${av.on ? `<span class="emp-day-hrs" id="efdh-${i}">${hrs.toFixed(1)}h</span>` : `<span class="emp-day-off">Day off</span>`}
       </div>
-      ${av.on ? `
-      <div class="emp-day-body">
+      ${av.on ? `<div class="emp-day-body">
         <div class="dark-time-row">
           <span class="dark-lbl">From</span>
           <input class="dark-ti" type="time" value="${av.s}" oninput="efTime(${i},'s',this.value)">
@@ -819,29 +832,66 @@ function efUpdateTotal() {
   if (el) el.textContent = total.toFixed(1)+'h';
 }
 
+function efShowDone(emp) {
+  document.getElementById('ef-step-pick').style.display = 'none';
+  document.getElementById('ef-step-avail').style.display = 'none';
+  document.getElementById('ef-step-done').style.display = '';
+  const dates = getWeekDates();
+  let rows = '';
+  DAYS.forEach((d, i) => {
+    const av = efAvail[i];
+    if (av && av.on) {
+      rows += `<div class="sub-row">
+        <span class="sub-day">${d} ${dates[i]}</span>
+        <span class="sub-time">${f12(av.s)} – ${f12(av.e)}</span>
+      </div>`;
+    }
+  });
+  if (!rows) rows = '<div style="font-size:12px;color:rgba(255,255,255,.35);text-align:center;padding:10px">No days selected</div>';
+  document.getElementById('ef-sub-summary').innerHTML = rows;
+}
+
+function efEditAgain() {
+  const emp = D.employees.find(e => e.id === efEmpId);
+  if (!emp) return;
+  const subKey = getSubKey(efEmpId);
+  const rawSub = localStorage.getItem(subKey);
+  if (rawSub) {
+    try {
+      const sub = JSON.parse(rawSub);
+      efAvail = sub.avail || emp.avail.map(d => ({...d}));
+    } catch(e) { efAvail = emp.avail.map(d => ({...d})); }
+  } else {
+    efAvail = emp.avail.map(d => ({...d}));
+  }
+  efShowAvailForm(emp);
+}
+
+function efBackToPick() {
+  efEmpId = '';
+  document.getElementById('ef-step-pick').style.display = '';
+  document.getElementById('ef-step-avail').style.display = 'none';
+  document.getElementById('ef-step-done').style.display = 'none';
+}
+
 function submitEmpAvail() {
   const emp = D.employees.find(e => e.id === efEmpId);
   if (!emp) { toast('Error: employee not found', 'er'); return; }
-
   const subKey = getSubKey(efEmpId);
   const subData = {
     avail: efAvail.map(d => ({...d})),
     submittedAt: new Date().toISOString(),
     submitted: true,
-    empName: emp.name
+    empName: emp.name,
+    empId: efEmpId
   };
   localStorage.setItem(subKey, JSON.stringify(subData));
-
-  // Add notification for manager
   addNotification(emp.name, emp.position);
-
   toast('Availability submitted! ✅', 'ok');
   efShowDone(emp);
 }
 
-// ═══════════════════════════
-//  NOTIFICATIONS
-// ═══════════════════════════
+// ==================== NOTIFICATIONS ====================
 function addNotification(empName, empPos) {
   if (!D.notifications) D.notifications = [];
   D.notifications.unshift({
@@ -852,9 +902,7 @@ function addNotification(empName, empPos) {
     read: false,
     weekStart: D.week.start
   });
-  // Keep max 50
   if (D.notifications.length > 50) D.notifications = D.notifications.slice(0, 50);
-  // Save silently
   localStorage.setItem('kfc4', JSON.stringify(D));
   updateNotifBadge();
 }
@@ -879,7 +927,6 @@ function renderNotifications() {
     list.innerHTML = '<div class="empty"><span class="empty-ic">🔔</span>No notifications yet. Submissions will appear here.</div>';
     return;
   }
-
   list.innerHTML = '<div class="notif-panel">' + D.notifications.map(n => {
     const dt = new Date(n.timestamp);
     const timeStr = dt.toLocaleString('en-US', {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
@@ -898,10 +945,7 @@ function renderNotifications() {
       <div class="notif-time">${timeStr}</div>
     </div>`;
   }).join('') + '</div>';
-
-  // Mark all as read when viewing
-  D.notifications.forEach(n => n.read = true);
-  localStorage.setItem('kfc4', JSON.stringify(D));
+  // Don't auto-mark as read when viewing
   updateNotifBadge();
 }
 
@@ -920,26 +964,20 @@ function markAllRead() {
   toast('All marked as read', 'nf');
 }
 
-// ═══════════════════════════
-//  SHARE LINK PAGE
-// ═══════════════════════════
+// ==================== SHARE LINK PAGE ====================
 function renderSharePage() {
   const link = getAvailLink();
   document.getElementById('main-link-url').textContent = link;
-
   const list = document.getElementById('share-list');
   if (!D.employees.length) {
     list.innerHTML = '<div class="empty"><span class="empty-ic">👥</span>Add employees on the Team tab first</div>';
     return;
   }
-
   let pendingCount = 0;
   let html = '';
-
   const byPos = {};
   POSITIONS.forEach(p => byPos[p] = []);
   D.employees.forEach(e => { if (byPos[e.position]) byPos[e.position].push(e); });
-
   POSITIONS.forEach(pos => {
     byPos[pos].forEach(emp => {
       const subKey = getSubKey(emp.id);
@@ -955,11 +993,9 @@ function renderSharePage() {
       }
       const ps = PS[emp.position] || {bg:'#f5f5f5',tx:'#444'};
       const init = initials(emp.name);
-
       let statusBadge = '';
       if (subStatus === 'submitted') statusBadge = '<span class="pending-badge submitted">📬 Submitted</span>';
       else statusBadge = '<span class="pending-badge waiting" style="background:#f3f4f6;color:#6b7280">⏳ Waiting</span>';
-
       html += `<div class="pending-card ${subStatus==='submitted'?'has-sub':''}">
         ${statusBadge}
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
@@ -976,10 +1012,7 @@ function renderSharePage() {
       </div>`;
     });
   });
-
   list.innerHTML = html;
-
-  const pc = document.getElementById('pending-count-badge');
   const banner = document.getElementById('pending-banner');
   if (pendingCount > 0) {
     if (banner) { banner.style.display = 'flex'; }
@@ -991,21 +1024,17 @@ function renderSharePage() {
 
 function copyMainLink() {
   const url = getAvailLink();
-  navigator.clipboard.writeText(url)
-    .then(() => toast('Link copied! ✅', 'ok'))
-    .catch(() => {
-      const ta = document.createElement('textarea');
-      ta.value = url; document.body.appendChild(ta); ta.select();
-      document.execCommand('copy'); ta.remove();
-      toast('Link copied!', 'ok');
-    });
+  navigator.clipboard.writeText(url).then(() => toast('Link copied! ✅', 'ok')).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = url; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove();
+    toast('Link copied!', 'ok');
+  });
 }
 
 function shareWhatsApp() {
   const url = getAvailLink();
-  const msg = encodeURIComponent(
-    'Hi team! 👋\nPlease fill in your availability for the week:\n' + url
-  );
+  const msg = encodeURIComponent('Hi team! 👋\nPlease fill in your availability for the week:\n' + url);
   window.open('https://wa.me/?text=' + msg, '_blank');
 }
 
@@ -1022,217 +1051,93 @@ function shareNative() {
   }
 }
 
+// FIXED: Sync functions that properly check for submissions
 function syncOne(empId) {
   const emp = D.employees.find(e => e.id === empId);
   if (!emp) return;
   const subKey = getSubKey(empId);
   const rawSub = localStorage.getItem(subKey);
-  if (!rawSub) { toast('No submission found', 'er'); return; }
+  if (!rawSub) { toast('No submission found for this employee', 'er'); return; }
   try {
     const sub = JSON.parse(rawSub);
-    emp.avail = (sub.avail || sub).map(d => ({...d}));
-    saveData();
-    toast(`Applied ${emp.name.split(',')[0]}'s availability ✅`, 'ok');
-    renderSharePage();
-  } catch(e) { toast('Error reading submission', 'er'); }
+    if (!sub.submitted) {
+      toast('This submission has not been finalized yet', 'nf');
+      return;
+    }
+    // Apply the submitted availability to the employee
+    if (sub.avail && sub.avail.length === 7) {
+      emp.avail = sub.avail.map(d => ({...d}));
+      saveData();
+      toast(`Applied ${emp.name.split(',')[0]}'s availability ✅`, 'ok');
+      renderSharePage();
+      renderTeam();
+      renderAvail();
+    } else {
+      toast('Invalid availability data', 'er');
+    }
+  } catch(e) { 
+    console.error(e);
+    toast('Error reading submission', 'er'); 
+  }
 }
 
 function syncAll() {
   let count = 0;
+  let syncedEmployees = [];
   D.employees.forEach(emp => {
     const subKey = getSubKey(emp.id);
     const rawSub = localStorage.getItem(subKey);
     if (!rawSub) return;
     try {
       const sub = JSON.parse(rawSub);
-      if (!sub.submitted) return;
-      emp.avail = (sub.avail || sub).map(d => ({...d}));
-      count++;
+      if (sub.submitted && sub.avail && sub.avail.length === 7) {
+        // Check if this submission is actually different from current availability
+        let hasChanges = false;
+        for (let i = 0; i < 7; i++) {
+          if (sub.avail[i].on !== emp.avail[i].on ||
+              sub.avail[i].s !== emp.avail[i].s ||
+              sub.avail[i].e !== emp.avail[i].e) {
+            hasChanges = true;
+            break;
+          }
+        }
+        if (hasChanges) {
+          emp.avail = sub.avail.map(d => ({...d}));
+          count++;
+          syncedEmployees.push(emp.name.split(',')[0]);
+        }
+      }
     } catch(e) {}
   });
-  if (count === 0) { toast('No new submissions to sync', 'nf'); return; }
+  
+  if (count === 0) { 
+    toast('No new submissions to sync', 'nf'); 
+    return; 
+  }
+  
   saveData();
   renderTeam();
+  renderAvail();
   renderSharePage();
-  toast(`Synced ${count} submission${count>1?'s':''}! ✅`, 'ok');
+  toast(`Synced ${count} submission${count>1?'s':''}: ${syncedEmployees.join(', ')} ✅`, 'ok');
 }
 
 function clearSub(empId) {
-  if (!confirm('Clear this submission?')) return;
+  if (!confirm('Clear this submission? This cannot be undone.')) return;
   const subKey = getSubKey(empId);
   localStorage.removeItem(subKey);
   renderSharePage();
-  toast('Cleared', 'nf');
+  toast('Submission cleared', 'nf');
 }
 
-// ═══════════════════════════
-//  SEED DATA
-// ═══════════════════════════
-function seed() {
-  const T = [
-    ['Bouhoula, Mohamed Hedi',      'Assistant General Manager',    COLORS[0]],
-    ['Adedunye, Damiola Priscilla', 'Customer Service Team Member', COLORS[1]],
-    ['Appidi, Nandakishore',        'Customer Service Team Member', COLORS[4]],
-    ['Hashim, Agil',                'Customer Service Team Member', COLORS[5]],
-    ['Legault-Agil, Alyza',         'Customer Service Team Member', COLORS[6]],
-    ['Sagji, Brinio',               'Customer Service Team Member', COLORS[8]],
-    ['Aghwach, Adam',               'Food Service Team Member',     COLORS[9]],
-    ['Belarbii, Anes Abdelmalek',   'Food Service Team Member',     COLORS[3]],
-    ['Figueroa Padron, Jorge',       'Food Service Team Member',     COLORS[7]],
-    ['Khandelwal, Sunny',           'Food Service Team Member',     COLORS[2]],
-    ['Shaheen, Ghazala',            'Shift Manager',                COLORS[0]],
-    ['Tiwari, Balveer',             'Shift Manager',                COLORS[1]],
-    ['Gilotra, Arjun',              'Shift Manager in Training',    COLORS[4]],
-  ];
-  D.employees = T.map((r,i) => ({ id:'e'+i, name:r[0], position:r[1], station:'', color:r[2], avail:blankAvail() }));
-  D.notifications = [];
-}
-
-function blankAvail() {
-  return DAYS.map(() => ({ on:false, s:'09:00', e:'17:00' }));
-}
-function fixAvail(emp) {
-  if (!emp.avail || emp.avail.length !== 7) emp.avail = blankAvail();
-}
-
-// ═══════════════════════════
-//  PERSIST
-// ═══════════════════════════
-function saveData() {
-  if (!D.notifications) D.notifications = [];
-  localStorage.setItem('kfc4', JSON.stringify(D));
-  toast('Saved', 'ok');
-}
-function loadData() {
-  try {
-    const s = localStorage.getItem('kfc4');
-    if (s) D = JSON.parse(s);
-    else seed();
-  } catch(e) { seed(); }
-  if (!D.notifications) D.notifications = [];
-  D.employees.forEach(fixAvail);
-}
-function exportJSON() {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(D,null,2)],{type:'application/json'}));
-  a.download = 'kfc_schedule.json'; a.click();
-  toast('Exported','nf');
-}
-function importJSON(ev) {
-  const f = ev.target.files[0]; if (!f) return;
-  const r = new FileReader();
-  r.onload = e => {
-    try {
-      D = JSON.parse(e.target.result);
-      if (!D.notifications) D.notifications = [];
-      D.employees.forEach(fixAvail);
-      renderAll(); saveData(); toast('Imported','ok');
-    } catch { toast('Bad file','er'); }
-  };
-  r.readAsText(f); ev.target.value = '';
-}
-function resetAll() {
-  if (!confirm('Reset ALL data? Cannot be undone.')) return;
-  localStorage.removeItem('kfc4');
-  seed(); renderAll(); toast('Reset complete','nf');
-}
-function saveSet() {
-  D.settings.num  = document.getElementById('sNum').value  || '111';
-  D.settings.name = document.getElementById('sName').value || 'KFC';
-  D.settings.mgr  = document.getElementById('sMgr').value  || '';
-  localStorage.setItem('kfc4', JSON.stringify(D));
-}
-
-// ═══════════════════════════
-//  TABS
-// ═══════════════════════════
-function go(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
-  document.getElementById('pg-'+name).classList.add('on');
-  document.getElementById('tb-'+name).classList.add('on');
-  if (name === 'avail')  renderAvail();
-  if (name === 'sched')  buildSched();
-  if (name === 'set')    loadSet();
-  if (name === 'share')  renderSharePage();
-  if (name === 'notif')  renderNotifications();
-}
-
-// ═══════════════════════════
-//  WEEK HELPERS
-// ═══════════════════════════
-function initWeek() {
-  const t = new Date();
-  const dow = t.getDay();
-  const diff = t.getDate() - dow + (dow===0?-6:1);
-  const mon = new Date(t); mon.setDate(diff);
-  if (!D.week.start) D.week.start = mon.toISOString().split('T')[0];
-  document.getElementById('wkStart').value  = D.week.start;
-  document.getElementById('wkPeriod').value = D.week.period || '';
-  document.getElementById('wkYear').value   = D.week.year   || '2026';
-  refreshWkRange();
-}
-function onWkChange() {
-  D.week.start  = document.getElementById('wkStart').value;
-  D.week.period = document.getElementById('wkPeriod').value;
-  D.week.year   = document.getElementById('wkYear').value;
-  refreshWkRange();
-  localStorage.setItem('kfc4',JSON.stringify(D));
-}
-function refreshWkRange() {
-  const el = document.getElementById('wkRange');
-  if (!D.week.start) { el.textContent='Select a Monday'; return; }
-  const s = new Date(D.week.start+'T00:00:00');
-  const e = new Date(s); e.setDate(e.getDate()+6);
-  const f = d => `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;
-  el.textContent = f(s)+' – '+f(e);
-}
-function getWeekDates() {
-  if (!D.week.start) return DAYS.map(d => d);
-  const s = new Date(D.week.start+'T00:00:00');
-  return DAYS.map((_,i) => { const d=new Date(s); d.setDate(d.getDate()+i); return `${d.getMonth()+1}/${d.getDate()}`; });
-}
-
-// ═══════════════════════════
-//  HELPERS
-// ═══════════════════════════
-function initials(name) {
-  return name.split(',').map(p=>p.trim()).map(p=>p[0]||'').join('').slice(0,2).toUpperCase();
-}
-function calcH(s,e) {
-  if (!s||!e) return 0;
-  const [sh,sm]=s.split(':').map(Number);
-  const [eh,em]=e.split(':').map(Number);
-  let d=(eh*60+em)-(sh*60+sm);
-  if(d<0)d+=1440;
-  return Math.round(d/60*100)/100;
-}
-function f12(t) {
-  if (!t) return '—';
-  const [h,m]=t.split(':').map(Number);
-  return `${h%12||12}:${String(m).padStart(2,'0')}${h<12?'A':'P'}`;
-}
-function toast(msg,type='nf') {
-  document.querySelectorAll('.tst').forEach(t=>t.remove());
-  const t=document.createElement('div');
-  t.className='tst '+type;
-  t.innerHTML=(type==='ok'?'✅':type==='er'?'❌':'ℹ️')+' '+msg;
-  document.body.appendChild(t);
-  setTimeout(()=>{ t.style.transition='all .4s'; t.style.opacity='0'; t.style.transform='translateY(16px)'; setTimeout(()=>t.remove(),400); },2800);
-}
-
-// ═══════════════════════════
-//  TEAM RENDER
-// ═══════════════════════════
+// ==================== TEAM RENDER ====================
 function renderTeam() {
   const grid = document.getElementById('team-grid');
   document.getElementById('tc').textContent = D.employees.length;
   updateNotifBadge();
-
   const byPos = {};
   POSITIONS.forEach(p => byPos[p] = []);
   D.employees.forEach(e => { if (byPos[e.position]) byPos[e.position].push(e); });
-
   let html = '';
   POSITIONS.forEach(pos => {
     byPos[pos].forEach(emp => {
@@ -1241,14 +1146,12 @@ function renderTeam() {
       const ps = PS[emp.position] || {bg:'#f5f5f5',tx:'#444'};
       const days = emp.avail.filter(d=>d.on).length;
       const hrs  = emp.avail.reduce((s,d)=>s+(d.on?calcH(d.s,d.e):0),0);
-
       const subKey = getSubKey(emp.id);
       const rawSub = localStorage.getItem(subKey);
       let pendingDot = '';
       if (rawSub) {
         try { const sub=JSON.parse(rawSub); if(sub.submitted) pendingDot='<span class="pending-dot" title="Availability submitted"></span>'; } catch(e) {}
       }
-
       html += `<div class="emp-card">
         <div class="emp-top">
           <div class="av" style="background:${emp.color}">${init}</div>
@@ -1266,7 +1169,6 @@ function renderTeam() {
       </div>`;
     });
   });
-
   html += `<div class="add-card" onclick="openAdd()">
     <span class="add-card-icon">+</span>
     <span class="add-card-lbl">Add Employee</span>
@@ -1274,9 +1176,7 @@ function renderTeam() {
   grid.innerHTML = html;
 }
 
-// ═══════════════════════════
-//  AVAILABILITY PAGE
-// ═══════════════════════════
+// ==================== AVAILABILITY PAGE ====================
 function renderAvail() {
   const list = document.getElementById('avail-list');
   const dates = getWeekDates();
@@ -1310,23 +1210,11 @@ function renderAvail() {
         </div>
         <div class="av-table-wrap">
           <table class="av-table">
-            <thead><tr>
-              <th></th>
-              ${DAYS.map((d,i)=>`<th><div style="display:flex;flex-direction:column;align-items:center;gap:1px"><span>${d}</span><span style="font-weight:400;font-size:9px;opacity:.7">${dates[i]}</span></div></th>`).join('')}
-            </tr></thead>
+            <thead><tr><th></th>${DAYS.map((d,i)=>`<th><div style="display:flex;flex-direction:column;align-items:center;gap:1px"><span>${d}</span><span style="font-weight:400;font-size:9px;opacity:.7">${dates[i]}</span></div></th>`).join('')}</tr></thead>
             <tbody>
-              <tr>
-                <td>Working</td>
-                ${emp.avail.map((av,i)=>`<td><div class="tog ${av.on?'on':'off'}" onclick="quickTogDay('${emp.id}',${i})" style="display:flex;align-items:center;justify-content:center">✓</div></td>`).join('')}
-              </tr>
-              <tr>
-                <td>Start</td>
-                ${emp.avail.map((av,i)=>`<td><input class="ti" type="time" value="${av.s}" ${av.on?'':'disabled'} onchange="quickUpdTime('${emp.id}',${i},'s',this.value)"></td>`).join('')}
-              </tr>
-              <tr>
-                <td>End</td>
-                ${emp.avail.map((av,i)=>`<td><input class="ti" type="time" value="${av.e}" ${av.on?'':'disabled'} onchange="quickUpdTime('${emp.id}',${i},'e',this.value)"></td>`).join('')}
-              </tr>
+              <tr><td>Working</td>${emp.avail.map((av,i)=>`<td><div class="tog ${av.on?'on':'off'}" onclick="quickTogDay('${emp.id}',${i})" style="display:flex;align-items:center;justify-content:center">✓</div></td>`).join('')}</tr>
+              <tr><td>Start</td>${emp.avail.map((av,i)=>`<td><input class="ti" type="time" value="${av.s}" ${av.on?'':'disabled'} onchange="quickUpdTime('${emp.id}',${i},'s',this.value)"></td>`).join('')}</tr>
+              <tr><td>End</td>${emp.avail.map((av,i)=>`<td><input class="ti" type="time" value="${av.e}" ${av.on?'':'disabled'} onchange="quickUpdTime('${emp.id}',${i},'e',this.value)"></td>`).join('')}</tr>
             </tbody>
           </table>
         </div>
@@ -1341,14 +1229,13 @@ function quickTogDay(empId,idx) {
   emp.avail[idx].on=!emp.avail[idx].on;
   localStorage.setItem('kfc4',JSON.stringify(D)); renderAvail();
 }
+
 function quickUpdTime(empId,idx,field,val) {
   const emp=D.employees.find(e=>e.id===empId); if(!emp) return;
   emp.avail[idx][field]=val; localStorage.setItem('kfc4',JSON.stringify(D));
 }
 
-// ═══════════════════════════
-//  EDIT MODAL
-// ═══════════════════════════
+// ==================== EDIT MODAL ====================
 function openAdd() {
   editId=null; editAvail=blankAvail();
   document.getElementById('mdl-title').textContent='Add Employee';
@@ -1360,6 +1247,7 @@ function openAdd() {
   buildDayRows();
   document.getElementById('editOv').classList.add('on');
 }
+
 function openEdit(id) {
   const emp=D.employees.find(e=>e.id===id); if(!emp) return;
   fixAvail(emp);
@@ -1373,6 +1261,7 @@ function openEdit(id) {
   buildDayRows();
   document.getElementById('editOv').classList.add('on');
 }
+
 function closeEdit() { document.getElementById('editOv').classList.remove('on'); }
 document.getElementById('editOv').addEventListener('click',e=>{ if(e.target===document.getElementById('editOv')) closeEdit(); });
 
@@ -1380,6 +1269,7 @@ function buildCP(sel) {
   editColor=sel;
   document.getElementById('cp').innerHTML=COLORS.map(c=>`<div class="cdot ${c===sel?'sel':''}" style="background:${c}" onclick="pickC('${c}')"></div>`).join('');
 }
+
 function pickC(c) { editColor=c; buildCP(c); }
 
 function getPresets(position) {
@@ -1394,6 +1284,7 @@ function getPresets(position) {
       return [{label:'10:00A – 7:00P',s:'10:00',e:'19:00'},{label:'5:00P – 11:30P',s:'17:00',e:'23:30'}];
   }
 }
+
 function matchPreset(presets,s,e) { return presets.findIndex(p=>p.s===s&&p.e===e); }
 
 function buildDayRows() {
@@ -1432,31 +1323,37 @@ function buildDayRows() {
   document.getElementById('day-rows').innerHTML=html;
   calcWkTotal();
 }
+
 function modTog(i) {
   editAvail[i].on=!editAvail[i].on;
   if(editAvail[i].on){const pos=document.getElementById('eP').value;const p=getPresets(pos);if(p.length){editAvail[i].s=p[0].s;editAvail[i].e=p[0].e;}}
   buildDayRows();
 }
+
 function applyPreset(dayIdx,presetIdx) {
   const pos=document.getElementById('eP').value;
   const p=getPresets(pos)[presetIdx]; if(!p) return;
   editAvail[dayIdx].s=p.s; editAvail[dayIdx].e=p.e; buildDayRows();
 }
+
 function showCustom(dayIdx) {
   const ct=document.getElementById('ct-'+dayIdx); if(ct) ct.style.display='';
   const pos=document.getElementById('eP').value; const presets=getPresets(pos);
   document.querySelectorAll(`#dr-${dayIdx} .sp`).forEach((b,bi)=>b.classList.toggle('active',bi===presets.length));
 }
+
 function modTime(i,field,val) {
   editAvail[i][field]=val;
   const hrs=calcH(editAvail[i].s,editAvail[i].e);
   const el=document.getElementById('dh-'+i); if(el) el.textContent=hrs.toFixed(1)+'h';
   calcWkTotal();
 }
+
 function calcWkTotal() {
   const total=editAvail.reduce((s,d)=>s+(d.on?calcH(d.s,d.e):0),0);
   document.getElementById('wk-total').textContent=total.toFixed(2);
 }
+
 function saveEdit() {
   const name=document.getElementById('eN').value.trim();
   const pos=document.getElementById('eP').value;
@@ -1472,15 +1369,14 @@ function saveEdit() {
   }
   closeEdit(); renderTeam(); saveData();
 }
+
 function delEmp(id) {
   if(!confirm('Remove this employee?')) return;
   D.employees=D.employees.filter(e=>e.id!==id);
   renderTeam(); saveData(); toast('Removed','nf');
 }
 
-// ═══════════════════════════
-//  SCHEDULE BUILD
-// ═══════════════════════════
+// ==================== SCHEDULE BUILD ====================
 function buildSched() {
   const out=document.getElementById('sch-out');
   const dates=getWeekDates();
@@ -1510,27 +1406,15 @@ function buildSched() {
   const thd=DAYS.map((d,i)=>`<th>${d}<br><span style="font-weight:400;opacity:.6;font-size:9px">${dates[i]}</span></th>`).join('');
   out.innerHTML=`
     <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-      <div>
-        <div style="font-size:14px;font-weight:800">${D.settings.name||'KFC'} Store ${D.settings.num||'111'} — Weekly Time Sheet</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px">${pl}</div>
-      </div>
+      <div><div style="font-size:14px;font-weight:800">${D.settings.name||'KFC'} Store ${D.settings.num||'111'} — Weekly Time Sheet</div><div style="font-size:12px;color:var(--muted);margin-top:2px">${pl}</div></div>
       <div style="font-size:13px">Total: <strong>${grand.toFixed(2)} hrs</strong></div>
     </div>
-    <div class="sch-scroll">
-      <table class="sch-table">
-        <thead><tr><th>Name</th>${thd}<th>Total</th></tr></thead>
-        <tbody>${rows}</tbody>
-        <tfoot><tr style="background:var(--ink)">
-          <td colspan="8" style="color:#fff;font-weight:700;font-size:11px;padding:10px;text-transform:uppercase;letter-spacing:.06em">Total Scheduled Hours</td>
-          <td style="color:#fff;font-weight:800;font-size:14px;text-align:center;font-family:'DM Mono',monospace;padding:10px">${grand.toFixed(2)}</td>
-        </tr></tfoot>
-      </table>
-    </div>`;
+    <div class="sch-scroll"><table class="sch-table"><thead><tr><th>Name</th>${thd}<th>Total</th></tr></thead><tbody>${rows}</tbody>
+    <tfoot><tr style="background:var(--ink)"><td colspan="8" style="color:#fff;font-weight:700;font-size:11px;padding:10px;text-transform:uppercase;letter-spacing:.06em">Total Scheduled Hours</td>
+    <td style="color:#fff;font-weight:800;font-size:14px;text-align:center;font-family:'DM Mono',monospace;padding:10px">${grand.toFixed(2)}</td></tr></tfoot></table></div>`;
 }
 
-// ═══════════════════════════
-//  PDF EXPORT
-// ═══════════════════════════
+// ==================== PDF EXPORT ====================
 function exportPDF() {
   if(!window.jspdf){toast('PDF library loading…','nf');return;}
   const {jsPDF}=window.jspdf;
@@ -1608,16 +1492,61 @@ function exportPDF() {
   toast('PDF saved','ok');
 }
 
-// ═══════════════════════════
-//  SETTINGS
-// ═══════════════════════════
+// ==================== SETTINGS ====================
 function loadSet() {
   document.getElementById('sNum').value  = D.settings.num  || '111';
   document.getElementById('sName').value = D.settings.name || 'KFC';
   document.getElementById('sMgr').value  = D.settings.mgr  || '';
 }
+
+function saveSet() {
+  D.settings.num  = document.getElementById('sNum').value  || '111';
+  D.settings.name = document.getElementById('sName').value || 'KFC';
+  D.settings.mgr  = document.getElementById('sMgr').value  || '';
+  localStorage.setItem('kfc4', JSON.stringify(D));
+}
+
+function exportJSON() {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(D,null,2)],{type:'application/json'}));
+  a.download = 'kfc_schedule.json'; a.click();
+  toast('Exported','nf');
+}
+
+function importJSON(ev) {
+  const f = ev.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      D = JSON.parse(e.target.result);
+      if (!D.notifications) D.notifications = [];
+      D.employees.forEach(fixAvail);
+      renderAll(); saveData(); toast('Imported','ok');
+    } catch { toast('Bad file','er'); }
+  };
+  r.readAsText(f); ev.target.value = '';
+}
+
+function resetAll() {
+  if (!confirm('Reset ALL data? Cannot be undone.')) return;
+  localStorage.removeItem('kfc4');
+  seed(); renderAll(); toast('Reset complete','nf');
+}
+
 function renderAll() {
   renderTeam(); loadSet();
+}
+
+function go(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.getElementById('pg-'+name).classList.add('on');
+  document.getElementById('tb-'+name).classList.add('on');
+  if (name === 'avail')  renderAvail();
+  if (name === 'sched')  buildSched();
+  if (name === 'set')    loadSet();
+  if (name === 'share')  renderSharePage();
+  if (name === 'notif')  renderNotifications();
 }
 
 init();
