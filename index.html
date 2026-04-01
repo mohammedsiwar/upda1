@@ -186,7 +186,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .empty{text-align:center;padding:40px 20px;color:var(--muted)}
 .empty-ic{font-size:2.5rem;display:block;margin-bottom:10px;opacity:.35}
 
-/* ===== EXPIRY ALERT BANNER (floating, top of page) ===== */
+/* ===== EXPIRY ALERT BANNER ===== */
 .expiry-alert-bar{
   display:none;
   position:fixed;top:56px;left:0;right:0;z-index:180;
@@ -205,12 +205,12 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .ea-btn:hover{background:rgba(255,255,255,.3)}
 .ea-btn.primary{background:#fff;color:#b45309;border-color:#fff}
 
-/* ===== DRINKS EXPIRY MODAL ===== */
-.exp-mdl{max-width:640px}
+/* ===== CRITICAL ITEMS EXPIRY MODAL ===== */
+.exp-mdl{max-width:700px}
 .exp-category{margin-bottom:20px}
 .exp-cat-title{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;padding-bottom:7px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:6px}
 .exp-cat-title .cat-icon{font-size:14px}
-.exp-item-row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:9px 12px;border-radius:10px;border:1.5px solid var(--border);background:#fff;margin-bottom:7px;transition:border-color .15s,background .15s}
+.exp-item-row{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;padding:9px 12px;border-radius:10px;border:1.5px solid var(--border);background:#fff;margin-bottom:7px;transition:border-color .15s,background .15s}
 .exp-item-row.exp-critical{border-color:#fca5a5;background:#fff5f5}
 .exp-item-row.exp-warning{border-color:#fcd34d;background:#fffbeb}
 .exp-item-row.exp-ok{border-color:#86efac;background:var(--green-lt)}
@@ -227,6 +227,16 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .exp-date-inp.inp-critical{border-color:#f87171;background:#fff5f5}
 .exp-date-inp.inp-warning{border-color:#fbbf24;background:#fffbeb}
 .exp-date-inp.inp-ok{border-color:#86efac;background:var(--green-lt)}
+.exp-del-btn{width:28px;height:28px;border-radius:7px;border:1.5px solid var(--border);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted);transition:all .15s;flex-shrink:0}
+.exp-del-btn:hover{border-color:#f87171;color:#dc2626;background:#fff5f5}
+
+/* Add item form inside modal */
+.add-item-panel{background:var(--orange-lt);border:2px dashed #fcd34d;border-radius:12px;padding:16px;margin-top:8px}
+.add-item-panel-title{font-size:12px;font-weight:800;color:var(--orange);margin-bottom:12px;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.06em}
+.add-item-form{display:grid;grid-template-columns:1fr 1fr 80px auto;gap:8px;align-items:end}
+.add-item-form .fg{margin-bottom:0}
+.add-item-fi{width:100%;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-family:'Syne',sans-serif;font-size:13px;color:var(--ink);background:#fff}
+.add-item-fi:focus{outline:none;border-color:var(--orange)}
 
 /* expiry tab badge */
 .exp-tab-badge{background:var(--orange);color:#fff;border-radius:20px;padding:1px 6px;font-size:10px;font-weight:700;display:none}
@@ -326,6 +336,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
   .ef-body{padding:0 12px}
   .exp-item-row{grid-template-columns:1fr auto}
   .exp-date-inp{display:none}
+  .add-item-form{grid-template-columns:1fr 1fr}
 }
 </style>
 </head>
@@ -334,7 +345,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 <!-- EXPIRY ALERT BAR -->
 <div class="expiry-alert-bar" id="expiry-alert-bar">
   <div class="ea-msg">
-    🧃 <strong>Drink Expiry Alert!</strong>
+    ⚠️ <strong>Critical Items Expiry Alert!</strong>
     <span class="ea-count" id="ea-count-text">0 items expiring soon</span>
   </div>
   <div class="ea-actions">
@@ -407,7 +418,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
       <span class="hdr-title">Store 111 — Complete Schedule Builder</span>
     </div>
     <div class="hdr-r">
-      <button class="btn btn-orange btn-sm" onclick="openExpiryModal()" id="expiry-hdr-btn" title="Drinks Expiry Tracker">🧃 Expiry <span id="expiry-hdr-badge" style="display:none;background:rgba(255,255,255,.3);border-radius:20px;padding:1px 6px;font-size:10px;margin-left:2px">0</span></button>
+      <button class="btn btn-orange btn-sm" onclick="openExpiryModal()" id="expiry-hdr-btn" title="Critical Items Expiry Tracker">⚠️ Critical Items <span id="expiry-hdr-badge" style="display:none;background:rgba(255,255,255,.3);border-radius:20px;padding:1px 6px;font-size:10px;margin-left:2px">0</span></button>
       <button class="btn btn-ow btn-sm" onclick="exportPDF()">⬇ PDF</button>
       <button class="btn btn-wh btn-sm" onclick="saveData()">💾 Save</button>
     </div>
@@ -420,7 +431,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
     <button class="tab" id="tb-notif" onclick="go('notif')">
       <div class="notif-ring">🔔 Notifications<span class="badge" id="notif-badge" style="display:none">0</span></div>
     </button>
-    <button class="tab" id="tb-expiry" onclick="go('expiry')">🧃 Drinks Expiry <span class="exp-tab-badge" id="exp-tab-badge">0</span></button>
+    <button class="tab" id="tb-expiry" onclick="go('expiry')">⚠️ Critical Items <span class="exp-tab-badge" id="exp-tab-badge">0</span></button>
     <button class="tab" id="tb-sched" onclick="go('sched')">📋 Schedule</button>
     <button class="tab" id="tb-set" onclick="go('set')">⚙️ Settings</button>
   </div>
@@ -484,10 +495,10 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
     <div id="notif-list"></div>
   </div>
 
-  <!-- DRINKS EXPIRY PAGE -->
+  <!-- CRITICAL ITEMS EXPIRY PAGE -->
   <div class="page" id="pg-expiry">
     <div class="ph">
-      <div class="ph-l"><div class="pt">🧃 Drinks Expiry Tracker</div><div class="ps">Track expiry dates — items expiring within 7 days will alert you</div></div>
+      <div class="ph-l"><div class="pt">⚠️ Critical Items Expiry Tracker</div><div class="ps">Track expiry dates for any item — alerts trigger within 7 days</div></div>
       <button class="btn btn-orange" onclick="openExpiryModal()">✏️ Edit Expiry Dates</button>
     </div>
     <div class="exp-summary-grid" id="exp-summary-grid"></div>
@@ -564,11 +575,11 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
   </div>
 </div>
 
-<!-- DRINKS EXPIRY MODAL -->
+<!-- CRITICAL ITEMS EXPIRY MODAL -->
 <div class="ov" id="expiryOv">
   <div class="mdl exp-mdl">
     <div class="mdl-hd" style="background:linear-gradient(90deg,#b45309,#92400e)">
-      <span class="mdl-ht">🧃 Drinks Expiry Tracker</span>
+      <span class="mdl-ht">⚠️ Critical Items Expiry Tracker</span>
       <button class="mdl-cl" onclick="closeExpiryModal()">✕</button>
     </div>
     <div class="mdl-bd" style="max-height:70vh;overflow-y:auto">
@@ -576,10 +587,32 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
         ⚠️ Items expiring <strong>within 7 days</strong> will show a warning. Items expiring <strong>today or already expired</strong> will show as critical.
       </div>
       <div id="expiry-modal-body"></div>
+
+      <!-- ADD CUSTOM ITEM PANEL -->
+      <div class="add-item-panel">
+        <div class="add-item-panel-title">➕ Add Custom Item</div>
+        <div class="add-item-form">
+          <div class="fg">
+            <label class="fl" style="color:var(--orange)">Item Name</label>
+            <input type="text" class="add-item-fi" id="new-item-name" placeholder="e.g. Ranch Sauce">
+          </div>
+          <div class="fg">
+            <label class="fl" style="color:var(--orange)">Category / Size (optional)</label>
+            <input type="text" class="add-item-fi" id="new-item-cat" placeholder="e.g. Sauces · 1L">
+          </div>
+          <div class="fg">
+            <label class="fl" style="color:var(--orange)">Icon</label>
+            <input type="text" class="add-item-fi" id="new-item-icon" placeholder="🧴" maxlength="4" style="text-align:center;font-size:18px">
+          </div>
+          <div class="fg" style="display:flex;align-items:flex-end">
+            <button class="btn btn-orange" style="width:100%;justify-content:center" onclick="addCustomItem()">+ Add</button>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="mdl-ft">
       <button class="btn btn-gl" onclick="closeExpiryModal()">Close</button>
-      <button class="btn btn-orange" onclick="saveExpiryDates()">💾 Save Expiry Dates</button>
+      <button class="btn btn-orange" onclick="saveExpiryDates()">💾 Save All</button>
     </div>
   </div>
 </div>
@@ -603,8 +636,9 @@ const PS = {
   'Shift Manager in Training':    {bg:'#f5f3ff',tx:'#7c3aed'},
 };
 
-// ==================== DRINKS PRODUCTS ====================
-const DRINK_PRODUCTS = [
+// ==================== DEFAULT ITEMS LIST ====================
+// Built-in items — always present (cannot be deleted)
+const BUILTIN_ITEMS = [
   { id:'pepsi_2l',       name:'Pepsi',       size:'2L',    category:'Pepsi', icon:'🥤' },
   { id:'pepsi_591',      name:'Pepsi',       size:'591mL', category:'Pepsi', icon:'🥤' },
   { id:'pepsi_335',      name:'Pepsi',       size:'335mL', category:'Pepsi', icon:'🥤' },
@@ -620,15 +654,14 @@ const DRINK_PRODUCTS = [
   { id:'7up_335',        name:'7UP',         size:'335mL', category:'7UP', icon:'💚' },
 ];
 
-const DRINK_CATEGORIES = ['Pepsi','Pepsi Diet','Pepsi Zero','Iced Tea','7UP'];
-
 // ==================== STATE ====================
 let D = {
   employees: [],
   week: { start:'', period:'', year:'2026' },
   settings: { num:'111', name:'KFC', mgr:'Bouhoula, Mohamed Hedi' },
   notifications: [],
-  drinksExpiry: {}  // { product_id: 'YYYY-MM-DD' }
+  drinksExpiry: {},   // { item_id: 'YYYY-MM-DD' }
+  customItems: []     // [{ id, name, size, category, icon }]
 };
 let editId = null;
 let editColor = COLORS[0];
@@ -636,6 +669,18 @@ let editAvail = [];
 let efEmpId = '';
 let efAvail = [];
 let expiryBarDismissed = false;
+
+// ==================== GET ALL ITEMS (built-in + custom) ====================
+function getAllItems() {
+  const custom = (D.customItems || []);
+  return [...BUILTIN_ITEMS, ...custom];
+}
+
+function getAllCategories() {
+  const cats = [];
+  getAllItems().forEach(p => { if (!cats.includes(p.category)) cats.push(p.category); });
+  return cats;
+}
 
 // ==================== INITIALIZATION ====================
 function init() {
@@ -672,6 +717,7 @@ function seed() {
   D.employees = T.map((r,i) => ({ id:'e'+i, name:r[0], position:r[1], station:'', color:r[2], avail:blankAvail() }));
   D.notifications = [];
   D.drinksExpiry = {};
+  D.customItems = [];
 }
 
 function blankAvail() {
@@ -690,12 +736,14 @@ function loadData() {
   } catch(e) { seed(); }
   if (!D.notifications) D.notifications = [];
   if (!D.drinksExpiry)  D.drinksExpiry = {};
+  if (!D.customItems)   D.customItems = [];
   D.employees.forEach(fixAvail);
 }
 
 function saveData() {
   if (!D.notifications) D.notifications = [];
   if (!D.drinksExpiry)  D.drinksExpiry = {};
+  if (!D.customItems)   D.customItems = [];
   localStorage.setItem('kfc4', JSON.stringify(D));
   toast('Saved', 'ok');
 }
@@ -711,9 +759,8 @@ function getDaysUntilExpiry(dateStr) {
 function getExpiryStatus(dateStr) {
   const days = getDaysUntilExpiry(dateStr);
   if (days === null) return 'none';
-  if (days < 0)  return 'critical';   // already expired
-  if (days === 0) return 'critical';  // expires today
-  if (days <= 7)  return 'warning';   // within a week
+  if (days <= 0)  return 'critical';
+  if (days <= 7)  return 'warning';
   return 'ok';
 }
 
@@ -729,7 +776,7 @@ function getExpiryLabel(dateStr) {
 
 function countAlerts() {
   let critical = 0, warning = 0;
-  DRINK_PRODUCTS.forEach(p => {
+  getAllItems().forEach(p => {
     const st = getExpiryStatus(D.drinksExpiry[p.id]);
     if (st === 'critical') critical++;
     else if (st === 'warning') warning++;
@@ -741,28 +788,25 @@ function checkExpiryAlerts() {
   const { critical, warning } = countAlerts();
   const total = critical + warning;
 
-  // Update header button badge
   const badge = document.getElementById('expiry-hdr-badge');
   if (badge) {
     if (total > 0) { badge.textContent = total; badge.style.display = ''; }
     else badge.style.display = 'none';
   }
 
-  // Update tab badge
   const tabBadge = document.getElementById('exp-tab-badge');
   if (tabBadge) {
     if (total > 0) { tabBadge.textContent = total; tabBadge.classList.add('show'); }
     else tabBadge.classList.remove('show');
   }
 
-  // Show/hide alert bar
   const bar = document.getElementById('expiry-alert-bar');
   if (bar && !expiryBarDismissed && total > 0) {
     bar.classList.add('show');
     let txt = '';
     if (critical > 0 && warning > 0) txt = `${critical} expired/expiring today, ${warning} within 7 days`;
-    else if (critical > 0) txt = `${critical} product${critical>1?'s':''} expired or expiring today!`;
-    else txt = `${warning} product${warning>1?'s':''} expiring within 7 days`;
+    else if (critical > 0) txt = `${critical} item${critical>1?'s':''} expired or expiring today!`;
+    else txt = `${warning} item${warning>1?'s':''} expiring within 7 days`;
     document.getElementById('ea-count-text').textContent = txt;
   } else if (bar) {
     bar.classList.remove('show');
@@ -772,6 +816,54 @@ function checkExpiryAlerts() {
 function dismissExpiryBar() {
   expiryBarDismissed = true;
   document.getElementById('expiry-alert-bar').classList.remove('show');
+}
+
+// ==================== ADD CUSTOM ITEM ====================
+function addCustomItem() {
+  const nameEl  = document.getElementById('new-item-name');
+  const catEl   = document.getElementById('new-item-cat');
+  const iconEl  = document.getElementById('new-item-icon');
+  const name = nameEl.value.trim();
+  if (!name) { toast('Enter an item name', 'er'); nameEl.focus(); return; }
+
+  // Parse "category · size" or just category
+  let category = name, size = '';
+  const raw = catEl.value.trim();
+  if (raw) {
+    const sep = raw.indexOf('·');
+    if (sep !== -1) {
+      category = raw.slice(0, sep).trim() || name;
+      size     = raw.slice(sep + 1).trim();
+    } else {
+      category = raw;
+    }
+  }
+
+  const icon = iconEl.value.trim() || '📦';
+  const id   = 'custom_' + Date.now();
+
+  if (!D.customItems) D.customItems = [];
+  D.customItems.push({ id, name, size, category, icon });
+
+  // Clear form
+  nameEl.value = ''; catEl.value = ''; iconEl.value = '';
+
+  // Save & re-render modal body
+  localStorage.setItem('kfc4', JSON.stringify(D));
+  checkExpiryAlerts();
+  renderExpiryModal();
+  toast(`"${name}" added ✅`, 'ok');
+}
+
+function deleteCustomItem(id) {
+  if (!confirm('Remove this item from the list?')) return;
+  D.customItems = (D.customItems || []).filter(c => c.id !== id);
+  delete D.drinksExpiry[id];
+  localStorage.setItem('kfc4', JSON.stringify(D));
+  checkExpiryAlerts();
+  renderExpiryModal();
+  renderExpiryPage();
+  toast('Item removed', 'nf');
 }
 
 // ==================== EXPIRY MODAL ====================
@@ -789,9 +881,12 @@ document.getElementById('expiryOv').addEventListener('click', e => {
 });
 
 function renderExpiryModal() {
+  const allItems = getAllItems();
+  const allCats  = getAllCategories();
   let html = '';
-  DRINK_CATEGORIES.forEach(cat => {
-    const products = DRINK_PRODUCTS.filter(p => p.category === cat);
+
+  allCats.forEach(cat => {
+    const products = allItems.filter(p => p.category === cat);
     html += `<div class="exp-category">
       <div class="exp-cat-title"><span class="cat-icon">${products[0].icon}</span>${cat}</div>`;
     products.forEach(p => {
@@ -804,19 +899,26 @@ function renderExpiryModal() {
       else if (status === 'ok')      statusBadgeHtml = `<span class="exp-status-badge ok">✓ ${label}</span>`;
       else                           statusBadgeHtml = `<span class="exp-status-badge none">Not set</span>`;
 
+      const isCustom = !BUILTIN_ITEMS.find(b => b.id === p.id);
+      const delBtn   = isCustom
+        ? `<button class="exp-del-btn" onclick="deleteCustomItem('${p.id}')" title="Remove item">🗑</button>`
+        : `<div style="width:28px"></div>`;
+
       html += `<div class="exp-item-row exp-${status}" id="erow-${p.id}">
         <div>
-          <div class="exp-item-name">${p.name} <span style="font-size:11px;color:var(--muted);font-weight:600">${p.size}</span></div>
+          <div class="exp-item-name">${p.icon} ${p.name} <span style="font-size:11px;color:var(--muted);font-weight:600">${p.size}</span></div>
         </div>
         <div>${statusBadgeHtml}</div>
         <div>
           <input type="date" class="exp-date-inp inp-${status}" id="exp-inp-${p.id}" value="${dateVal}"
             oninput="onExpiryDateChange('${p.id}', this.value)" title="Set expiry date for ${p.name} ${p.size}">
         </div>
+        ${delBtn}
       </div>`;
     });
     html += '</div>';
   });
+
   document.getElementById('expiry-modal-body').innerHTML = html;
 }
 
@@ -826,24 +928,20 @@ function onExpiryDateChange(productId, dateVal) {
   const label   = dateVal ? getExpiryLabel(dateVal) : '';
   const row     = document.getElementById('erow-' + productId);
   const inp     = document.getElementById('exp-inp-' + productId);
-  // Update row class
+  if (!row || !inp) return;
   row.className = 'exp-item-row exp-' + status;
-  // Update input class
   inp.className = 'exp-date-inp inp-' + status;
-  // Update badge
   let badgeHtml = '';
   if (status === 'critical')     badgeHtml = `<span class="exp-status-badge critical">⚠️ ${label}</span>`;
   else if (status === 'warning') badgeHtml = `<span class="exp-status-badge warning">⏳ ${label}</span>`;
   else if (status === 'ok')      badgeHtml = `<span class="exp-status-badge ok">✓ ${label}</span>`;
   else                           badgeHtml = `<span class="exp-status-badge none">Not set</span>`;
   row.children[1].innerHTML = badgeHtml;
-  // Live-check alerts
   checkExpiryAlerts();
 }
 
 function saveExpiryDates() {
-  // Collect all values from inputs
-  DRINK_PRODUCTS.forEach(p => {
+  getAllItems().forEach(p => {
     const inp = document.getElementById('exp-inp-' + p.id);
     if (inp) D.drinksExpiry[p.id] = inp.value;
   });
@@ -851,17 +949,16 @@ function saveExpiryDates() {
   checkExpiryAlerts();
   closeExpiryModal();
   toast('Expiry dates saved ✅', 'ok');
-  // Re-render expiry page if visible
   renderExpiryPage();
 }
 
 // ==================== EXPIRY PAGE ====================
 function renderExpiryPage() {
+  const allItems = getAllItems();
   const { critical, warning } = countAlerts();
-  const ok   = DRINK_PRODUCTS.filter(p => { const st = getExpiryStatus(D.drinksExpiry[p.id]); return st === 'ok'; }).length;
-  const none = DRINK_PRODUCTS.filter(p => { const st = getExpiryStatus(D.drinksExpiry[p.id]); return st === 'none'; }).length;
+  const ok   = allItems.filter(p => getExpiryStatus(D.drinksExpiry[p.id]) === 'ok').length;
+  const none = allItems.filter(p => getExpiryStatus(D.drinksExpiry[p.id]) === 'none').length;
 
-  // Summary grid
   document.getElementById('exp-summary-grid').innerHTML = `
     <div class="exp-sum-card critical">
       <div class="esc-icon">🚨</div>
@@ -884,10 +981,10 @@ function renderExpiryPage() {
       <div class="esc-label">No Date Set</div>
     </div>`;
 
-  // Full list
+  const allCats = getAllCategories();
   let html = '';
-  DRINK_CATEGORIES.forEach(cat => {
-    const products = DRINK_PRODUCTS.filter(p => p.category === cat);
+  allCats.forEach(cat => {
+    const products = allItems.filter(p => p.category === cat);
     html += `<div class="set-card" style="margin-bottom:14px">
       <div class="set-title" style="display:flex;align-items:center;gap:8px">${products[0].icon} ${cat}</div>
       <div style="display:flex;flex-direction:column;gap:8px">`;
@@ -897,10 +994,11 @@ function renderExpiryPage() {
       const label   = dateVal ? getExpiryLabel(dateVal) : 'No date set';
       const colors  = { critical:'#dc2626', warning:'#92400e', ok:'var(--green)', none:'var(--muted)' };
       const bgs     = { critical:'#fee2e2', warning:'#fef9c3', ok:'var(--green-lt)', none:'var(--bg)' };
+      const borders = { critical:'#fca5a5', warning:'#fcd34d', ok:'#86efac', none:'var(--border)' };
       const icons   = { critical:'🚨', warning:'⏳', ok:'✅', none:'❓' };
-      html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:10px;background:${bgs[status]};border:1.5px solid ${status==='critical'?'#fca5a5':status==='warning'?'#fcd34d':status==='ok'?'#86efac':'var(--border)'}">
+      html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:10px;background:${bgs[status]};border:1.5px solid ${borders[status]}">
         <div>
-          <div style="font-weight:700;font-size:13px">${p.name} <span style="font-size:11px;color:var(--muted);font-weight:600">${p.size}</span></div>
+          <div style="font-weight:700;font-size:13px">${p.icon} ${p.name} <span style="font-size:11px;color:var(--muted);font-weight:600">${p.size}</span></div>
           ${dateVal ? `<div style="font-family:'DM Mono',monospace;font-size:11px;color:${colors[status]};font-weight:600;margin-top:3px">${icons[status]} ${label}</div>` : `<div style="font-size:11px;color:var(--muted);margin-top:3px">No expiry date set</div>`}
         </div>
         ${dateVal ? `<div style="font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:${colors[status]}">${dateVal}</div>` : ''}
@@ -1684,7 +1782,8 @@ function importJSON(ev) {
     try {
       D = JSON.parse(e.target.result);
       if (!D.notifications) D.notifications = [];
-      if (!D.drinksExpiry) D.drinksExpiry = {};
+      if (!D.drinksExpiry)  D.drinksExpiry = {};
+      if (!D.customItems)   D.customItems = [];
       D.employees.forEach(fixAvail);
       renderAll(); saveData(); toast('Imported','ok');
     } catch { toast('Bad file','er'); }
