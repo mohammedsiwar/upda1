@@ -6,6 +6,96 @@
 <title>KFC 1416 — Complete Schedule Builder</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- ========== FIREBASE CONFIG — REPLACE WITH YOUR OWN VALUES ========== -->
+<!--
+  ╔══════════════════════════════════════════════════════════════════╗
+  ║  FIRESTORE SECURITY RULES — paste into Firebase Console         ║
+  ║  (Firestore → Rules tab)                                        ║
+  ╠══════════════════════════════════════════════════════════════════╣
+  ║  rules_version = '2';                                           ║
+  ║  service cloud.firestore {                                      ║
+  ║    match /databases/{database}/documents {                      ║
+  ║                                                                 ║
+  ║      // ✅ SUBMISSIONS — public read/write so staff can submit  ║
+  ║      //    their availability without needing to log in         ║
+  ║      match /submissions/{id} {                                  ║
+  ║        allow read, write: if true;                              ║
+  ║      }                                                          ║
+  ║                                                                 ║
+  ║      // Manager-only: all other docs require your email         ║
+  ║      match /{document=**} {                                     ║
+  ║        allow read, write: if request.auth != null               ║
+  ║          && request.auth.token.email ==                         ║
+  ║             'bouhoula_mohamedhedi@yahoo.fr';                    ║
+  ║      }                                                          ║
+  ║                                                                 ║
+  ║      // Per-user profile docs                                   ║
+  ║      match /users/{uid} {                                       ║
+  ║        allow read, write: if request.auth != null               ║
+  ║          && request.auth.uid == uid;                            ║
+  ║      }                                                          ║
+  ║      match /deals/{id}    { allow read: if true; }              ║
+  ║      match /stores/{id}   { allow read: if true; }              ║
+  ║      match /reviews/{id}  {                                     ║
+  ║        allow read: if true;                                     ║
+  ║        allow write: if request.auth != null;                    ║
+  ║      }                                                          ║
+  ║      match /premium_users/{uid} {                               ║
+  ║        allow read, write: if request.auth != null               ║
+  ║          && request.auth.uid == uid;                            ║
+  ║      }                                                          ║
+  ║      match /redemptions/{id} {                                  ║
+  ║        allow read, write: if request.auth != null;              ║
+  ║      }                                                          ║
+  ║      match /chatThreads/{id} {                                  ║
+  ║        allow read, write: if request.auth != null;              ║
+  ║        match /messages/{m} {                                    ║
+  ║          allow read, write: if request.auth != null;            ║
+  ║        }                                                        ║
+  ║      }                                                          ║
+  ║      match /storeChatThreads/{id} {                             ║
+  ║        allow read, write: if request.auth != null;              ║
+  ║        match /messages/{m} {                                    ║
+  ║          allow read, write: if request.auth != null;            ║
+  ║        }                                                        ║
+  ║      }                                                          ║
+  ║    }                                                            ║
+  ║  }                                                              ║
+  ╚══════════════════════════════════════════════════════════════════╝
+-->
+<script type="module">
+  import { initializeApp }       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, doc, setDoc, getDoc, getDocs, deleteDoc, collection, query, where }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey:            "YOUR_API_KEY",
+    authDomain:        "YOUR_PROJECT.firebaseapp.com",
+    projectId:         "YOUR_PROJECT_ID",
+    storageBucket:     "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId:             "YOUR_APP_ID"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+
+  // Expose to global scope so non-module functions can use them
+  window._db            = db;
+  window._fsDoc         = doc;
+  window._fsSetDoc      = setDoc;
+  window._fsGetDoc      = getDoc;
+  window._fsGetDocs     = getDocs;
+  window._fsDeleteDoc   = deleteDoc;
+  window._fsColl        = collection;
+  window._fsQuery       = query;
+  window._fsWhere       = where;
+  window._firebaseReady = true;
+  console.log('Firebase ready ✅');
+</script>
+<!-- ===================================================================== -->
+
 <style>
 :root{
   --red:#D4001A;--red2:#A80015;--red-lt:#fff0f1;
@@ -187,15 +277,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .empty-ic{font-size:2.5rem;display:block;margin-bottom:10px;opacity:.35}
 
 /* ===== EXPIRY ALERT BANNER ===== */
-.expiry-alert-bar{
-  display:none;
-  position:fixed;top:56px;left:0;right:0;z-index:180;
-  background:linear-gradient(90deg,#b45309,#92400e);
-  color:#fff;padding:9px 20px;
-  align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
-  box-shadow:0 3px 12px rgba(180,83,9,.4);
-  animation:slideDown .3s ease;
-}
+.expiry-alert-bar{display:none;position:fixed;top:56px;left:0;right:0;z-index:180;background:linear-gradient(90deg,#b45309,#92400e);color:#fff;padding:9px 20px;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;box-shadow:0 3px 12px rgba(180,83,9,.4);animation:slideDown .3s ease}
 .expiry-alert-bar.show{display:flex}
 @keyframes slideDown{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}
 .expiry-alert-bar .ea-msg{font-size:12px;font-weight:700;display:flex;align-items:center;gap:8px}
@@ -205,7 +287,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .ea-btn:hover{background:rgba(255,255,255,.3)}
 .ea-btn.primary{background:#fff;color:#b45309;border-color:#fff}
 
-/* ===== CRITICAL ITEMS EXPIRY MODAL ===== */
+/* ===== EXPIRY MODAL ===== */
 .exp-mdl{max-width:700px}
 .exp-category{margin-bottom:20px}
 .exp-cat-title{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;padding-bottom:7px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:6px}
@@ -230,7 +312,6 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .exp-del-btn{width:28px;height:28px;border-radius:7px;border:1.5px solid var(--border);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted);transition:all .15s;flex-shrink:0}
 .exp-del-btn:hover{border-color:#f87171;color:#dc2626;background:#fff5f5}
 
-/* Add item form inside modal */
 .add-item-panel{background:var(--orange-lt);border:2px dashed #fcd34d;border-radius:12px;padding:16px;margin-top:8px}
 .add-item-panel-title{font-size:12px;font-weight:800;color:var(--orange);margin-bottom:12px;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.06em}
 .add-item-form{display:grid;grid-template-columns:1fr 1fr 80px auto;gap:8px;align-items:end}
@@ -238,11 +319,9 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .add-item-fi{width:100%;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-family:'Syne',sans-serif;font-size:13px;color:var(--ink);background:#fff}
 .add-item-fi:focus{outline:none;border-color:var(--orange)}
 
-/* expiry tab badge */
 .exp-tab-badge{background:var(--orange);color:#fff;border-radius:20px;padding:1px 6px;font-size:10px;font-weight:700;display:none}
 .exp-tab-badge.show{display:inline-block;animation:pulse 1.5s infinite}
 
-/* expiry summary cards in tab view */
 .exp-summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:20px}
 .exp-sum-card{border-radius:12px;padding:14px;border:1.5px solid}
 .exp-sum-card.critical{background:#fff5f5;border-color:#fca5a5}
@@ -253,7 +332,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .esc-count{font-size:22px;font-weight:800;font-family:'DM Mono',monospace}
 .esc-label{font-size:11px;font-weight:600;color:var(--muted);margin-top:2px}
 
-/* Employee Form */
+/* ===== EMPLOYEE FORM ===== */
 .ef-wrap{min-height:100vh;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);display:flex;flex-direction:column;align-items:center;padding:0 0 40px}
 .ef-hdr{width:100%;background:var(--red);display:flex;align-items:center;gap:14px;padding:14px 20px;margin-bottom:32px;box-shadow:0 4px 20px rgba(212,0,26,.4)}
 .ef-hdr-badge{background:#fff;color:var(--red);font-weight:800;font-size:13px;padding:4px 10px;border-radius:6px}
@@ -313,6 +392,10 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .update-btn{padding:11px 24px;border-radius:10px;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.25);color:#fff;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s}
 .update-btn:hover{background:rgba(255,255,255,.18)}
 
+/* Firebase not ready warning */
+.fb-warn{background:#fffbeb;border:1.5px solid #fcd34d;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#92400e;font-weight:600;line-height:1.6;display:none}
+.fb-warn.show{display:block}
+
 @media(max-width:640px){
   html{font-size:13px}
   .page{padding:10px}
@@ -344,10 +427,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 
 <!-- EXPIRY ALERT BAR -->
 <div class="expiry-alert-bar" id="expiry-alert-bar">
-  <div class="ea-msg">
-    ⚠️ <strong>Critical Items Expiry Alert!</strong>
-    <span class="ea-count" id="ea-count-text">0 items expiring soon</span>
-  </div>
+  <div class="ea-msg">⚠️ <strong>Critical Items Expiry Alert!</strong><span class="ea-count" id="ea-count-text">0 items expiring soon</span></div>
   <div class="ea-actions">
     <button class="ea-btn" onclick="dismissExpiryBar()">Dismiss</button>
     <button class="ea-btn primary" onclick="openExpiryModal()">View Details →</button>
@@ -365,6 +445,11 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
       </div>
     </div>
     <div class="ef-body">
+      <!-- Firebase not configured warning -->
+      <div class="fb-warn" id="fb-warn">
+        ⚠️ <strong>Firebase not configured yet.</strong> Your submission will be saved locally only and will NOT be visible to the manager on another device. Ask your manager to set up Firebase.
+      </div>
+
       <div id="ef-step-pick">
         <div class="name-picker-card">
           <div class="name-picker-title">👋 Hi there!</div>
@@ -373,6 +458,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
           <div class="name-list" id="ef-name-list"></div>
         </div>
       </div>
+
       <div id="ef-step-avail" style="display:none">
         <div class="avail-card">
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
@@ -395,6 +481,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
           You can come back and update until your manager finalizes the schedule.
         </div>
       </div>
+
       <div id="ef-step-done" style="display:none">
         <div class="avail-card">
           <div class="submitted-wrap">
@@ -415,10 +502,10 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
   <header class="hdr">
     <div class="hdr-l">
       <div class="hdr-badge">KFC</div>
-      <span class="hdr-title">Store 111 — Complete Schedule Builder</span>
+      <span class="hdr-title">Store 1416 — Complete Schedule Builder</span>
     </div>
     <div class="hdr-r">
-      <button class="btn btn-orange btn-sm" onclick="openExpiryModal()" id="expiry-hdr-btn" title="Critical Items Expiry Tracker">⚠️ Critical Items <span id="expiry-hdr-badge" style="display:none;background:rgba(255,255,255,.3);border-radius:20px;padding:1px 6px;font-size:10px;margin-left:2px">0</span></button>
+      <button class="btn btn-orange btn-sm" onclick="openExpiryModal()" title="Critical Items Expiry Tracker">⚠️ Critical Items <span id="expiry-hdr-badge" style="display:none;background:rgba(255,255,255,.3);border-radius:20px;padding:1px 6px;font-size:10px;margin-left:2px">0</span></button>
       <button class="btn btn-ow btn-sm" onclick="exportPDF()">⬇ PDF</button>
       <button class="btn btn-wh btn-sm" onclick="saveData()">💾 Save</button>
     </div>
@@ -587,26 +674,13 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
         ⚠️ Items expiring <strong>within 7 days</strong> will show a warning. Items expiring <strong>today or already expired</strong> will show as critical.
       </div>
       <div id="expiry-modal-body"></div>
-
-      <!-- ADD CUSTOM ITEM PANEL -->
       <div class="add-item-panel">
         <div class="add-item-panel-title">➕ Add Custom Item</div>
         <div class="add-item-form">
-          <div class="fg">
-            <label class="fl" style="color:var(--orange)">Item Name</label>
-            <input type="text" class="add-item-fi" id="new-item-name" placeholder="e.g. Ranch Sauce">
-          </div>
-          <div class="fg">
-            <label class="fl" style="color:var(--orange)">Category / Size (optional)</label>
-            <input type="text" class="add-item-fi" id="new-item-cat" placeholder="e.g. Sauces · 1L">
-          </div>
-          <div class="fg">
-            <label class="fl" style="color:var(--orange)">Icon</label>
-            <input type="text" class="add-item-fi" id="new-item-icon" placeholder="🧴" maxlength="4" style="text-align:center;font-size:18px">
-          </div>
-          <div class="fg" style="display:flex;align-items:flex-end">
-            <button class="btn btn-orange" style="width:100%;justify-content:center" onclick="addCustomItem()">+ Add</button>
-          </div>
+          <div class="fg"><label class="fl" style="color:var(--orange)">Item Name</label><input type="text" class="add-item-fi" id="new-item-name" placeholder="e.g. Ranch Sauce"></div>
+          <div class="fg"><label class="fl" style="color:var(--orange)">Category / Size (optional)</label><input type="text" class="add-item-fi" id="new-item-cat" placeholder="e.g. Sauces · 1L"></div>
+          <div class="fg"><label class="fl" style="color:var(--orange)">Icon</label><input type="text" class="add-item-fi" id="new-item-icon" placeholder="🧴" maxlength="4" style="text-align:center;font-size:18px"></div>
+          <div class="fg" style="display:flex;align-items:flex-end"><button class="btn btn-orange" style="width:100%;justify-content:center" onclick="addCustomItem()">+ Add</button></div>
         </div>
       </div>
     </div>
@@ -619,7 +693,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 
 <script>
 // ==================== CONSTANTS ====================
-const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const DAYS      = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const POSITIONS = [
   'Assistant General Manager',
   'Customer Service Team Member',
@@ -636,32 +710,30 @@ const PS = {
   'Shift Manager in Training':    {bg:'#f5f3ff',tx:'#7c3aed'},
 };
 
-// ==================== DEFAULT ITEMS LIST ====================
-// Built-in items — always present (cannot be deleted)
 const BUILTIN_ITEMS = [
-  { id:'pepsi_2l',       name:'Pepsi',       size:'2L',    category:'Pepsi', icon:'🥤' },
-  { id:'pepsi_591',      name:'Pepsi',       size:'591mL', category:'Pepsi', icon:'🥤' },
-  { id:'pepsi_335',      name:'Pepsi',       size:'335mL', category:'Pepsi', icon:'🥤' },
+  { id:'pepsi_2l',       name:'Pepsi',       size:'2L',    category:'Pepsi',      icon:'🥤' },
+  { id:'pepsi_591',      name:'Pepsi',       size:'591mL', category:'Pepsi',      icon:'🥤' },
+  { id:'pepsi_335',      name:'Pepsi',       size:'335mL', category:'Pepsi',      icon:'🥤' },
   { id:'pepsi_diet_2l',  name:'Pepsi Diet',  size:'2L',    category:'Pepsi Diet', icon:'🧃' },
   { id:'pepsi_diet_591', name:'Pepsi Diet',  size:'591mL', category:'Pepsi Diet', icon:'🧃' },
   { id:'pepsi_diet_335', name:'Pepsi Diet',  size:'335mL', category:'Pepsi Diet', icon:'🧃' },
   { id:'pepsi_zero_591', name:'Pepsi Zero',  size:'591mL', category:'Pepsi Zero', icon:'🫙' },
-  { id:'iced_tea_2l',    name:'Iced Tea',    size:'2L',    category:'Iced Tea', icon:'🍵' },
-  { id:'iced_tea_591',   name:'Iced Tea',    size:'591mL', category:'Iced Tea', icon:'🍵' },
-  { id:'iced_tea_335',   name:'Iced Tea',    size:'335mL', category:'Iced Tea', icon:'🍵' },
-  { id:'7up_2l',         name:'7UP',         size:'2L',    category:'7UP', icon:'💚' },
-  { id:'7up_591',        name:'7UP',         size:'591mL', category:'7UP', icon:'💚' },
-  { id:'7up_335',        name:'7UP',         size:'335mL', category:'7UP', icon:'💚' },
+  { id:'iced_tea_2l',    name:'Iced Tea',    size:'2L',    category:'Iced Tea',   icon:'🍵' },
+  { id:'iced_tea_591',   name:'Iced Tea',    size:'591mL', category:'Iced Tea',   icon:'🍵' },
+  { id:'iced_tea_335',   name:'Iced Tea',    size:'335mL', category:'Iced Tea',   icon:'🍵' },
+  { id:'7up_2l',         name:'7UP',         size:'2L',    category:'7UP',        icon:'💚' },
+  { id:'7up_591',        name:'7UP',         size:'591mL', category:'7UP',        icon:'💚' },
+  { id:'7up_335',        name:'7UP',         size:'335mL', category:'7UP',        icon:'💚' },
 ];
 
 // ==================== STATE ====================
 let D = {
   employees: [],
   week: { start:'', period:'', year:'2026' },
-  settings: { num:'111', name:'KFC', mgr:'Bouhoula, Mohamed Hedi' },
+  settings: { num:'1416', name:'KFC', mgr:'Bouhoula, Mohamed Hedi' },
   notifications: [],
-  drinksExpiry: {},   // { item_id: 'YYYY-MM-DD' }
-  customItems: []     // [{ id, name, size, category, icon }]
+  drinksExpiry: {},
+  customItems: []
 };
 let editId = null;
 let editColor = COLORS[0];
@@ -670,23 +742,80 @@ let efEmpId = '';
 let efAvail = [];
 let expiryBarDismissed = false;
 
-// ==================== GET ALL ITEMS (built-in + custom) ====================
-function getAllItems() {
-  const custom = (D.customItems || []);
-  return [...BUILTIN_ITEMS, ...custom];
+// ==================== FIREBASE HELPERS ====================
+// Returns true if Firebase was successfully loaded (the <script type="module"> ran)
+function fbReady() {
+  return !!(window._firebaseReady && window._db);
 }
 
+// Firestore document ID for a submission: empId + weekStart
+function subDocId(empId) {
+  return empId + '_' + (D.week.start || 'noweek');
+}
+
+// Write a submission to Firestore.
+// NOTE: The /submissions collection must have "allow read, write: if true" in your
+// Firestore rules — employees open the link without being logged in.
+// Falls back to localStorage ONLY when Firebase is not configured at all.
+async function fbSetSub(empId, data) {
+  if (fbReady()) {
+    await window._fsSetDoc(window._fsDoc(window._db, 'submissions', subDocId(empId)), data);
+  } else {
+    // Fallback: save locally (only when Firebase config is missing)
+    localStorage.setItem('kfc_sub_' + subDocId(empId), JSON.stringify(data));
+  }
+}
+
+// Read a submission from Firestore.
+// When Firebase IS ready, always use Firestore — never localStorage — so
+// stale local data on the manager's phone can't show a false "Submitted" status.
+async function fbGetSub(empId) {
+  if (fbReady()) {
+    const snap = await window._fsGetDoc(window._fsDoc(window._db, 'submissions', subDocId(empId)));
+    return snap.exists() ? snap.data() : null;
+  } else {
+    const raw = localStorage.getItem('kfc_sub_' + subDocId(empId));
+    return raw ? JSON.parse(raw) : null;
+  }
+}
+
+// Read all submissions for the current week from Firestore
+async function fbGetAllSubs() {
+  const week = D.week.start || 'noweek';
+  const results = {};
+  if (fbReady()) {
+    const q = window._fsQuery(
+      window._fsColl(window._db, 'submissions'),
+      window._fsWhere('weekStart', '==', week)
+    );
+    const snap = await window._fsGetDocs(q);
+    snap.forEach(doc => { results[doc.data().empId] = doc.data(); });
+  } else {
+    // Fallback: scan localStorage keys (only when Firebase not configured)
+    D.employees.forEach(emp => {
+      const raw = localStorage.getItem('kfc_sub_' + subDocId(emp.id));
+      if (raw) {
+        try { const d = JSON.parse(raw); if (d.weekStart === week) results[emp.id] = d; } catch(e) {}
+      }
+    });
+  }
+  return results;
+}
+
+// ==================== ALL ITEMS ====================
+function getAllItems() {
+  return [...BUILTIN_ITEMS, ...(D.customItems || [])];
+}
 function getAllCategories() {
   const cats = [];
   getAllItems().forEach(p => { if (!cats.includes(p.category)) cats.push(p.category); });
   return cats;
 }
 
-// ==================== INITIALIZATION ====================
+// ==================== INIT ====================
 function init() {
   const params = new URLSearchParams(window.location.search);
-  const isAvail = params.get('avail');
-  if (isAvail) {
+  if (params.get('avail')) {
     loadData();
     showEmpForm();
   } else {
@@ -714,10 +843,10 @@ function seed() {
     ['Tiwari, Balveer',             'Shift Manager',                COLORS[1]],
     ['Gilotra, Arjun',              'Shift Manager in Training',    COLORS[4]],
   ];
-  D.employees = T.map((r,i) => ({ id:'e'+i, name:r[0], position:r[1], station:'', color:r[2], avail:blankAvail() }));
+  D.employees     = T.map((r,i) => ({ id:'e'+i, name:r[0], position:r[1], station:'', color:r[2], avail:blankAvail() }));
   D.notifications = [];
-  D.drinksExpiry = {};
-  D.customItems = [];
+  D.drinksExpiry  = {};
+  D.customItems   = [];
 }
 
 function blankAvail() {
@@ -735,15 +864,15 @@ function loadData() {
     else seed();
   } catch(e) { seed(); }
   if (!D.notifications) D.notifications = [];
-  if (!D.drinksExpiry)  D.drinksExpiry = {};
-  if (!D.customItems)   D.customItems = [];
+  if (!D.drinksExpiry)  D.drinksExpiry  = {};
+  if (!D.customItems)   D.customItems   = [];
   D.employees.forEach(fixAvail);
 }
 
 function saveData() {
   if (!D.notifications) D.notifications = [];
-  if (!D.drinksExpiry)  D.drinksExpiry = {};
-  if (!D.customItems)   D.customItems = [];
+  if (!D.drinksExpiry)  D.drinksExpiry  = {};
+  if (!D.customItems)   D.customItems   = [];
   localStorage.setItem('kfc4', JSON.stringify(D));
   toast('Saved', 'ok');
 }
@@ -755,7 +884,6 @@ function getDaysUntilExpiry(dateStr) {
   const exp   = new Date(dateStr + 'T00:00:00');
   return Math.floor((exp - today) / 86400000);
 }
-
 function getExpiryStatus(dateStr) {
   const days = getDaysUntilExpiry(dateStr);
   if (days === null) return 'none';
@@ -763,17 +891,14 @@ function getExpiryStatus(dateStr) {
   if (days <= 7)  return 'warning';
   return 'ok';
 }
-
 function getExpiryLabel(dateStr) {
   const days = getDaysUntilExpiry(dateStr);
   if (days === null) return 'No date set';
   if (days < 0)  return `Expired ${Math.abs(days)}d ago`;
   if (days === 0) return 'Expires TODAY';
   if (days === 1) return 'Expires TOMORROW';
-  if (days <= 7)  return `Expires in ${days} days`;
   return `Expires in ${days} days`;
 }
-
 function countAlerts() {
   let critical = 0, warning = 0;
   getAllItems().forEach(p => {
@@ -783,23 +908,13 @@ function countAlerts() {
   });
   return { critical, warning };
 }
-
 function checkExpiryAlerts() {
   const { critical, warning } = countAlerts();
   const total = critical + warning;
-
   const badge = document.getElementById('expiry-hdr-badge');
-  if (badge) {
-    if (total > 0) { badge.textContent = total; badge.style.display = ''; }
-    else badge.style.display = 'none';
-  }
-
+  if (badge) { if (total > 0) { badge.textContent = total; badge.style.display = ''; } else badge.style.display = 'none'; }
   const tabBadge = document.getElementById('exp-tab-badge');
-  if (tabBadge) {
-    if (total > 0) { tabBadge.textContent = total; tabBadge.classList.add('show'); }
-    else tabBadge.classList.remove('show');
-  }
-
+  if (tabBadge) { if (total > 0) { tabBadge.textContent = total; tabBadge.classList.add('show'); } else tabBadge.classList.remove('show'); }
   const bar = document.getElementById('expiry-alert-bar');
   if (bar && !expiryBarDismissed && total > 0) {
     bar.classList.add('show');
@@ -808,47 +923,32 @@ function checkExpiryAlerts() {
     else if (critical > 0) txt = `${critical} item${critical>1?'s':''} expired or expiring today!`;
     else txt = `${warning} item${warning>1?'s':''} expiring within 7 days`;
     document.getElementById('ea-count-text').textContent = txt;
-  } else if (bar) {
-    bar.classList.remove('show');
-  }
+  } else if (bar) { bar.classList.remove('show'); }
 }
-
 function dismissExpiryBar() {
   expiryBarDismissed = true;
   document.getElementById('expiry-alert-bar').classList.remove('show');
 }
 
-// ==================== ADD CUSTOM ITEM ====================
+// ==================== CUSTOM ITEMS ====================
 function addCustomItem() {
-  const nameEl  = document.getElementById('new-item-name');
-  const catEl   = document.getElementById('new-item-cat');
-  const iconEl  = document.getElementById('new-item-icon');
+  const nameEl = document.getElementById('new-item-name');
+  const catEl  = document.getElementById('new-item-cat');
+  const iconEl = document.getElementById('new-item-icon');
   const name = nameEl.value.trim();
   if (!name) { toast('Enter an item name', 'er'); nameEl.focus(); return; }
-
-  // Parse "category · size" or just category
   let category = name, size = '';
   const raw = catEl.value.trim();
   if (raw) {
     const sep = raw.indexOf('·');
-    if (sep !== -1) {
-      category = raw.slice(0, sep).trim() || name;
-      size     = raw.slice(sep + 1).trim();
-    } else {
-      category = raw;
-    }
+    if (sep !== -1) { category = raw.slice(0, sep).trim() || name; size = raw.slice(sep + 1).trim(); }
+    else category = raw;
   }
-
   const icon = iconEl.value.trim() || '📦';
   const id   = 'custom_' + Date.now();
-
   if (!D.customItems) D.customItems = [];
   D.customItems.push({ id, name, size, category, icon });
-
-  // Clear form
   nameEl.value = ''; catEl.value = ''; iconEl.value = '';
-
-  // Save & re-render modal body
   localStorage.setItem('kfc4', JSON.stringify(D));
   checkExpiryAlerts();
   renderExpiryModal();
@@ -867,28 +967,17 @@ function deleteCustomItem(id) {
 }
 
 // ==================== EXPIRY MODAL ====================
-function openExpiryModal() {
-  renderExpiryModal();
-  document.getElementById('expiryOv').classList.add('on');
-}
-
-function closeExpiryModal() {
-  document.getElementById('expiryOv').classList.remove('on');
-}
-
-document.getElementById('expiryOv').addEventListener('click', e => {
-  if (e.target === document.getElementById('expiryOv')) closeExpiryModal();
-});
+function openExpiryModal() { renderExpiryModal(); document.getElementById('expiryOv').classList.add('on'); }
+function closeExpiryModal() { document.getElementById('expiryOv').classList.remove('on'); }
+document.getElementById('expiryOv').addEventListener('click', e => { if (e.target === document.getElementById('expiryOv')) closeExpiryModal(); });
 
 function renderExpiryModal() {
   const allItems = getAllItems();
   const allCats  = getAllCategories();
   let html = '';
-
   allCats.forEach(cat => {
     const products = allItems.filter(p => p.category === cat);
-    html += `<div class="exp-category">
-      <div class="exp-cat-title"><span class="cat-icon">${products[0].icon}</span>${cat}</div>`;
+    html += `<div class="exp-category"><div class="exp-cat-title"><span class="cat-icon">${products[0].icon}</span>${cat}</div>`;
     products.forEach(p => {
       const dateVal = D.drinksExpiry[p.id] || '';
       const status  = getExpiryStatus(dateVal);
@@ -898,36 +987,26 @@ function renderExpiryModal() {
       else if (status === 'warning') statusBadgeHtml = `<span class="exp-status-badge warning">⏳ ${label}</span>`;
       else if (status === 'ok')      statusBadgeHtml = `<span class="exp-status-badge ok">✓ ${label}</span>`;
       else                           statusBadgeHtml = `<span class="exp-status-badge none">Not set</span>`;
-
       const isCustom = !BUILTIN_ITEMS.find(b => b.id === p.id);
-      const delBtn   = isCustom
-        ? `<button class="exp-del-btn" onclick="deleteCustomItem('${p.id}')" title="Remove item">🗑</button>`
-        : `<div style="width:28px"></div>`;
-
+      const delBtn   = isCustom ? `<button class="exp-del-btn" onclick="deleteCustomItem('${p.id}')" title="Remove item">🗑</button>` : `<div style="width:28px"></div>`;
       html += `<div class="exp-item-row exp-${status}" id="erow-${p.id}">
-        <div>
-          <div class="exp-item-name">${p.icon} ${p.name} <span style="font-size:11px;color:var(--muted);font-weight:600">${p.size}</span></div>
-        </div>
+        <div><div class="exp-item-name">${p.icon} ${p.name} <span style="font-size:11px;color:var(--muted);font-weight:600">${p.size}</span></div></div>
         <div>${statusBadgeHtml}</div>
-        <div>
-          <input type="date" class="exp-date-inp inp-${status}" id="exp-inp-${p.id}" value="${dateVal}"
-            oninput="onExpiryDateChange('${p.id}', this.value)" title="Set expiry date for ${p.name} ${p.size}">
-        </div>
+        <div><input type="date" class="exp-date-inp inp-${status}" id="exp-inp-${p.id}" value="${dateVal}" oninput="onExpiryDateChange('${p.id}', this.value)" title="Set expiry date for ${p.name} ${p.size}"></div>
         ${delBtn}
       </div>`;
     });
     html += '</div>';
   });
-
   document.getElementById('expiry-modal-body').innerHTML = html;
 }
 
 function onExpiryDateChange(productId, dateVal) {
   D.drinksExpiry[productId] = dateVal;
-  const status  = getExpiryStatus(dateVal);
-  const label   = dateVal ? getExpiryLabel(dateVal) : '';
-  const row     = document.getElementById('erow-' + productId);
-  const inp     = document.getElementById('exp-inp-' + productId);
+  const status = getExpiryStatus(dateVal);
+  const label  = dateVal ? getExpiryLabel(dateVal) : '';
+  const row = document.getElementById('erow-' + productId);
+  const inp = document.getElementById('exp-inp-' + productId);
   if (!row || !inp) return;
   row.className = 'exp-item-row exp-' + status;
   inp.className = 'exp-date-inp inp-' + status;
@@ -958,36 +1037,16 @@ function renderExpiryPage() {
   const { critical, warning } = countAlerts();
   const ok   = allItems.filter(p => getExpiryStatus(D.drinksExpiry[p.id]) === 'ok').length;
   const none = allItems.filter(p => getExpiryStatus(D.drinksExpiry[p.id]) === 'none').length;
-
   document.getElementById('exp-summary-grid').innerHTML = `
-    <div class="exp-sum-card critical">
-      <div class="esc-icon">🚨</div>
-      <div class="esc-count" style="color:#dc2626">${critical}</div>
-      <div class="esc-label">Expired / Expiring Today</div>
-    </div>
-    <div class="exp-sum-card warning">
-      <div class="esc-icon">⏳</div>
-      <div class="esc-count" style="color:#92400e">${warning}</div>
-      <div class="esc-label">Expiring Within 7 Days</div>
-    </div>
-    <div class="exp-sum-card ok">
-      <div class="esc-icon">✅</div>
-      <div class="esc-count" style="color:var(--green)">${ok}</div>
-      <div class="esc-label">Good / Not Expiring Soon</div>
-    </div>
-    <div class="exp-sum-card none">
-      <div class="esc-icon">❓</div>
-      <div class="esc-count" style="color:var(--muted)">${none}</div>
-      <div class="esc-label">No Date Set</div>
-    </div>`;
-
+    <div class="exp-sum-card critical"><div class="esc-icon">🚨</div><div class="esc-count" style="color:#dc2626">${critical}</div><div class="esc-label">Expired / Expiring Today</div></div>
+    <div class="exp-sum-card warning"><div class="esc-icon">⏳</div><div class="esc-count" style="color:#92400e">${warning}</div><div class="esc-label">Expiring Within 7 Days</div></div>
+    <div class="exp-sum-card ok"><div class="esc-icon">✅</div><div class="esc-count" style="color:var(--green)">${ok}</div><div class="esc-label">Good / Not Expiring Soon</div></div>
+    <div class="exp-sum-card none"><div class="esc-icon">❓</div><div class="esc-count" style="color:var(--muted)">${none}</div><div class="esc-label">No Date Set</div></div>`;
   const allCats = getAllCategories();
   let html = '';
   allCats.forEach(cat => {
     const products = allItems.filter(p => p.category === cat);
-    html += `<div class="set-card" style="margin-bottom:14px">
-      <div class="set-title" style="display:flex;align-items:center;gap:8px">${products[0].icon} ${cat}</div>
-      <div style="display:flex;flex-direction:column;gap:8px">`;
+    html += `<div class="set-card" style="margin-bottom:14px"><div class="set-title" style="display:flex;align-items:center;gap:8px">${products[0].icon} ${cat}</div><div style="display:flex;flex-direction:column;gap:8px">`;
     products.forEach(p => {
       const dateVal = D.drinksExpiry[p.id] || '';
       const status  = getExpiryStatus(dateVal);
@@ -1021,15 +1080,13 @@ function initWeek() {
   document.getElementById('wkYear').value   = D.week.year   || '2026';
   refreshWkRange();
 }
-
 function onWkChange() {
   D.week.start  = document.getElementById('wkStart').value;
   D.week.period = document.getElementById('wkPeriod').value;
   D.week.year   = document.getElementById('wkYear').value;
   refreshWkRange();
-  localStorage.setItem('kfc4',JSON.stringify(D));
+  localStorage.setItem('kfc4', JSON.stringify(D));
 }
-
 function refreshWkRange() {
   const el = document.getElementById('wkRange');
   if (!D.week.start) { el.textContent='Select a Monday'; return; }
@@ -1038,27 +1095,19 @@ function refreshWkRange() {
   const f = d => `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;
   el.textContent = f(s)+' – '+f(e);
 }
-
 function getWeekDates() {
   if (!D.week.start) return DAYS.map(d => d);
   const s = new Date(D.week.start+'T00:00:00');
   return DAYS.map((_,i) => { const d=new Date(s); d.setDate(d.getDate()+i); return `${d.getMonth()+1}/${d.getDate()}`; });
 }
-
 function getAvailLink() {
-  const base = window.location.href.split('?')[0];
-  return base + '?avail=1';
-}
-
-function getSubKey(empId) {
-  return 'kfc_sub_' + empId + '_' + (D.week.start || 'noweek');
+  return window.location.href.split('?')[0] + '?avail=1';
 }
 
 // ==================== HELPERS ====================
 function initials(name) {
   return name.split(',').map(p=>p.trim()).map(p=>p[0]||'').join('').slice(0,2).toUpperCase();
 }
-
 function calcH(s,e) {
   if (!s||!e) return 0;
   const [sh,sm]=s.split(':').map(Number);
@@ -1067,13 +1116,11 @@ function calcH(s,e) {
   if(d<0)d+=1440;
   return Math.round(d/60*100)/100;
 }
-
 function f12(t) {
   if (!t) return '—';
   const [h,m]=t.split(':').map(Number);
   return `${h%12||12}:${String(m).padStart(2,'0')}${h<12?'A':'P'}`;
 }
-
 function toast(msg,type='nf') {
   document.querySelectorAll('.tst').forEach(t=>t.remove());
   const t=document.createElement('div');
@@ -1086,8 +1133,8 @@ function toast(msg,type='nf') {
 // ==================== EMPLOYEE FORM ====================
 function showEmpForm() {
   document.getElementById('emp-form-page').style.display = '';
-  const sn = D.settings.name || 'KFC';
-  const num = D.settings.num || '111';
+  const sn  = D.settings.name || 'KFC';
+  const num = D.settings.num  || '111';
   document.getElementById('ef-store-name').textContent = sn + ' Store ' + num + ' — Availability';
   if (D.week.start) {
     const s = new Date(D.week.start + 'T00:00:00');
@@ -1097,6 +1144,10 @@ function showEmpForm() {
     if (D.week.period) range += ' · ' + D.week.period;
     document.getElementById('ef-week-range').textContent = range;
   }
+  // Show warning if Firebase not configured
+  const warn = document.getElementById('fb-warn');
+  if (warn) warn.classList.toggle('show', !fbReady());
+
   renderNamePicker();
 }
 
@@ -1110,42 +1161,57 @@ function renderNamePicker(filter='') {
     list.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(255,255,255,.35);font-size:13px">No employees found</div>';
     return;
   }
+  // Show loading state while we fetch Firestore statuses
   list.innerHTML = emps.map(emp => {
     const init = initials(emp.name);
-    const subKey = getSubKey(emp.id);
-    const rawSub = localStorage.getItem(subKey);
-    let isSubmitted = false;
-    if (rawSub) { try { const s = JSON.parse(rawSub); isSubmitted = !!s.submitted; } catch(e) {} }
-    const badge = isSubmitted
-      ? '<span class="ni-badge done">✓ Submitted</span>'
-      : '<span class="ni-badge open">⏳ Pending</span>';
     return `<div class="name-item" onclick="efSelectEmp('${emp.id}')">
       <div class="ni-av" style="background:${emp.color}">${init}</div>
       <div class="ni-info"><div class="ni-name">${emp.name}</div><div class="ni-pos">${emp.position}</div></div>
-      ${badge}
+      <span class="ni-badge open" id="ni-badge-${emp.id}">⏳ Pending</span>
     </div>`;
   }).join('');
+
+  // Async: update badges from Firestore (or localStorage fallback)
+  emps.forEach(async emp => {
+    try {
+      const sub = await fbGetSub(emp.id);
+      const badge = document.getElementById('ni-badge-' + emp.id);
+      if (badge && sub && sub.submitted) {
+        badge.className = 'ni-badge done';
+        badge.textContent = '✓ Submitted';
+      }
+    } catch(e) {}
+  });
 }
 
-function efSelectEmp(empId) {
-  const emp = D.employees.find(e => e.id === empId); if (!emp) return;
-  efEmpId = empId; fixAvail(emp);
-  const subKey = getSubKey(empId);
-  const rawSub = localStorage.getItem(subKey);
-  if (rawSub) {
-    try {
-      const sub = JSON.parse(rawSub);
-      if (sub.submitted) { efAvail = sub.avail || blankAvail(); efShowDone(emp); return; }
-      efAvail = sub.avail || emp.avail.map(d => ({...d}));
-    } catch(e) { efAvail = emp.avail.map(d => ({...d})); }
-  } else { efAvail = emp.avail.map(d => ({...d})); }
+// ========== efSelectEmp — reads from Firestore ===========
+async function efSelectEmp(empId) {
+  const emp = D.employees.find(e => e.id === empId);
+  if (!emp) return;
+  efEmpId = empId;
+  fixAvail(emp);
+
+  toast('Loading…', 'nf');
+  try {
+    const sub = await fbGetSub(empId);
+    if (sub) {
+      efAvail = (sub.avail && sub.avail.length === 7) ? sub.avail : emp.avail.map(d => ({...d}));
+      if (sub.submitted) { efShowDone(emp); return; }
+    } else {
+      efAvail = emp.avail.map(d => ({...d}));
+    }
+  } catch(err) {
+    console.error('fbGetSub error:', err);
+    efAvail = emp.avail.map(d => ({...d}));
+    toast('Could not load previous submission', 'wr');
+  }
   efShowAvailForm(emp);
 }
 
 function efShowAvailForm(emp) {
-  document.getElementById('ef-step-pick').style.display = 'none';
+  document.getElementById('ef-step-pick').style.display  = 'none';
   document.getElementById('ef-step-avail').style.display = '';
-  document.getElementById('ef-step-done').style.display = 'none';
+  document.getElementById('ef-step-done').style.display  = 'none';
   const init = initials(emp.name);
   document.getElementById('ef-av').style.background = emp.color;
   document.getElementById('ef-av').textContent = init;
@@ -1159,7 +1225,7 @@ function renderEfDays() {
   const dates = getWeekDates();
   let html = '';
   DAYS.forEach((d, i) => {
-    const av = efAvail[i];
+    const av  = efAvail[i];
     const hrs = av.on ? calcH(av.s, av.e) : 0;
     html += `<div class="emp-day-row ${av.on?'day-on':''}" id="edr-${i}">
       <div class="emp-day-top">
@@ -1186,7 +1252,6 @@ function efTogDay(i) {
   if (efAvail[i].on) { efAvail[i].s = '09:00'; efAvail[i].e = '17:00'; }
   renderEfDays();
 }
-
 function efTime(i, field, val) {
   efAvail[i][field] = val;
   const hrs = calcH(efAvail[i].s, efAvail[i].e);
@@ -1194,7 +1259,6 @@ function efTime(i, field, val) {
   if (el) el.textContent = hrs.toFixed(1)+'h';
   efUpdateTotal();
 }
-
 function efUpdateTotal() {
   const total = efAvail.reduce((s, d) => s + (d.on ? calcH(d.s, d.e) : 0), 0);
   const el = document.getElementById('ef-total');
@@ -1202,9 +1266,9 @@ function efUpdateTotal() {
 }
 
 function efShowDone(emp) {
-  document.getElementById('ef-step-pick').style.display = 'none';
+  document.getElementById('ef-step-pick').style.display  = 'none';
   document.getElementById('ef-step-avail').style.display = 'none';
-  document.getElementById('ef-step-done').style.display = '';
+  document.getElementById('ef-step-done').style.display  = '';
   const dates = getWeekDates();
   let rows = '';
   DAYS.forEach((d, i) => {
@@ -1215,33 +1279,53 @@ function efShowDone(emp) {
   document.getElementById('ef-sub-summary').innerHTML = rows;
 }
 
-function efEditAgain() {
-  const emp = D.employees.find(e => e.id === efEmpId); if (!emp) return;
-  const subKey = getSubKey(efEmpId);
-  const rawSub = localStorage.getItem(subKey);
-  if (rawSub) {
-    try { const sub = JSON.parse(rawSub); efAvail = sub.avail || emp.avail.map(d => ({...d})); }
-    catch(e) { efAvail = emp.avail.map(d => ({...d})); }
-  } else { efAvail = emp.avail.map(d => ({...d})); }
+async function efEditAgain() {
+  const emp = D.employees.find(e => e.id === efEmpId);
+  if (!emp) return;
+  try {
+    const sub = await fbGetSub(efEmpId);
+    efAvail = (sub && sub.avail && sub.avail.length === 7) ? sub.avail : emp.avail.map(d => ({...d}));
+  } catch(e) {
+    efAvail = emp.avail.map(d => ({...d}));
+  }
   efShowAvailForm(emp);
 }
 
 function efBackToPick() {
   efEmpId = '';
-  document.getElementById('ef-step-pick').style.display = '';
+  document.getElementById('ef-step-pick').style.display  = '';
   document.getElementById('ef-step-avail').style.display = 'none';
-  document.getElementById('ef-step-done').style.display = 'none';
+  document.getElementById('ef-step-done').style.display  = 'none';
 }
 
-function submitEmpAvail() {
+// ========== submitEmpAvail — writes to Firestore ==========
+async function submitEmpAvail() {
   const emp = D.employees.find(e => e.id === efEmpId);
   if (!emp) { toast('Error: employee not found', 'er'); return; }
-  const subKey = getSubKey(efEmpId);
-  const subData = { avail: efAvail.map(d => ({...d})), submittedAt: new Date().toISOString(), submitted: true, empName: emp.name, empId: efEmpId };
-  localStorage.setItem(subKey, JSON.stringify(subData));
-  addNotification(emp.name, emp.position);
-  toast('Availability submitted! ✅', 'ok');
-  efShowDone(emp);
+
+  const subData = {
+    avail:       efAvail.map(d => ({...d})),
+    submittedAt: new Date().toISOString(),
+    submitted:   true,
+    empName:     emp.name,
+    empId:       efEmpId,
+    weekStart:   D.week.start || 'noweek'
+  };
+
+  const btn = document.querySelector('.submit-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Saving…'; }
+
+  try {
+    await fbSetSub(efEmpId, subData);
+    addNotification(emp.name, emp.position);
+    toast('Availability submitted! ✅', 'ok');
+    efShowDone(emp);
+  } catch(err) {
+    console.error('submitEmpAvail error:', err);
+    toast('Error saving: ' + err.message, 'er');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '✅ Submit My Availability'; }
+  }
 }
 
 // ==================== NOTIFICATIONS ====================
@@ -1252,7 +1336,6 @@ function addNotification(empName, empPos) {
   localStorage.setItem('kfc4', JSON.stringify(D));
   updateNotifBadge();
 }
-
 function updateNotifBadge() {
   if (!D.notifications) D.notifications = [];
   const unread = D.notifications.filter(n => !n.read).length;
@@ -1261,7 +1344,6 @@ function updateNotifBadge() {
   if (unread > 0) { badge.textContent = unread; badge.style.display = ''; }
   else badge.style.display = 'none';
 }
-
 function renderNotifications() {
   if (!D.notifications) D.notifications = [];
   const list = document.getElementById('notif-list');
@@ -1289,13 +1371,10 @@ function renderNotifications() {
   }).join('') + '</div>';
   updateNotifBadge();
 }
-
 function markRead(id) {
-  if (!D.notifications) return;
-  const n = D.notifications.find(x => x.id === id);
+  const n = D.notifications && D.notifications.find(x => x.id === id);
   if (n) { n.read = true; localStorage.setItem('kfc4', JSON.stringify(D)); updateNotifBadge(); }
 }
-
 function markAllRead() {
   if (!D.notifications) return;
   D.notifications.forEach(n => n.read = true);
@@ -1305,28 +1384,30 @@ function markAllRead() {
 }
 
 // ==================== SHARE LINK PAGE ====================
-function renderSharePage() {
-  const link = getAvailLink();
-  document.getElementById('main-link-url').textContent = link;
+async function renderSharePage() {
+  document.getElementById('main-link-url').textContent = getAvailLink();
   const list = document.getElementById('share-list');
   if (!D.employees.length) {
     list.innerHTML = '<div class="empty"><span class="empty-ic">👥</span>Add employees on the Team tab first</div>';
     return;
   }
+  list.innerHTML = '<div class="empty"><span class="empty-ic">⏳</span>Loading submissions…</div>';
+
+  let allSubs = {};
+  try { allSubs = await fbGetAllSubs(); } catch(e) {}
+
   let pendingCount = 0;
   let html = '';
   const byPos = {};
   POSITIONS.forEach(p => byPos[p] = []);
   D.employees.forEach(e => { if (byPos[e.position]) byPos[e.position].push(e); });
+
   POSITIONS.forEach(pos => {
     byPos[pos].forEach(emp => {
-      const subKey = getSubKey(emp.id);
-      const rawSub = localStorage.getItem(subKey);
-      let subStatus = 'none', subData = null;
-      if (rawSub) {
-        try { subData = JSON.parse(rawSub); subStatus = subData.submitted ? 'submitted' : 'draft'; if (subData.submitted) pendingCount++; } catch(e) {}
-      }
-      const ps = PS[emp.position] || {bg:'#f5f5f5',tx:'#444'};
+      const subData   = allSubs[emp.id] || null;
+      const subStatus = (subData && subData.submitted) ? 'submitted' : 'none';
+      if (subStatus === 'submitted') pendingCount++;
+      const ps   = PS[emp.position] || {bg:'#f5f5f5',tx:'#444'};
       const init = initials(emp.name);
       let statusBadge = subStatus === 'submitted'
         ? '<span class="pending-badge submitted">📬 Submitted</span>'
@@ -1345,11 +1426,14 @@ function renderSharePage() {
     });
   });
   list.innerHTML = html;
+
   const banner = document.getElementById('pending-banner');
   if (pendingCount > 0) {
     if (banner) banner.style.display = 'flex';
     document.getElementById('pending-banner-text').textContent = `${pendingCount} new submission${pendingCount>1?'s':''} waiting`;
-  } else { if (banner) banner.style.display = 'none'; }
+  } else {
+    if (banner) banner.style.display = 'none';
+  }
 }
 
 function copyMainLink() {
@@ -1359,61 +1443,68 @@ function copyMainLink() {
     document.execCommand('copy'); ta.remove(); toast('Link copied!', 'ok');
   });
 }
-
 function shareWhatsApp() {
-  const url = getAvailLink();
-  const msg = encodeURIComponent('Hi team! 👋\nPlease fill in your availability for the week:\n' + url);
+  const msg = encodeURIComponent('Hi team! 👋\nPlease fill in your availability for the week:\n' + getAvailLink());
   window.open('https://wa.me/?text=' + msg, '_blank');
 }
-
 function shareNative() {
-  const url = getAvailLink();
   if (navigator.share) {
-    navigator.share({ title: 'KFC Store ' + (D.settings.num||'111') + ' — Availability', text: 'Please fill in your availability for the week.', url }).catch(() => {});
+    navigator.share({ title:'KFC Store '+(D.settings.num||'111')+' — Availability', text:'Please fill in your availability for the week.', url:getAvailLink() }).catch(()=>{});
   } else { copyMainLink(); }
 }
 
-function syncOne(empId) {
-  const emp = D.employees.find(e => e.id === empId); if (!emp) return;
-  const subKey = getSubKey(empId);
-  const rawSub = localStorage.getItem(subKey);
-  if (!rawSub) { toast('No submission found for this employee', 'er'); return; }
+// ========== syncOne — reads from Firestore ==========
+async function syncOne(empId) {
+  const emp = D.employees.find(e => e.id === empId);
+  if (!emp) return;
   try {
-    const sub = JSON.parse(rawSub);
-    if (!sub.submitted) { toast('This submission has not been finalized yet', 'nf'); return; }
+    const sub = await fbGetSub(empId);
+    if (!sub) { toast('No submission found for this employee', 'er'); return; }
+    if (!sub.submitted) { toast('Submission not finalized yet', 'nf'); return; }
     if (sub.avail && sub.avail.length === 7) {
-      emp.avail = sub.avail.map(d => ({...d})); saveData();
+      emp.avail = sub.avail.map(d => ({...d}));
+      saveData();
       toast(`Applied ${emp.name.split(',')[0]}'s availability ✅`, 'ok');
       renderSharePage(); renderTeam(); renderAvail();
     } else { toast('Invalid availability data', 'er'); }
-  } catch(e) { toast('Error reading submission', 'er'); }
+  } catch(err) { toast('Error: ' + err.message, 'er'); }
 }
 
-function syncAll() {
-  let count = 0, synced = [];
-  D.employees.forEach(emp => {
-    const rawSub = localStorage.getItem(getSubKey(emp.id));
-    if (!rawSub) return;
-    try {
-      const sub = JSON.parse(rawSub);
-      if (sub.submitted && sub.avail && sub.avail.length === 7) {
-        let hasChanges = false;
-        for (let i = 0; i < 7; i++) {
-          if (sub.avail[i].on !== emp.avail[i].on || sub.avail[i].s !== emp.avail[i].s || sub.avail[i].e !== emp.avail[i].e) { hasChanges = true; break; }
-        }
-        if (hasChanges) { emp.avail = sub.avail.map(d => ({...d})); count++; synced.push(emp.name.split(',')[0]); }
+// ========== syncAll — reads all from Firestore ==========
+async function syncAll() {
+  toast('Syncing…', 'nf');
+  let count = 0; const synced = [];
+  try {
+    const allSubs = await fbGetAllSubs();
+    D.employees.forEach(emp => {
+      const sub = allSubs[emp.id];
+      if (!sub || !sub.submitted || !sub.avail || sub.avail.length !== 7) return;
+      let hasChanges = false;
+      for (let i = 0; i < 7; i++) {
+        if (sub.avail[i].on !== emp.avail[i].on || sub.avail[i].s !== emp.avail[i].s || sub.avail[i].e !== emp.avail[i].e) { hasChanges = true; break; }
       }
-    } catch(e) {}
-  });
+      if (hasChanges) { emp.avail = sub.avail.map(d => ({...d})); count++; synced.push(emp.name.split(',')[0]); }
+    });
+  } catch(err) { toast('Sync error: ' + err.message, 'er'); return; }
+
   if (count === 0) { toast('No new submissions to sync', 'nf'); return; }
   saveData(); renderTeam(); renderAvail(); renderSharePage();
   toast(`Synced ${count} submission${count>1?'s':''}: ${synced.join(', ')} ✅`, 'ok');
 }
 
-function clearSub(empId) {
+// ========== clearSub — deletes from Firestore ==========
+async function clearSub(empId) {
   if (!confirm('Clear this submission? This cannot be undone.')) return;
-  localStorage.removeItem(getSubKey(empId));
-  renderSharePage(); toast('Submission cleared', 'nf');
+  if (fbReady()) {
+    try {
+      // Properly delete the document from Firestore
+      await window._fsDeleteDoc(window._fsDoc(window._db, 'submissions', subDocId(empId)));
+    } catch(e) { console.error('clearSub error:', e); }
+  } else {
+    localStorage.removeItem('kfc_sub_' + subDocId(empId));
+  }
+  renderSharePage();
+  toast('Submission cleared', 'nf');
 }
 
 // ==================== TEAM RENDER ====================
@@ -1429,17 +1520,14 @@ function renderTeam() {
     byPos[pos].forEach(emp => {
       fixAvail(emp);
       const init = initials(emp.name);
-      const ps = PS[emp.position] || {bg:'#f5f5f5',tx:'#444'};
+      const ps   = PS[emp.position] || {bg:'#f5f5f5',tx:'#444'};
       const days = emp.avail.filter(d=>d.on).length;
       const hrs  = emp.avail.reduce((s,d)=>s+(d.on?calcH(d.s,d.e):0),0);
-      const rawSub = localStorage.getItem(getSubKey(emp.id));
-      let pendingDot = '';
-      if (rawSub) { try { const sub=JSON.parse(rawSub); if(sub.submitted) pendingDot='<span class="pending-dot" title="Availability submitted"></span>'; } catch(e) {} }
       html += `<div class="emp-card">
         <div class="emp-top">
           <div class="av" style="background:${emp.color}">${init}</div>
           <div>
-            <div class="en">${emp.name}${pendingDot}</div>
+            <div class="en">${emp.name}</div>
             <div class="eb" style="background:${ps.bg};color:${ps.tx}">${emp.position}</div>
             ${emp.station?`<div class="es">${emp.station}</div>`:''}
             <div style="font-size:11px;color:var(--muted);margin-top:4px">${days} days · ${hrs.toFixed(1)}h / week</div>
@@ -1458,12 +1546,9 @@ function renderTeam() {
 
 // ==================== AVAILABILITY PAGE ====================
 function renderAvail() {
-  const list = document.getElementById('avail-list');
+  const list  = document.getElementById('avail-list');
   const dates = getWeekDates();
-  if (!D.employees.length) {
-    list.innerHTML='<div class="empty"><span class="empty-ic">👥</span>Add employees on the Team tab first</div>';
-    return;
-  }
+  if (!D.employees.length) { list.innerHTML='<div class="empty"><span class="empty-ic">👥</span>Add employees on the Team tab first</div>'; return; }
   const byPos={}; POSITIONS.forEach(p=>byPos[p]=[]); D.employees.forEach(e=>{if(byPos[e.position])byPos[e.position].push(e);});
   let html='';
   POSITIONS.forEach(pos=>{
@@ -1504,7 +1589,6 @@ function quickTogDay(empId,idx) {
   emp.avail[idx].on=!emp.avail[idx].on;
   localStorage.setItem('kfc4',JSON.stringify(D)); renderAvail();
 }
-
 function quickUpdTime(empId,idx,field,val) {
   const emp=D.employees.find(e=>e.id===empId); if(!emp) return;
   emp.avail[idx][field]=val; localStorage.setItem('kfc4',JSON.stringify(D));
@@ -1522,7 +1606,6 @@ function openAdd() {
   buildDayRows();
   document.getElementById('editOv').classList.add('on');
 }
-
 function openEdit(id) {
   const emp=D.employees.find(e=>e.id===id); if(!emp) return;
   fixAvail(emp); editId=id; editAvail=emp.avail.map(d=>({...d}));
@@ -1535,7 +1618,6 @@ function openEdit(id) {
   buildDayRows();
   document.getElementById('editOv').classList.add('on');
 }
-
 function closeEdit() { document.getElementById('editOv').classList.remove('on'); }
 document.getElementById('editOv').addEventListener('click',e=>{ if(e.target===document.getElementById('editOv')) closeEdit(); });
 
@@ -1543,18 +1625,17 @@ function buildCP(sel) {
   editColor=sel;
   document.getElementById('cp').innerHTML=COLORS.map(c=>`<div class="cdot ${c===sel?'sel':''}" style="background:${c}" onclick="pickC('${c}')"></div>`).join('');
 }
-
 function pickC(c) { editColor=c; buildCP(c); }
 
 function getPresets(position) {
   switch(position) {
-    case 'Food Service Team Member': return [{label:'9:30A – 5:00P',s:'09:30',e:'17:00'},{label:'5:00P – 11:30P',s:'17:00',e:'23:30'}];
-    case 'Customer Service Team Member': return [{label:'9:30A – 5:00P',s:'09:30',e:'17:00'},{label:'4:00P – 8:00P',s:'16:00',e:'20:00'},{label:'5:00P – 10:00P',s:'17:00',e:'22:00'},{label:'12:00P – 8:00P',s:'12:00',e:'20:00'}];
-    case 'Shift Manager': case 'Shift Manager in Training': return [{label:'9:30A – 5:00P',s:'09:30',e:'17:00'},{label:'5:00P – 11:30P',s:'17:00',e:'23:30'}];
-    default: return [{label:'10:00A – 7:00P',s:'10:00',e:'19:00'},{label:'5:00P – 11:30P',s:'17:00',e:'23:30'}];
+    case 'Food Service Team Member':        return [{label:'9:30A – 5:00P',s:'09:30',e:'17:00'},{label:'5:00P – 11:30P',s:'17:00',e:'23:30'}];
+    case 'Customer Service Team Member':    return [{label:'9:30A – 5:00P',s:'09:30',e:'17:00'},{label:'4:00P – 8:00P',s:'16:00',e:'20:00'},{label:'5:00P – 10:00P',s:'17:00',e:'22:00'},{label:'12:00P – 8:00P',s:'12:00',e:'20:00'}];
+    case 'Shift Manager':
+    case 'Shift Manager in Training':       return [{label:'9:30A – 5:00P',s:'09:30',e:'17:00'},{label:'5:00P – 11:30P',s:'17:00',e:'23:30'}];
+    default:                                return [{label:'10:00A – 7:00P',s:'10:00',e:'19:00'},{label:'5:00P – 11:30P',s:'17:00',e:'23:30'}];
   }
 }
-
 function matchPreset(presets,s,e) { return presets.findIndex(p=>p.s===s&&p.e===e); }
 
 function buildDayRows() {
@@ -1597,31 +1678,26 @@ function modTog(i) {
   if(editAvail[i].on){const pos=document.getElementById('eP').value;const p=getPresets(pos);if(p.length){editAvail[i].s=p[0].s;editAvail[i].e=p[0].e;}}
   buildDayRows();
 }
-
 function applyPreset(dayIdx,presetIdx) {
   const pos=document.getElementById('eP').value;
   const p=getPresets(pos)[presetIdx]; if(!p) return;
   editAvail[dayIdx].s=p.s; editAvail[dayIdx].e=p.e; buildDayRows();
 }
-
 function showCustom(dayIdx) {
   const ct=document.getElementById('ct-'+dayIdx); if(ct) ct.style.display='';
   const pos=document.getElementById('eP').value; const presets=getPresets(pos);
   document.querySelectorAll(`#dr-${dayIdx} .sp`).forEach((b,bi)=>b.classList.toggle('active',bi===presets.length));
 }
-
 function modTime(i,field,val) {
   editAvail[i][field]=val;
   const hrs=calcH(editAvail[i].s,editAvail[i].e);
   const el=document.getElementById('dh-'+i); if(el) el.textContent=hrs.toFixed(1)+'h';
   calcWkTotal();
 }
-
 function calcWkTotal() {
   const total=editAvail.reduce((s,d)=>s+(d.on?calcH(d.s,d.e):0),0);
   document.getElementById('wk-total').textContent=total.toFixed(2);
 }
-
 function saveEdit() {
   const name=document.getElementById('eN').value.trim();
   const pos=document.getElementById('eP').value;
@@ -1637,7 +1713,6 @@ function saveEdit() {
   }
   closeEdit(); renderTeam(); saveData();
 }
-
 function delEmp(id) {
   if(!confirm('Remove this employee?')) return;
   D.employees=D.employees.filter(e=>e.id!==id);
@@ -1760,56 +1835,51 @@ function loadSet() {
   document.getElementById('sName').value = D.settings.name || 'KFC';
   document.getElementById('sMgr').value  = D.settings.mgr  || '';
 }
-
 function saveSet() {
   D.settings.num  = document.getElementById('sNum').value  || '111';
   D.settings.name = document.getElementById('sName').value || 'KFC';
   D.settings.mgr  = document.getElementById('sMgr').value  || '';
   localStorage.setItem('kfc4', JSON.stringify(D));
 }
-
 function exportJSON() {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(D,null,2)],{type:'application/json'}));
-  a.download = 'kfc_schedule.json'; a.click();
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(D,null,2)],{type:'application/json'}));
+  a.download='kfc_schedule.json'; a.click();
   toast('Exported','nf');
 }
-
 function importJSON(ev) {
-  const f = ev.target.files[0]; if (!f) return;
-  const r = new FileReader();
-  r.onload = e => {
+  const f=ev.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=e=>{
     try {
-      D = JSON.parse(e.target.result);
-      if (!D.notifications) D.notifications = [];
-      if (!D.drinksExpiry)  D.drinksExpiry = {};
-      if (!D.customItems)   D.customItems = [];
+      D=JSON.parse(e.target.result);
+      if(!D.notifications) D.notifications=[];
+      if(!D.drinksExpiry)  D.drinksExpiry={};
+      if(!D.customItems)   D.customItems=[];
       D.employees.forEach(fixAvail);
       renderAll(); saveData(); toast('Imported','ok');
     } catch { toast('Bad file','er'); }
   };
-  r.readAsText(f); ev.target.value = '';
+  r.readAsText(f); ev.target.value='';
 }
-
 function resetAll() {
-  if (!confirm('Reset ALL data? Cannot be undone.')) return;
+  if(!confirm('Reset ALL data? Cannot be undone.')) return;
   localStorage.removeItem('kfc4');
   seed(); renderAll(); checkExpiryAlerts(); toast('Reset complete','nf');
 }
-
 function renderAll() { renderTeam(); loadSet(); }
 
 function go(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   document.getElementById('pg-'+name).classList.add('on');
   document.getElementById('tb-'+name).classList.add('on');
-  if (name === 'avail')  renderAvail();
-  if (name === 'sched')  buildSched();
-  if (name === 'set')    loadSet();
-  if (name === 'share')  renderSharePage();
-  if (name === 'notif')  renderNotifications();
-  if (name === 'expiry') renderExpiryPage();
+  if(name==='avail')  renderAvail();
+  if(name==='sched')  buildSched();
+  if(name==='set')    loadSet();
+  if(name==='share')  renderSharePage();
+  if(name==='notif')  renderNotifications();
+  if(name==='expiry') renderExpiryPage();
 }
 
 init();
