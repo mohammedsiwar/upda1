@@ -7,81 +7,24 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-<!-- ========== FIREBASE CONFIG — REPLACE WITH YOUR OWN VALUES ========== -->
-<!--
-  ╔══════════════════════════════════════════════════════════════════╗
-  ║  FIRESTORE SECURITY RULES — paste into Firebase Console         ║
-  ║  (Firestore → Rules tab)                                        ║
-  ╠══════════════════════════════════════════════════════════════════╣
-  ║  rules_version = '2';                                           ║
-  ║  service cloud.firestore {                                      ║
-  ║    match /databases/{database}/documents {                      ║
-  ║                                                                 ║
-  ║      // ✅ SUBMISSIONS — public read/write so staff can submit  ║
-  ║      //    their availability without needing to log in         ║
-  ║      match /submissions/{id} {                                  ║
-  ║        allow read, write: if true;                              ║
-  ║      }                                                          ║
-  ║                                                                 ║
-  ║      // Manager-only: all other docs require your email         ║
-  ║      match /{document=**} {                                     ║
-  ║        allow read, write: if request.auth != null               ║
-  ║          && request.auth.token.email ==                         ║
-  ║             'bouhoula_mohamedhedi@yahoo.fr';                    ║
-  ║      }                                                          ║
-  ║                                                                 ║
-  ║      // Per-user profile docs                                   ║
-  ║      match /users/{uid} {                                       ║
-  ║        allow read, write: if request.auth != null               ║
-  ║          && request.auth.uid == uid;                            ║
-  ║      }                                                          ║
-  ║      match /deals/{id}    { allow read: if true; }              ║
-  ║      match /stores/{id}   { allow read: if true; }              ║
-  ║      match /reviews/{id}  {                                     ║
-  ║        allow read: if true;                                     ║
-  ║        allow write: if request.auth != null;                    ║
-  ║      }                                                          ║
-  ║      match /premium_users/{uid} {                               ║
-  ║        allow read, write: if request.auth != null               ║
-  ║          && request.auth.uid == uid;                            ║
-  ║      }                                                          ║
-  ║      match /redemptions/{id} {                                  ║
-  ║        allow read, write: if request.auth != null;              ║
-  ║      }                                                          ║
-  ║      match /chatThreads/{id} {                                  ║
-  ║        allow read, write: if request.auth != null;              ║
-  ║        match /messages/{m} {                                    ║
-  ║          allow read, write: if request.auth != null;            ║
-  ║        }                                                        ║
-  ║      }                                                          ║
-  ║      match /storeChatThreads/{id} {                             ║
-  ║        allow read, write: if request.auth != null;              ║
-  ║        match /messages/{m} {                                    ║
-  ║          allow read, write: if request.auth != null;            ║
-  ║        }                                                        ║
-  ║      }                                                          ║
-  ║    }                                                            ║
-  ║  }                                                              ║
-  ╚══════════════════════════════════════════════════════════════════╝
--->
+<!-- ========== FIREBASE CONFIG ========== -->
 <script type="module">
   import { initializeApp }       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getFirestore, doc, setDoc, getDoc, getDocs, deleteDoc, collection, query, where }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
-    apiKey:            "YOUR_API_KEY",
-    authDomain:        "YOUR_PROJECT.firebaseapp.com",
-    projectId:         "YOUR_PROJECT_ID",
-    storageBucket:     "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId:             "YOUR_APP_ID"
+    apiKey:            "AIzaSyBF3T4E6ckYGzaL28YKMMVz9PRoJ_57pWA",
+    authDomain:        "ottawa-arab-deals.firebaseapp.com",
+    projectId:         "ottawa-arab-deals",
+    storageBucket:     "ottawa-arab-deals.firebasestorage.app",
+    messagingSenderId: "271070834694",
+    appId:             "1:271070834694:web:df94994328a8e503cdd387"
   };
 
   const app = initializeApp(firebaseConfig);
   const db  = getFirestore(app);
 
-  // Expose to global scope so non-module functions can use them
   window._db            = db;
   window._fsDoc         = doc;
   window._fsSetDoc      = setDoc;
@@ -94,7 +37,7 @@
   window._firebaseReady = true;
   console.log('Firebase ready ✅');
 </script>
-<!-- ===================================================================== -->
+<!-- ===================================== -->
 
 <style>
 :root{
@@ -392,9 +335,11 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
 .update-btn{padding:11px 24px;border-radius:10px;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.25);color:#fff;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s}
 .update-btn:hover{background:rgba(255,255,255,.18)}
 
-/* Firebase not ready warning */
-.fb-warn{background:#fffbeb;border:1.5px solid #fcd34d;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#92400e;font-weight:600;line-height:1.6;display:none}
-.fb-warn.show{display:block}
+/* Firebase status indicator */
+.fb-status{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;margin-bottom:12px}
+.fb-status.ok{background:rgba(26,127,55,.2);color:#6ee7a0;border:1px solid rgba(26,127,55,.3)}
+.fb-status.err{background:rgba(212,0,26,.2);color:#fca5a5;border:1px solid rgba(212,0,26,.3)}
+.fb-dot{width:7px;height:7px;border-radius:50%;background:currentColor}
 
 @media(max-width:640px){
   html{font-size:13px}
@@ -440,20 +385,18 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
     <div class="ef-hdr">
       <div class="ef-hdr-badge">KFC</div>
       <div class="ef-hdr-info">
-        <div class="ef-hdr-title" id="ef-store-name">Store 111 — Availability</div>
+        <div class="ef-hdr-title" id="ef-store-name">Store 1416 — Availability</div>
         <div class="ef-hdr-sub" id="ef-week-range">Loading…</div>
       </div>
     </div>
     <div class="ef-body">
-      <!-- Firebase not configured warning -->
-      <div class="fb-warn" id="fb-warn">
-        ⚠️ <strong>Firebase not configured yet.</strong> Your submission will be saved locally only and will NOT be visible to the manager on another device. Ask your manager to set up Firebase.
-      </div>
 
       <div id="ef-step-pick">
         <div class="name-picker-card">
           <div class="name-picker-title">👋 Hi there!</div>
           <div class="name-picker-sub">Select your name to fill in your availability for the week.</div>
+          <!-- Firebase status shown to staff -->
+          <div id="fb-status-bar"></div>
           <input type="text" class="name-search" id="ef-search" placeholder="🔍 Search your name…" oninput="filterNames()">
           <div class="name-list" id="ef-name-list"></div>
         </div>
@@ -610,10 +553,14 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-hei
     <div class="set-card">
       <div class="set-title">🏪 Store Information</div>
       <div class="set-row">
-        <div class="fg"><label class="fl">Store Number</label><input type="text" class="fi" id="sNum" placeholder="111" oninput="saveSet()"></div>
+        <div class="fg"><label class="fl">Store Number</label><input type="text" class="fi" id="sNum" placeholder="1416" oninput="saveSet()"></div>
         <div class="fg"><label class="fl">Brand / Name</label><input type="text" class="fi" id="sName" placeholder="KFC" oninput="saveSet()"></div>
         <div class="fg" style="grid-column:1/-1"><label class="fl">Manager Name</label><input type="text" class="fi" id="sMgr" placeholder="Manager Name" oninput="saveSet()"></div>
       </div>
+    </div>
+    <div class="set-card">
+      <div class="set-title">🔥 Firebase Status</div>
+      <div id="mgr-fb-status" style="font-size:13px;color:var(--muted);padding:8px 0"></div>
     </div>
     <div class="set-card">
       <div class="set-title">📁 Data Management</div>
@@ -743,35 +690,34 @@ let efAvail = [];
 let expiryBarDismissed = false;
 
 // ==================== FIREBASE HELPERS ====================
-// Returns true if Firebase was successfully loaded (the <script type="module"> ran)
 function fbReady() {
   return !!(window._firebaseReady && window._db);
 }
 
-// Firestore document ID for a submission: empId + weekStart
 function subDocId(empId) {
   return empId + '_' + (D.week.start || 'noweek');
 }
 
-// Write a submission to Firestore.
-// NOTE: The /submissions collection must have "allow read, write: if true" in your
-// Firestore rules — employees open the link without being logged in.
-// Falls back to localStorage ONLY when Firebase is not configured at all.
+// Write submission to Firestore (no auth required — public write rule)
 async function fbSetSub(empId, data) {
   if (fbReady()) {
-    await window._fsSetDoc(window._fsDoc(window._db, 'submissions', subDocId(empId)), data);
+    await window._fsSetDoc(
+      window._fsDoc(window._db, 'submissions', subDocId(empId)),
+      data
+    );
   } else {
-    // Fallback: save locally (only when Firebase config is missing)
+    // Fallback to localStorage only if Firebase SDK failed to load
     localStorage.setItem('kfc_sub_' + subDocId(empId), JSON.stringify(data));
+    console.warn('Firebase not ready — saved to localStorage only');
   }
 }
 
-// Read a submission from Firestore.
-// When Firebase IS ready, always use Firestore — never localStorage — so
-// stale local data on the manager's phone can't show a false "Submitted" status.
+// Read a single submission
 async function fbGetSub(empId) {
   if (fbReady()) {
-    const snap = await window._fsGetDoc(window._fsDoc(window._db, 'submissions', subDocId(empId)));
+    const snap = await window._fsGetDoc(
+      window._fsDoc(window._db, 'submissions', subDocId(empId))
+    );
     return snap.exists() ? snap.data() : null;
   } else {
     const raw = localStorage.getItem('kfc_sub_' + subDocId(empId));
@@ -779,7 +725,7 @@ async function fbGetSub(empId) {
   }
 }
 
-// Read all submissions for the current week from Firestore
+// Read all submissions for current week
 async function fbGetAllSubs() {
   const week = D.week.start || 'noweek';
   const results = {};
@@ -789,17 +735,41 @@ async function fbGetAllSubs() {
       window._fsWhere('weekStart', '==', week)
     );
     const snap = await window._fsGetDocs(q);
-    snap.forEach(doc => { results[doc.data().empId] = doc.data(); });
+    snap.forEach(docSnap => { results[docSnap.data().empId] = docSnap.data(); });
   } else {
-    // Fallback: scan localStorage keys (only when Firebase not configured)
     D.employees.forEach(emp => {
       const raw = localStorage.getItem('kfc_sub_' + subDocId(emp.id));
       if (raw) {
-        try { const d = JSON.parse(raw); if (d.weekStart === week) results[emp.id] = d; } catch(e) {}
+        try {
+          const d = JSON.parse(raw);
+          if (d.weekStart === week) results[emp.id] = d;
+        } catch(e) {}
       }
     });
   }
   return results;
+}
+
+// Delete a submission
+async function fbDeleteSub(empId) {
+  if (fbReady()) {
+    await window._fsDeleteDoc(
+      window._fsDoc(window._db, 'submissions', subDocId(empId))
+    );
+  } else {
+    localStorage.removeItem('kfc_sub_' + subDocId(empId));
+  }
+}
+
+// ==================== FIREBASE STATUS UI ====================
+function renderFbStatusBar(target) {
+  const el = document.getElementById(target);
+  if (!el) return;
+  if (fbReady()) {
+    el.innerHTML = '<div class="fb-status ok"><span class="fb-dot"></span> Firebase connected — submissions sync in real time</div>';
+  } else {
+    el.innerHTML = '<div class="fb-status err"><span class="fb-dot"></span> Firebase connecting… (submissions may not sync yet)</div>';
+  }
 }
 
 // ==================== ALL ITEMS ====================
@@ -824,6 +794,19 @@ function init() {
     initWeek();
     document.getElementById('manager-app').style.display = '';
     checkExpiryAlerts();
+    // Show Firebase status in settings
+    setTimeout(() => {
+      const el = document.getElementById('mgr-fb-status');
+      if (el) {
+        if (fbReady()) {
+          el.innerHTML = '🟢 <strong>Firebase connected.</strong> Staff submissions from any device will appear here in real time.';
+          el.style.color = 'var(--green)';
+        } else {
+          el.innerHTML = '🔴 <strong>Firebase not connected.</strong> Submissions may not sync across devices.';
+          el.style.color = 'var(--red)';
+        }
+      }
+    }, 1500);
   }
 }
 
@@ -1134,7 +1117,7 @@ function toast(msg,type='nf') {
 function showEmpForm() {
   document.getElementById('emp-form-page').style.display = '';
   const sn  = D.settings.name || 'KFC';
-  const num = D.settings.num  || '111';
+  const num = D.settings.num  || '1416';
   document.getElementById('ef-store-name').textContent = sn + ' Store ' + num + ' — Availability';
   if (D.week.start) {
     const s = new Date(D.week.start + 'T00:00:00');
@@ -1144,10 +1127,8 @@ function showEmpForm() {
     if (D.week.period) range += ' · ' + D.week.period;
     document.getElementById('ef-week-range').textContent = range;
   }
-  // Show warning if Firebase not configured
-  const warn = document.getElementById('fb-warn');
-  if (warn) warn.classList.toggle('show', !fbReady());
-
+  // Wait for Firebase to initialize then show status
+  setTimeout(() => renderFbStatusBar('fb-status-bar'), 1500);
   renderNamePicker();
 }
 
@@ -1161,7 +1142,6 @@ function renderNamePicker(filter='') {
     list.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(255,255,255,.35);font-size:13px">No employees found</div>';
     return;
   }
-  // Show loading state while we fetch Firestore statuses
   list.innerHTML = emps.map(emp => {
     const init = initials(emp.name);
     return `<div class="name-item" onclick="efSelectEmp('${emp.id}')">
@@ -1171,7 +1151,7 @@ function renderNamePicker(filter='') {
     </div>`;
   }).join('');
 
-  // Async: update badges from Firestore (or localStorage fallback)
+  // Async: update badges from Firestore
   emps.forEach(async emp => {
     try {
       const sub = await fbGetSub(emp.id);
@@ -1184,7 +1164,6 @@ function renderNamePicker(filter='') {
   });
 }
 
-// ========== efSelectEmp — reads from Firestore ===========
 async function efSelectEmp(empId) {
   const emp = D.employees.find(e => e.id === empId);
   if (!emp) return;
@@ -1394,7 +1373,7 @@ async function renderSharePage() {
   list.innerHTML = '<div class="empty"><span class="empty-ic">⏳</span>Loading submissions…</div>';
 
   let allSubs = {};
-  try { allSubs = await fbGetAllSubs(); } catch(e) {}
+  try { allSubs = await fbGetAllSubs(); } catch(e) { console.error('renderSharePage fbGetAllSubs error:', e); }
 
   let pendingCount = 0;
   let html = '';
@@ -1430,7 +1409,7 @@ async function renderSharePage() {
   const banner = document.getElementById('pending-banner');
   if (pendingCount > 0) {
     if (banner) banner.style.display = 'flex';
-    document.getElementById('pending-banner-text').textContent = `${pendingCount} new submission${pendingCount>1?'s':''} waiting`;
+    document.getElementById('pending-banner-text').textContent = `${pendingCount} submission${pendingCount>1?'s':''} received`;
   } else {
     if (banner) banner.style.display = 'none';
   }
@@ -1449,11 +1428,10 @@ function shareWhatsApp() {
 }
 function shareNative() {
   if (navigator.share) {
-    navigator.share({ title:'KFC Store '+(D.settings.num||'111')+' — Availability', text:'Please fill in your availability for the week.', url:getAvailLink() }).catch(()=>{});
+    navigator.share({ title:'KFC Store '+(D.settings.num||'1416')+' — Availability', text:'Please fill in your availability for the week.', url:getAvailLink() }).catch(()=>{});
   } else { copyMainLink(); }
 }
 
-// ========== syncOne — reads from Firestore ==========
 async function syncOne(empId) {
   const emp = D.employees.find(e => e.id === empId);
   if (!emp) return;
@@ -1470,7 +1448,6 @@ async function syncOne(empId) {
   } catch(err) { toast('Error: ' + err.message, 'er'); }
 }
 
-// ========== syncAll — reads all from Firestore ==========
 async function syncAll() {
   toast('Syncing…', 'nf');
   let count = 0; const synced = [];
@@ -1492,17 +1469,11 @@ async function syncAll() {
   toast(`Synced ${count} submission${count>1?'s':''}: ${synced.join(', ')} ✅`, 'ok');
 }
 
-// ========== clearSub — deletes from Firestore ==========
 async function clearSub(empId) {
   if (!confirm('Clear this submission? This cannot be undone.')) return;
-  if (fbReady()) {
-    try {
-      // Properly delete the document from Firestore
-      await window._fsDeleteDoc(window._fsDoc(window._db, 'submissions', subDocId(empId)));
-    } catch(e) { console.error('clearSub error:', e); }
-  } else {
-    localStorage.removeItem('kfc_sub_' + subDocId(empId));
-  }
+  try {
+    await fbDeleteSub(empId);
+  } catch(e) { console.error('clearSub error:', e); }
   renderSharePage();
   toast('Submission cleared', 'nf');
 }
@@ -1746,7 +1717,7 @@ function buildSched() {
   const thd=DAYS.map((d,i)=>`<th>${d}<br><span style="font-weight:400;opacity:.6;font-size:9px">${dates[i]}</span></th>`).join('');
   out.innerHTML=`
     <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-      <div><div style="font-size:14px;font-weight:800">${D.settings.name||'KFC'} Store ${D.settings.num||'111'} — Weekly Time Sheet</div><div style="font-size:12px;color:var(--muted);margin-top:2px">${pl}</div></div>
+      <div><div style="font-size:14px;font-weight:800">${D.settings.name||'KFC'} Store ${D.settings.num||'1416'} — Weekly Time Sheet</div><div style="font-size:12px;color:var(--muted);margin-top:2px">${pl}</div></div>
       <div style="font-size:13px">Total: <strong>${grand.toFixed(2)} hrs</strong></div>
     </div>
     <div class="sch-scroll"><table class="sch-table"><thead><tr><th>Name</th>${thd}<th>Total</th></tr></thead><tbody>${rows}</tbody>
@@ -1764,7 +1735,7 @@ function exportPDF() {
   const mg=10; const dates=getWeekDates();
   doc.setFillColor(212,0,26); doc.rect(0,0,pw,16,'F');
   doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(255,255,255);
-  doc.text(`${D.settings.name||'KFC'} Store ${D.settings.num||'111'} — Weekly Time Sheet`,mg,10);
+  doc.text(`${D.settings.name||'KFC'} Store ${D.settings.num||'1416'} — Weekly Time Sheet`,mg,10);
   let pl='';
   if(D.week.start){const s=new Date(D.week.start+'T00:00:00');const e=new Date(s);e.setDate(e.getDate()+6);const f=d=>`${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;pl=f(s)+' – '+f(e);}
   if(D.week.period) pl+='   '+D.week.period;
@@ -1825,18 +1796,18 @@ function exportPDF() {
   doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(160,160,160);
   doc.text('Generated: '+new Date().toLocaleString('en-US'),mg,ph-4);
   doc.text('Page 1',pw-mg,ph-4,{align:'right'});
-  doc.save(`KFC_Store${D.settings.num||'111'}_Schedule.pdf`);
+  doc.save(`KFC_Store${D.settings.num||'1416'}_Schedule.pdf`);
   toast('PDF saved','ok');
 }
 
 // ==================== SETTINGS ====================
 function loadSet() {
-  document.getElementById('sNum').value  = D.settings.num  || '111';
+  document.getElementById('sNum').value  = D.settings.num  || '1416';
   document.getElementById('sName').value = D.settings.name || 'KFC';
   document.getElementById('sMgr').value  = D.settings.mgr  || '';
 }
 function saveSet() {
-  D.settings.num  = document.getElementById('sNum').value  || '111';
+  D.settings.num  = document.getElementById('sNum').value  || '1416';
   D.settings.name = document.getElementById('sName').value || 'KFC';
   D.settings.mgr  = document.getElementById('sMgr').value  || '';
   localStorage.setItem('kfc4', JSON.stringify(D));
