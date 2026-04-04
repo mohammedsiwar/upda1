@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>KFC Store 1416 — Complete Schedule Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  font-family: 'Inter', sans-serif;
+  background: #f1f5f9;
+  color: #0f172a;
+}
+/* splash screen */
+#splash {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(145deg, #0a0c10, #1a1f2c);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  transition: opacity 0.5s;
+}
+#splash.hide { opacity: 0; pointer-events: none; }
+.splash-badge {
+  background: #e11d48;
+  padding: 16px 36px;
+  border-radius: 60px;
+  color: white;
+  font-weight: 800;
+  font-size: 2.2rem;
+  box-shadow: 0 20px 35px -10px black;
+}
+.splash-spin {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(255,255,255,0.2);
+  border-top-color: #e11d48;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* login */
+#loginWrap {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: radial-gradient(circle at 20% 30%, #0f1117, #030507);
+  padding: 20px;
+}
+#loginWrap.on { display: flex; }
+.login-card {
+  background: rgba(255,255,255,0.98);
+  border-radius: 2rem;
+  width: 420px;
+  max-width: 100%;
+  overflow: hidden;
+  box-shadow: 0 30px 50px rgba(0,0,0,0.4);
+}
+.login-header {
+  background: #e11d48;
+  padding: 28px;
+  color: white;
+}
+.login-badge {
+  background: white;
+  color: #e11d48;
+  font-weight: 800;
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 40px;
+  font-size: 0.8rem;
+  margin-bottom: 16px;
+}
+.login-title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.login-body { padding: 32px 28px; }
+.input-field {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 24px;
+  font-size: 0.9rem;
+  transition: 0.2s;
+}
+.input-field:focus {
+  outline: none;
+  border-color: #e11d48;
+  box-shadow: 0 0 0 3px rgba(225,29,72,0.2);
+}
+.btn-primary {
+  background: #e11d48;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 40px;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+  font-size: 0.9rem;
+}
+.btn-primary:hover { background: #be123c; transform: translateY(-1px); }
+.btn-outline {
+  background: transparent;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 40px;
+  padding: 6px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-outline:hover { border-color: #e11d48; color: #e11d48; }
+
+/* manager app header */
+.app-header {
+  background: #0f172a;
+  color: white;
+  padding: 0 24px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.tabs-container {
+  background: white;
+  border-bottom: 1px solid #eef2ff;
+  display: flex;
+  gap: 4px;
+  padding: 0 20px;
+  overflow-x: auto;
+  position: sticky;
+  top: 64px;
+  z-index: 90;
+}
+.tab {
+  padding: 14px 20px;
+  font-weight: 600;
+  background: none;
+  border: none;
+  color: #475569;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  white-space: nowrap;
+}
+.tab.on { color: #e11d48; border-bottom-color: #e11d48; }
+.page {
+  display: none;
+  padding: 28px 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.page.on { display: block; }
+
+/* cards */
+.card-modern {
+  background: white;
+  border-radius: 28px;
+  border: 1px solid #eef2ff;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+}
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+.employee-card {
+  background: white;
+  border-radius: 24px;
+  border: 1px solid #eef2ff;
+  padding: 18px;
+  transition: 0.2s;
+}
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  color: white;
+}
+.badge-role {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 30px;
+  background: #f1f5f9;
+  display: inline-block;
+}
+.pin-chip {
+  font-family: monospace;
+  background: #f1f5f9;
+  padding: 4px 12px;
+  border-radius: 40px;
+  font-size: 0.75rem;
+  margin-top: 6px;
+  display: inline-block;
+}
+.availability-card {
+  background: white;
+  border-radius: 28px;
+  border: 1px solid #eef2ff;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.av-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+.av-table th {
+  background: #f8fafc;
+  padding: 12px 6px;
+  font-weight: 600;
+}
+.toggle-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
+  border: 1.5px solid #cbd5e1;
+  background: white;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.toggle-btn.on {
+  background: #dcfce7;
+  border-color: #22c55e;
+  color: #15803d;
+}
+.time-input {
+  width: 85px;
+  padding: 6px 8px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  font-family: monospace;
+  text-align: center;
+}
+.schedule-wrapper {
+  background: white;
+  border-radius: 28px;
+  border: 1px solid #eef2ff;
+  overflow-x: auto;
+}
+.schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 860px;
+}
+.schedule-table th {
+  background: #0f172a;
+  color: white;
+  padding: 12px 8px;
+  font-size: 0.75rem;
+}
+.shift-badge {
+  background: #eef2ff;
+  padding: 4px 8px;
+  border-radius: 30px;
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+/* staff portal (dark glass) */
+#empPortal {
+  display: none;
+  min-height: 100vh;
+  background: radial-gradient(circle at 20% 20%, #0c0f1c, #020617);
+}
+#empPortal.on { display: block; }
+.portal-header {
+  background: rgba(225,29,72,0.95);
+  backdrop-filter: blur(12px);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: white;
+}
+.portal-card {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(14px);
+  border-radius: 32px;
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.day-card {
+  background: rgba(255,255,255,0.04);
+  border-radius: 24px;
+  margin-bottom: 12px;
+  padding: 12px;
+}
+.pin-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  transition: 0.1s;
+}
+.pin-dot.filled { background: #e11d48; box-shadow: 0 0 6px #e11d48; }
+.pin-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+.pin-key {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 28px;
+  padding: 14px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+.toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  background: #1e293b;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 60px;
+  font-weight: 600;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: slideUp 0.25s;
+}
+.toast.ok { background: #15803d; }
+.toast.er { background: #e11d48; }
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.modal-glass {
+  background: white;
+  border-radius: 32px;
+  max-width: 750px;
+  width: 90%;
+  margin: auto;
+  overflow: hidden;
+}
+</style>
+</head>
+<body>
+
+<div id="splash"><div class="splash-badge">KFC 1416</div><div class="splash-spin"></div></div>
+
+<div id="loginWrap"><div class="login-card"><div class="login-header"><div class="login-badge">KFC</div><div class="login-title">Store 1416<br>Schedule Hub</div></div><div class="login-body" id="loginBody"></div></div></div>
+
+<div id="empPortal"><div class="portal-header"><i class="fas fa-drumstick-bite"></i><div style="font-weight:700;">KFC Store 1416 — Staff Portal</div><button style="margin-left:auto; background:rgba(255,255,255,0.2); border:none; padding:6px 16px; border-radius:40px; color:white; cursor:pointer;" onclick="doSignOut()">Exit</button></div><div class="ep-body" id="epBody" style="max-width:620px; margin:24px auto; padding:0 16px;"></div></div>
+
+<div id="managerApp" style="display:none;">
+  <div class="app-header"><div><i class="fas fa-store"></i> KFC 1416 · Schedule Builder</div><button class="btn-outline" style="color:white; border-color:#475569;" onclick="doSignOut()"><i class="fas fa-sign-out-alt"></i> Exit</button></div>
+  <div class="tabs-container">
+    <button class="tab on" onclick="go('team')"><i class="fas fa-users"></i> Team</button>
+    <button class="tab" onclick="go('avail')"><i class="fas fa-calendar-alt"></i> Availability</button>
+    <button class="tab" onclick="go('share')"><i class="fas fa-share-alt"></i> Share Link</button>
+    <button class="tab" onclick="go('sched')"><i class="fas fa-chalkboard-user"></i> Schedule</button>
+    <button class="tab" onclick="go('inv')"><i class="fas fa-boxes"></i> Inventory</button>
+    <button class="tab" onclick="go('users')"><i class="fas fa-id-card"></i> Users & PINs</button>
+  </div>
+  <div class="page on" id="pg-team"><div style="display:flex; justify-content:flex-end; margin-bottom:24px;"><button class="btn-primary" style="width:auto; padding:10px 24px;" onclick="openAdd()"><i class="fas fa-plus"></i> Add Employee</button></div><div class="team-grid" id="teamGrid"></div></div>
+  <div class="page" id="pg-avail"><div class="card-modern" style="display:flex; gap:12px; flex-wrap:wrap;"><label style="font-weight:600;">Week starting Monday:</label><input type="date" id="wkStart" class="input-field" style="width:auto;"></div><div id="availList"></div></div>
+  <div class="page" id="pg-share"><div class="card-modern" id="shareLinkBox"></div><div id="shareList"></div></div>
+  <div class="page" id="pg-sched"><div class="schedule-wrapper" id="schedOut"></div><div style="margin-top:16px; text-align:right;"><button class="btn-primary" style="width:auto; padding:8px 24px;" onclick="exportPDF()"><i class="fas fa-file-pdf"></i> Export PDF</button></div></div>
+  <div class="page" id="pg-inv"><div id="invContent"></div><div style="margin-top:20px;"><button class="btn-primary" onclick="saveInventory()">Save Inventory</button></div></div>
+  <div class="page" id="pg-users"><div style="display:flex; justify-content:flex-end; margin-bottom:20px;"><button class="btn-primary" style="width:auto;" onclick="openCreateUser()"><i class="fas fa-user-plus"></i> Add Staff PIN</button></div><div id="userList"></div></div>
+</div>
+
+<div class="ov" id="editOv" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(6px); align-items:center; justify-content:center; z-index:1000;"><div class="modal-glass"><div style="background:#0f172a; color:white; padding:18px 24px; display:flex; justify-content:space-between;"><span id="mdlTitle" style="font-weight:800;">Edit Employee</span><button onclick="closeEdit()" style="background:none; border:none; color:white; font-size:1.6rem; cursor:pointer;">&times;</button></div><div class="mdl-bd" style="padding:24px;"><div id="dayRows"></div><div style="margin-top:20px; background:#f1f5f9; padding:12px; border-radius:20px; text-align:center; font-weight:700;">Total hours: <span id="wkTotal">0</span>h</div></div><div style="padding:16px 24px; display:flex; justify-content:flex-end; gap:12px;"><button class="btn-outline" onclick="closeEdit()">Cancel</button><button class="btn-primary" style="width:auto;" onclick="saveEdit()">Save Changes</button></div></div></div></div>
+<div class="ov" id="createUserOv" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; z-index:1000;"><div class="modal-glass" style="max-width:460px;"><div style="background:#e11d48; color:white; padding:20px; border-radius:32px 32px 0 0;"><h3>Add Staff PIN Access</h3></div><div style="padding:24px;"><input type="text" id="cuName" placeholder="Full name (exact as employee)" class="input-field"><input type="text" id="cuPin" maxlength="4" placeholder="4-digit PIN" class="input-field" style="margin-top:12px;"><div id="cuErr" style="color:#e11d48; font-size:0.8rem; margin-top:8px;"></div></div><div style="padding:16px 24px; display:flex; justify-content:flex-end; gap:12px;"><button class="btn-outline" onclick="closeCreateUser()">Cancel</button><button class="btn-primary" style="width:auto;" onclick="createUser()">Create</button></div></div></div>
+
+<script>
+// ---------- FULL DATA & HELPERS (restored all features) ----------
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const POSITIONS = ['Assistant General Manager','Customer Service Team Member','Food Service Team Member','Shift Manager','Shift Manager in Training'];
+const COLORS = ['#e11d48','#2563eb','#16a34a','#ea580c','#9333ea','#0891b2','#db2777','#4b5563','#0f766e','#be185d'];
+let D = { employees:[], week:{ start: getMondayStr(), period:'', year:'2026' }, settings:{ num:'1416', name:'KFC' }, inventory:{}, users:[], notifications:[] };
+
+function getMondayStr(){ let d=new Date(); let day=d.getDay(); let diff=day===0?-6:1-day; d.setDate(d.getDate()+diff); return d.toISOString().split('T')[0]; }
+function blankAvail(){ return DAYS.map(()=>({on:false,s:'09:00',e:'17:00'})); }
+function fixAvail(e){ if(!e.avail || e.avail.length!==7) e.avail=blankAvail(); }
+function calcH(s,e){ let [sh,sm]=s.split(':'), [eh,em]=e.split(':'); let total=(eh*60+em)-(sh*60+sm); if(total<0)total+=1440; return Math.round(total/60*100)/100; }
+function f12(t){ if(!t)return '—'; let [h,m]=t.split(':'); return `${h%12||12}:${m} ${h<12?'A':'P'}`; }
+function toast(msg,type='ok'){ let t=document.createElement('div'); t.className=`toast ${type}`; t.innerHTML=`<i class="fas ${type==='ok'?'fa-check-circle':'fa-exclamation-triangle'}"></i> ${msg}`; document.body.appendChild(t); setTimeout(()=>t.remove(),2700); }
+function saveLocal(){ localStorage.setItem('kfc1416_complete',JSON.stringify(D)); }
+function loadLocal(){ let raw=localStorage.getItem('kfc1416_complete'); if(raw){ try{ let p=JSON.parse(raw); D={...D,...p}; D.employees=D.employees||[]; D.users=D.users||[]; D.inventory=D.inventory||{ freezer:[], kitchen:[] }; D.employees.forEach(fixAvail); }catch(e){} } else seed(); }
+function seed(){ D.employees=[ ['Bouhoula, Mohamed Hedi','Assistant General Manager',COLORS[0]],['Adedunye, Damiola','Customer Service Team Member',COLORS[1]],['Appidi, Nandakishore','Customer Service Team Member',COLORS[2]],['Hashim, Agil','Customer Service Team Member',COLORS[3]],['Legault-Agil, Alyza','Customer Service Team Member',COLORS[4]],['Aghwach, Adam','Food Service Team Member',COLORS[5]],['Belarbii, Anes','Food Service Team Member',COLORS[6]],['Shaheen, Ghazala','Shift Manager',COLORS[7]],['Tiwari, Balveer','Shift Manager',COLORS[0]],['Gilotra, Arjun','Shift Manager in Training',COLORS[1]] ].map((r,i)=>({id:'e'+i, name:r[0], position:r[1], station:'', color:r[2], avail:blankAvail()})); D.users=[]; D.inventory={ freezer:[{name:'Fries',have:'7',need:'11'},{name:'Hot Wings',have:'5',need:'8'}], kitchen:[{name:'Oil',have:'3',need:'5'},{name:'Flour',have:'2',need:'3'}] }; saveLocal(); }
+function getWeekDates(){ let s=new Date(D.week.start+'T00:00:00'); return DAYS.map((_,i)=>{ let d=new Date(s); d.setDate(d.getDate()+i); return `${d.getMonth()+1}/${d.getDate()}`; }); }
+function getSubKey(empId){ return `staff_sub_${empId}_${D.week.start}`; }
+function saveSubmission(empId,data){ localStorage.setItem(getSubKey(empId),JSON.stringify(data)); }
+function loadSubmission(empId){ let raw=localStorage.getItem(getSubKey(empId)); return raw?JSON.parse(raw):null; }
+function getAllSubmissions(){ let subs={}; D.employees.forEach(e=>{ let s=loadSubmission(e.id); if(s) subs[e.id]=s; }); return subs; }
+function addNotif(name){ D.notifications.unshift({id:Date.now(),empName:name,read:false}); if(D.notifications.length>40) D.notifications.pop(); saveLocal(); }
+
+// ---------- RENDER MANAGER MODULES ----------
+function renderTeam(){ let grid=document.getElementById('teamGrid'); if(!D.employees.length){ grid.innerHTML='<div class="card-modern">No team members. Add some.</div>'; return; }
+  grid.innerHTML=D.employees.map(emp=>{ let user=D.users.find(u=>u.name===emp.name); let init=emp.name.split(',').map(p=>p.trim()[0]).join('').slice(0,2).toUpperCase();
+    return `<div class="employee-card"><div style="display:flex; gap:14px;"><div class="avatar" style="background:${emp.color}">${init}</div><div><div style="font-weight:800;">${emp.name}</div><div class="badge-role">${emp.position}</div>${user?`<div class="pin-chip"><i class="fas fa-key"></i> PIN: ${user.pin}</div>`:'<div class="pin-chip" style="background:#fee2e2; color:#b91c1c;">⚠️ No PIN</div>'}</div></div><div style="margin-top:14px; display:flex; gap:8px;"><button class="btn-outline" onclick="openEdit('${emp.id}')"><i class="fas fa-edit"></i> Edit Schedule</button><button class="btn-outline" style="border-color:#fecaca;" onclick="delEmp('${emp.id}')"><i class="fas fa-trash"></i> Delete</button></div></div>`;
+  }).join('');
+}
+function renderAvail(){ let cont=document.getElementById('availList'); let dates=getWeekDates(); if(!D.employees.length){ cont.innerHTML='<div class="card-modern">No employees</div>'; return; }
+  cont.innerHTML=D.employees.map(emp=>{ fixAvail(emp); let total=emp.avail.reduce((s,d)=>s+(d.on?calcH(d.s,d.e):0),0);
+    return `<div class="availability-card"><div style="padding:16px; border-bottom:1px solid #eef2ff; display:flex; justify-content:space-between;"><b>${emp.name}</b><span>${total.toFixed(1)}h</span><button class="btn-outline" onclick="openEdit('${emp.id}')">Edit</button></div><div style="overflow-x:auto;"><table class="av-table"><thead><tr><th></th>${DAYS.map((d,i)=>`<th>${d}<br><span style="font-size:10px;">${dates[i]}</span></th>`).join('')}</tr></thead><tbody>
+    <tr><td>Work</td>${emp.avail.map((a,i)=>`<td><div class="toggle-btn ${a.on?'on':''}" onclick="quickTog('${emp.id}',${i})">${a.on?'✓':'✗'}</div></td>`).join('')}</tr>
+    <tr><td>Start</td>${emp.avail.map((a,i)=>`<td><input class="time-input" type="time" value="${a.s}" ${!a.on?'disabled':''} onchange="quickTime('${emp.id}',${i},'s',this.value)"></td>`).join('')}</tr>
+    <tr><td>End</td>${emp.avail.map((a,i)=>`<td><input class="time-input" type="time" value="${a.e}" ${!a.on?'disabled':''} onchange="quickTime('${emp.id}',${i},'e',this.value)"></td>`).join('')}</tr>
+    </tbody></table></div></div>`;
+  }).join('');
+}
+window.quickTog=(id,i)=>{ let e=D.employees.find(e=>e.id===id); if(e){ e.avail[i].on=!e.avail[i].on; saveLocal(); renderAvail(); } };
+window.quickTime=(id,i,f,v)=>{ let e=D.employees.find(e=>e.id===id); if(e){ e.avail[i][f]=v; saveLocal(); renderAvail(); } };
+function renderShare(){ let linkBox=document.getElementById('shareLinkBox'); let linkUrl=window.location.origin+window.location.pathname+'?portal=staff'; linkBox.innerHTML=`<div><i class="fas fa-link"></i> <strong>Staff portal link:</strong><div style="background:#f1f5f9; padding:12px; border-radius:20px; margin:12px 0; word-break:break-all;">${linkUrl}</div><button class="btn-primary" style="width:auto;" onclick="navigator.clipboard.writeText('${linkUrl}'); toast('Link copied','ok')"><i class="fas fa-copy"></i> Copy Link</button></div>`;
+  let subs=getAllSubmissions(); let listDiv=document.getElementById('shareList'); if(!D.employees.length){ listDiv.innerHTML=''; return; }
+  listDiv.innerHTML=D.employees.map(emp=>{ let sub=subs[emp.id]; let status=sub?.submitted?'✅ Submitted':'⏳ Pending'; return `<div class="card-modern" style="display:flex; justify-content:space-between; align-items:center;"><div><b>${emp.name}</b> <span class="badge-role">${status}</span></div><div>${sub?.submitted?`<button class="btn-outline" onclick="syncOne('${emp.id}')">Apply Availability</button> <button class="btn-outline" style="border-color:#fecaca;" onclick="clearSub('${emp.id}')">Clear</button>`:'—'}</div></div>`; }).join('');
+}
+window.syncOne=(id)=>{ let emp=D.employees.find(e=>e.id===id); let sub=loadSubmission(id); if(sub?.avail){ emp.avail=sub.avail.map(a=>({...a})); saveLocal(); renderAvail(); renderShare(); buildSched(); toast(`Synced ${emp.name}`,'ok'); } else toast('No submission','er'); };
+window.clearSub=(id)=>{ localStorage.removeItem(getSubKey(id)); renderShare(); toast('Submission cleared','ok'); };
+function buildSched(){ let out=document.getElementById('schedOut'); let dates=getWeekDates(); if(!D.employees.length){ out.innerHTML='<div class="card-modern">No employees</div>'; return; }
+  let rows='', grand=0; D.employees.forEach(emp=>{ fixAvail(emp); let wk=0; let cells=emp.avail.map(av=>{ if(av.on){ let h=calcH(av.s,av.e); wk+=h; return `<td><span class="shift-badge">${f12(av.s)}–${f12(av.e)}</span></td>`; } return `<td><span style="color:#cbd5e1;">—</span></td>`; }).join(''); grand+=wk; rows+=`<tr><td style="font-weight:600;">${emp.name}</td>${cells}<td style="font-weight:700;">${wk.toFixed(1)}</td></tr>`; });
+  out.innerHTML=`<table class="schedule-table"><thead><tr><th>Staff</th>${DAYS.map((d,i)=>`<th>${d}<br><span style="font-size:9px;">${dates[i]}</span></th>`).join('')}<th>Total</th></tr></thead><tbody>${rows}</tbody><tfoot><tr style="background:#f8fafc;"><td colspan="8"><b>Total store hours</b></td><td><b>${grand.toFixed(1)}</b></td></tr></tfoot></table>`;
+}
+function renderInventory(){ let invDiv=document.getElementById('invContent'); if(!D.inventory) D.inventory={}; let html=''; for(let [cat,items] of Object.entries(D.inventory)){ html+=`<div class="card-modern"><h3>${cat}</h3>${items.map((it,i)=>`<div style="display:flex; gap:12px; align-items:center; margin-top:8px;"><span style="width:140px; font-weight:500;">${it.name}</span><input id="inv_${cat}_${i}_have" value="${it.have||''}" class="input-field" style="width:90px;" placeholder="have"><input id="inv_${cat}_${i}_need" value="${it.need||''}" class="input-field" style="width:90px;" placeholder="need"></div>`).join('')}</div>`; } invDiv.innerHTML=html; }
+function saveInventory(){ for(let [cat,items] of Object.entries(D.inventory)){ items.forEach((it,i)=>{ let hv=document.getElementById(`inv_${cat}_${i}_have`); if(hv) it.have=hv.value; let nd=document.getElementById(`inv_${cat}_${i}_need`); if(nd) it.need=nd.value; }); } saveLocal(); toast('Inventory saved','ok'); }
+function renderUsers(){ let ul=document.getElementById('userList'); if(!D.users.length){ ul.innerHTML='<div class="card-modern">No staff PINs created. Add a user to let staff log in.</div>'; return; }
+  ul.innerHTML=D.users.map(u=>`<div class="card-modern" style="display:flex; justify-content:space-between; align-items:center;"><div><i class="fas fa-user-circle"></i> <b>${u.name}</b> <span class="pin-chip">PIN: ${u.pin}</span></div><button class="btn-outline" style="border-color:#fecaca;" onclick="deleteUser('${u.name}')">Delete</button></div>`).join('');
+}
+function deleteUser(name){ D.users=D.users.filter(u=>u.name!==name); saveLocal(); renderUsers(); renderTeam(); toast('User removed','nf'); }
+function openCreateUser(){ document.getElementById('cuName').value=''; document.getElementById('cuPin').value=''; document.getElementById('cuErr').innerText=''; document.getElementById('createUserOv').style.display='flex'; }
+function closeCreateUser(){ document.getElementById('createUserOv').style.display='none'; }
+function createUser(){ let name=document.getElementById('cuName').value.trim(); let pin=document.getElementById('cuPin').value.trim(); let errDiv=document.getElementById('cuErr'); if(!name || !pin || pin.length!==4 || !/^\d{4}$/.test(pin)){ errDiv.innerText='Valid name and 4-digit PIN required.'; return; } if(!D.employees.find(e=>e.name===name)){ errDiv.innerText=`Employee "${name}" not found in team.`; return; } if(D.users.find(u=>u.name===name)){ errDiv.innerText='User already exists.'; return; } D.users.push({name,pin,role:'staff'}); saveLocal(); closeCreateUser(); renderUsers(); renderTeam(); toast(`PIN created for ${name}`,'ok'); }
+let editId=null, windowEditAvail=[];
+function openEdit(id){ let emp=D.employees.find(e=>e.id===id); if(!emp) return; editId=id; windowEditAvail=emp.avail.map(a=>({...a})); document.getElementById('mdlTitle').innerText=`Edit ${emp.name}`; buildDayRowsModal(); document.getElementById('editOv').style.display='flex'; }
+function buildDayRowsModal(){ let dates=getWeekDates(); let html=''; DAYS.forEach((d,i)=>{ let av=windowEditAvail[i]; let hrs=av.on?calcH(av.s,av.e):0; html+=`<div style="border:1px solid #eef2ff; border-radius:20px; margin-bottom:12px; padding:12px;"><div style="display:flex; gap:12px; align-items:center;"><button style="width:44px; height:24px; border-radius:30px; border:none; background:${av.on?'#16a34a':'#cbd5e1'}; position:relative;" onclick="modalTog(${i})"><span style="position:absolute; top:2px; left:${av.on?'22px':'2px'}; width:20px; height:20px; background:white; border-radius:50%; transition:0.1s;"></span></button><span style="font-weight:800; width:50px;">${d}</span><span style="font-size:12px;">${dates[i]}</span>${av.on?`<span style="margin-left:auto;">${hrs.toFixed(1)}h</span>`:'<span style="margin-left:auto; color:#94a3b8;">Off</span>'}</div>${av.on?`<div style="margin-top:12px; display:flex; gap:12px;"><input type="time" value="${av.s}" onchange="modalTime(${i},'s',this.value)" class="time-input"><span>→</span><input type="time" value="${av.e}" onchange="modalTime(${i},'e',this.value)" class="time-input"></div>`:''}</div>`; }); document.getElementById('dayRows').innerHTML=html; modalCalcTotal(); }
+window.modalTog=(i)=>{ windowEditAvail[i].on=!windowEditAvail[i].on; if(windowEditAvail[i].on && !windowEditAvail[i].s) windowEditAvail[i].s='09:00'; if(windowEditAvail[i].on && !windowEditAvail[i].e) windowEditAvail[i].e='17:00'; buildDayRowsModal(); };
+window.modalTime=(i,f,v)=>{ windowEditAvail[i][f]=v; buildDayRowsModal(); };
+function modalCalcTotal(){ let total=windowEditAvail.reduce((s,d)=>s+(d.on?calcH(d.s,d.e):0),0); document.getElementById('wkTotal').innerText=total.toFixed(2); }
+function saveEdit(){ let emp=D.employees.find(e=>e.id===editId); if(emp){ emp.avail=windowEditAvail.map(a=>({...a})); saveLocal(); renderAvail(); renderTeam(); buildSched(); toast('Schedule updated','ok'); } closeEdit(); }
+function closeEdit(){ document.getElementById('editOv').style.display='none'; }
+function delEmp(id){ if(confirm('Delete employee?')){ D.employees=D.employees.filter(e=>e.id!==id); saveLocal(); renderTeam(); renderAvail(); buildSched(); } }
+function openAdd(){ let newId='e'+Date.now(); let newName=prompt('Enter full name (Last, First)'); if(!newName) return; let pos=POSITIONS[1]; D.employees.push({id:newId, name:newName, position:pos, station:'', color:COLORS[Math.floor(Math.random()*COLORS.length)], avail:blankAvail()}); saveLocal(); renderTeam(); toast('Employee added','ok'); }
+function exportPDF(){ if(!window.jspdf) return; const {jsPDF}=window.jspdf; const doc=new jsPDF({orientation:'landscape'}); doc.setFontSize(14); doc.text(`KFC Store ${D.settings.num||'1416'} Schedule`,14,12); buildSched(); toast('PDF generated (preview)','ok'); }
+function onWkChange(){ D.week.start=document.getElementById('wkStart').value; saveLocal(); renderAvail(); buildSched(); }
+function go(name){ document.querySelectorAll('.page').forEach(p=>p.classList.remove('on')); document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on')); document.getElementById('pg-'+name).classList.add('on'); let tabs=document.querySelectorAll('.tab'); for(let t of tabs){ if(t.innerText.toLowerCase().includes(name)) t.classList.add('on'); } if(name==='avail') renderAvail(); if(name==='share') renderShare(); if(name==='sched') buildSched(); if(name==='inv') renderInventory(); if(name==='users') renderUsers(); if(name==='team') renderTeam(); }
+
+// ---------- STAFF PORTAL (full PIN + availability) ----------
+let selectedStaff=null, staffPinInput='';
+function renderStaffPortal(){ let body=document.getElementById('epBody'); if(!D.employees.length){ body.innerHTML='<div class="portal-card">No staff configured.</div>'; return; }
+  body.innerHTML=`<div class="portal-card"><h3 style="color:white;">👋 Select your name</h3><input type="text" id="staffSearch" class="input-field" style="background:rgba(255,255,255,0.1); color:white; margin-top:12px;" placeholder="Search..." oninput="filterStaffList()"><div id="staffNameList" style="margin-top:16px;"></div><div id="pinPanel" style="display:none; margin-top:20px;"></div></div>`;
+  filterStaffList();
+}
+function filterStaffList(){ let search=document.getElementById('staffSearch')?.value.toLowerCase()||''; let filtered=D.employees.filter(e=>e.name.toLowerCase().includes(search)); let container=document.getElementById('staffNameList'); container.innerHTML=filtered.map(e=>`<div onclick="selectStaffPortal('${e.id}')" style="background:rgba(255,255,255,0.08); border-radius:20px; padding:14px; margin-bottom:8px; color:white; cursor:pointer;">${e.name} <span style="opacity:0.6;">${e.position}</span></div>`).join(''); }
+function selectStaffPortal(id){ let emp=D.employees.find(e=>e.id===id); if(!emp) return; selectedStaff=emp; staffPinInput=''; document.getElementById('pinPanel').style.display='block'; document.getElementById('pinPanel').innerHTML=`<div class="portal-card"><div>Enter PIN for <strong>${emp.name}</strong></div><div style="display:flex; gap:12px; justify-content:center; margin:16px 0;"><div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div><div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div></div><div class="pin-pad">${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>`<div class="pin-key" onclick="pinKeyPress('${k}')">${k}</div>`).join('')}</div><div id="pinErrMsg" style="color:#f87171;"></div></div>`; updatePinDotsUI(); }
+function pinKeyPress(k){ if(k==='⌫'){ staffPinInput=staffPinInput.slice(0,-1); updatePinDotsUI(); return; } if(k==='' || staffPinInput.length>=4) return; staffPinInput+=k; updatePinDotsUI(); if(staffPinInput.length===4) verifyStaffPin(); }
+function updatePinDotsUI(){ for(let i=0;i<4;i++){ let dot=document.getElementById('pd'+i); if(dot) dot.classList.toggle('filled', i<staffPinInput.length); } }
+function verifyStaffPin(){ let user=D.users.find(u=>u.name===selectedStaff.name); if(!user || user.pin!==staffPinInput){ let errDiv=document.getElementById('pinErrMsg'); if(errDiv) errDiv.innerText='Invalid PIN. Try again.'; staffPinInput=''; updatePinDotsUI(); return; }
+  window.epStaffAvail=selectedStaff.avail.map(a=>({...a})); renderStaffForm(); }
+function renderStaffForm(){ let emp=selectedStaff; let dates=getWeekDates(); let body=document.getElementById('epBody'); let html=`<div class="portal-card"><h2 style="color:white;">📅 My Availability</h2>${DAYS.map((d,i)=>{ let av=window.epStaffAvail[i]; let hrs=av.on?calcH(av.s,av.e):0; return `<div class="day-card" style="padding:12px;"><div style="display:flex; align-items:center; gap:12px;"><button style="width:48px; height:26px; border-radius:40px; border:none; background:${av.on?'#16a34a':'#475569'}; position:relative;" onclick="epToggleDay(${i})"><span style="position:absolute; top:3px; left:${av.on?'25px':'3px'}; width:20px; height:20px; background:white; border-radius:50%;"></span></button><span style="color:white; font-weight:700; width:50px;">${d}</span><span style="color:#94a3b8;">${dates[i]}</span>${av.on?`<span style="margin-left:auto; color:#86efac;">${hrs.toFixed(1)}h</span>`:'<span style="margin-left:auto; color:#64748b;">Off</span>'}</div>${av.on?`<div style="margin-top:12px; display:flex; gap:12px;"><input type="time" value="${av.s}" onchange="epTimeUpdate(${i},'s',this.value)" class="time-input" style="background:rgba(255,255,255,0.1); color:white;"><span style="color:white;">→</span><input type="time" value="${av.e}" onchange="epTimeUpdate(${i},'e',this.value)" class="time-input" style="background:rgba(255,255,255,0.1); color:white;"></div>`:''}</div>`; }).join('')}<div style="margin-top:20px; text-align:center; background:rgba(255,255,255,0.05); border-radius:40px; padding:12px;">Total: <span id="epTotalStaff">${window.epStaffAvail.reduce((s,d)=>s+(d.on?calcH(d.s,d.e):0),0).toFixed(1)}h</span></div><button class="btn-primary" style="margin-top:24px;" onclick="submitStaffFinal()">Submit Availability</button></div>`; body.innerHTML=html; }
+window.epToggleDay=(i)=>{ window.epStaffAvail[i].on=!window.epStaffAvail[i].on; if(window.epStaffAvail[i].on && !window.epStaffAvail[i].s) window.epStaffAvail[i].s='09:00'; if(window.epStaffAvail[i].on && !window.epStaffAvail[i].e) window.epStaffAvail[i].e='17:00'; renderStaffForm(); };
+window.epTimeUpdate=(i,f,v)=>{ window.epStaffAvail[i][f]=v; let total=window.epStaffAvail.reduce((s,d)=>s+(d.on?calcH(d.s,d.e):0),0); let span=document.getElementById('epTotalStaff'); if(span) span.innerText=total.toFixed(1)+'h'; };
+function submitStaffFinal(){ let emp=selectedStaff; if(!emp) return; saveSubmission(emp.id,{avail:window.epStaffAvail.map(a=>({...a})), submitted:true, submittedAt:new Date().toISOString(), empName:emp.name}); addNotif(emp.name); toast('Availability submitted!','ok'); document.getElementById('epBody').innerHTML=`<div class="portal-card"><div style="text-align:center; padding:24px;"><i class="fas fa-check-circle" style="font-size:3rem; color:#22c55e;"></i><h3 style="color:white; margin:12px 0;">Submitted</h3><p style="color:#cbd5e1;">Manager can now review.</p><button class="btn-outline" style="margin-top:16px; color:white;" onclick="renderStaffPortal()">← Back</button></div></div>`; }
+
+// ---------- LOGIN + BOOT ----------
+function renderLogin(){ let body=document.getElementById('loginBody'); let isStaff=window.location.search.includes('portal=staff'); if(isStaff){ body.innerHTML=`<button class="btn-primary" onclick="showStaffPortal()"><i class="fas fa-user-lock"></i> Staff Login (PIN)</button><div style="margin-top:16px;"><a href="?" style="color:#e11d48;">← Manager Login</a></div>`; document.getElementById('loginWrap').classList.add('on'); } else { body.innerHTML=`<input type="password" id="adminPass" class="input-field" placeholder="Manager password"><div id="loginErr" style="color:red; margin-top:8px;"></div><button class="btn-primary" style="margin-top:20px;" onclick="adminLogin()">Sign in as Manager</button><div style="margin-top:16px;"><a href="?portal=staff" style="color:#e11d48;">Staff portal →</a></div>`; document.getElementById('loginWrap').classList.add('on'); } }
+function adminLogin(){ let pass=document.getElementById('adminPass').value; if(pass==='kfc1416'){ document.getElementById('loginWrap').classList.remove('on'); document.getElementById('managerApp').style.display='block'; loadLocal(); document.getElementById('wkStart').value=D.week.start; renderTeam(); renderAvail(); renderShare(); buildSched(); renderInventory(); renderUsers(); toast('Welcome Manager','ok'); } else { document.getElementById('loginErr').innerText='Wrong password'; } }
+function showStaffPortal(){ document.getElementById('loginWrap').classList.remove('on'); document.getElementById('empPortal').classList.add('on'); renderStaffPortal(); }
+function doSignOut(){ document.getElementById('managerApp').style.display='none'; document.getElementById('empPortal').classList.remove('on'); renderLogin(); }
+window.onload=()=>{ setTimeout(()=>{ document.getElementById('splash').classList.add('hide'); setTimeout(()=>document.getElementById('splash').style.display='none',400); },500); loadLocal(); renderLogin(); };
+</script>
+</body>
+</html>
