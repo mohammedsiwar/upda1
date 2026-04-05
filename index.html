@@ -1,733 +1,1493 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes" />
-<title>KFC Store 1416 — Staff Portal with Correct Positions</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KFC 1416 — ShiftCore Pro v5</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 :root{
-  --bg:#f4f7fb; --surface:#ffffff; --surface-2:#f8fafc; --text:#0f172a;
-  --muted:#64748b; --brand:#e11d48; --brand-2:#be123c; --line:#e2e8f0;
-  --shadow:0 10px 30px rgba(15,23,42,.08); --radius:24px;
+  --red:#c8102e;--red-lt:#fff1f2;--red-md:#fecaca;
+  --green:#166534;--green-lt:#f0fdf4;--green-md:#bbf7d0;
+  --amber:#92400e;--amber-lt:#fffbeb;--amber-md:#fde68a;
+  --blue:#1e40af;--blue-lt:#eff6ff;--blue-md:#bfdbfe;
+  --purple:#5b21b6;--purple-lt:#f5f3ff;--purple-md:#ddd6fe;
+  --teal:#0f766e;--teal-lt:#f0fdfa;
+  --ink:#111827;--sub:#374151;--muted:#6b7280;--faint:#9ca3af;
+  --border:#e5e7eb;--bg:#f3f4f6;--white:#fff;
+  --r:7px;--sh:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
 }
-body.dark{
-  --bg:#020617; --surface:#0f172a; --surface-2:#111827; --text:#e5e7eb;
-  --muted:#94a3b8; --brand:#fb7185; --brand-2:#e11d48; --line:rgba(255,255,255,.12);
-}
-*{margin:0;padding:0;box-sizing:border-box;}
-body{ font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); transition: background 0.3s; -webkit-tap-highlight-color: transparent; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);min-height:100vh;padding:16px 12px;color:var(--ink);font-size:13px}
 
-.app-header{ background:#0f172a; color:white; padding:16px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:100; }
-.tabs-container{ background:var(--surface); border-bottom:1px solid var(--line); display:flex; overflow-x:auto; position:sticky; top:60px; z-index:90; }
-.tab{ padding:16px 20px; font-weight:700; border:none; background:none; color:var(--muted); cursor:pointer; white-space:nowrap; }
-.tab.on{ color:var(--brand); border-bottom:3px solid var(--brand); }
+/* ── layout ── */
+.wrap{max-width:1460px;margin:0 auto}
+.topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.kfc{background:var(--red);color:#fff;font-weight:900;font-size:21px;letter-spacing:1px;padding:4px 13px;border-radius:var(--r)}
+.topbar-info h2{font-size:14px;font-weight:700}
+.topbar-info p{font-size:11px;color:var(--muted);margin-top:1px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.wk-inp{display:flex;align-items:center;gap:6px}
+.wk-inp label{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+input[type=date]{padding:5px 9px;border:1px solid var(--border);border-radius:var(--r);font-size:12px;font-family:inherit}
 
-.page{ display:none; padding:20px; max-width:1400px; margin:0 auto; }
-.page.on{ display:block; }
-.card-modern{ background:var(--surface); border-radius:24px; padding:20px; margin-bottom:20px; border:1px solid var(--line); box-shadow:var(--shadow); }
+/* ── legend ── */
+.legend{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:11px}
+.leg{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;border:1px solid}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+.l-sm{background:var(--blue-lt);color:var(--blue);border-color:var(--blue-md)}
+.l-sk{background:var(--purple-lt);color:var(--purple);border-color:var(--purple-md)}
+.l-cm{background:var(--amber-lt);color:var(--amber);border-color:var(--amber-md)}
+.l-ck{background:var(--green-lt);color:var(--green);border-color:var(--green-md)}
+.l-tm{background:#f9fafb;color:var(--sub);border-color:var(--border)}
+.l-off{background:var(--red-lt);color:var(--red);border-color:var(--red-md)}
+.l-mgr{background:#fef9c3;color:#713f12;border-color:#fde047}
 
-.input-field{ width:100%; padding:12px; border-radius:12px; border:1px solid var(--line); margin-bottom:10px; background:var(--surface); color:var(--text); }
-.btn-primary{ background:var(--brand); color:white; border:none; padding:12px 24px; border-radius:999px; font-weight:700; cursor:pointer; transition:0.2s; }
-.btn-primary:hover{ background:var(--brand-2);}
-.btn-outline{ background:transparent; border:1.5px solid var(--line); padding:8px 16px; border-radius:999px; cursor:pointer; color:var(--text); }
+/* ── panels ── */
+.panel{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);margin-bottom:11px}
+.ph{background:var(--ink);color:#fff;padding:8px 14px;font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.ph-red{background:var(--red)}
+.ph-note{font-size:10px;font-weight:400;opacity:.7}
+.pb{padding:12px 14px}
 
-table{ width:100%; border-collapse:collapse; margin-top:10px; }
-th{ text-align:left; padding:12px; background:var(--surface-2); font-size:0.8rem; color:var(--muted); }
-td{ padding:12px; border-bottom:1px solid var(--line); }
+/* ── form elements ── */
+.lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:3px}
+input[type=text],select,textarea{padding:6px 9px;border:1px solid var(--border);border-radius:var(--r);font-size:12px;outline:none;background:#fff;font-family:inherit;transition:border-color .15s;width:100%}
+input[type=text]:focus,select:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 0 2px rgba(200,16,46,.1)}
+select{width:auto}
+textarea{resize:vertical}
 
-#splash{ position:fixed; inset:0; background:#020617; z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; transition:opacity .4s; }
-#splash.hide{ opacity:0; pointer-events:none; }
+/* ── buttons ── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border:none;border-radius:var(--r);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:filter .15s,transform .1s;font-family:inherit}
+.btn:hover{filter:brightness(.88)}.btn:active{transform:scale(.97)}
+.b-red{background:var(--red);color:#fff}.b-green{background:#15803d;color:#fff}
+.b-blue{background:#1d4ed8;color:#fff}.b-purple{background:#7c3aed;color:#fff}
+.b-amber{background:#b45309;color:#fff}
+.b-ghost{background:#f3f4f6;color:var(--ink);border:1px solid var(--border)}
+.b-danger{background:#fee2e2;color:var(--red);border:1px solid var(--red-md)}
+.b-sm{padding:4px 9px;font-size:11px}
+.btn:disabled{opacity:.5;cursor:not-allowed;filter:none}
 
-.login-overlay{ position:fixed; inset:0; background:#020617; z-index:10001; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:20px; overflow-y:auto; padding:20px; }
-.login-card{ max-width:450px; width:100%; background:var(--surface); border-radius:32px; padding:24px; text-align:center; }
+/* ── role grid (step 1) ── */
+.rg{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:6px}
+.re{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);background:#fafafa;font-size:12px;font-weight:600;min-height:38px}
+.re.is-mgr{border-color:var(--red-md);background:#fff5f5}
+.re-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.re-actions{display:flex;gap:4px;align-items:center;flex-shrink:0}
 
-.role-select{ display:flex; gap:12px; margin-bottom:25px; }
-.role-btn{ flex:1; padding:12px; border-radius:40px; background:var(--surface-2); border:1px solid var(--line); cursor:pointer; font-weight:600; font-size:16px; }
-.role-btn.active{ background:var(--brand); color:white; border-color:var(--brand); }
+/* ── role badges ── */
+.rb{font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;letter-spacing:.3px;flex-shrink:0}
+.rb-SM{background:var(--blue-lt);color:var(--blue)}.rb-SK{background:var(--purple-lt);color:var(--purple)}
+.rb-SMO{background:#dbeafe;color:#1e3a8a}.rb-CM{background:var(--amber-lt);color:var(--amber)}
+.rb-CK{background:var(--green-lt);color:var(--green)}.rb-TM{background:#f3f4f6;color:var(--sub)}
+.rb-MGR{background:#fef9c3;color:#713f12}
 
-.staff-select-container{ margin:20px 0; text-align:left; }
-.staff-select-container label{ display:block; margin-bottom:8px; font-weight:600; color:var(--text); }
-.staff-select{ width:100%; padding:14px; border-radius:16px; border:1px solid var(--line); background:var(--surface); font-size:16px; cursor:pointer; }
+/* ── availability grid (step 2) ── */
+.ag{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:7px;margin-bottom:10px}
+.ae{border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.ae.is-mgr{border-color:var(--red-md)}
+.aeh{background:#f9fafb;padding:6px 10px;font-size:11px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap}
+.ae.is-mgr .aeh{background:#fff5f5}
+.aeh-left{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.dc{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;padding:5px 8px}
+.dc label{display:flex;flex-direction:column;align-items:center;gap:1px;font-size:8.5px;font-weight:700;color:var(--muted);text-transform:uppercase;cursor:pointer;padding:3px 1px;border-radius:4px;line-height:1.2}
+.dc label:hover{background:#f3f4f6}
+.dc label.on{color:var(--green);background:var(--green-lt)}
+.dc label.off2{color:var(--red);background:var(--red-lt)}
+.dc input[type=checkbox]{width:13px;height:13px;accent-color:#15803d;cursor:pointer}
+.dtype-tag{font-size:6.5px;opacity:.6;font-weight:600}
+.hrs-pill{font-size:9px;font-weight:700;padding:1px 7px;border-radius:10px}
+.hp-ok{background:var(--green-lt);color:var(--green)}.hp-warn{background:#fef3c7;color:#92400e}.hp-over{background:var(--red-lt);color:var(--red)}
 
-.pin-section{ margin:20px 0; }
-.pin-input-wrapper{ display:flex; gap:10px; align-items:center; justify-content:center; margin-bottom:15px; }
-.pin-field{ width:60px; height:60px; text-align:center; font-size:28px; font-weight:bold; border:2px solid var(--line); border-radius:16px; background:var(--surface); color:var(--text); pointer-events: none; touch-action: manipulation; }
+/* ── mgr flexible shifts ── */
+.mgr-flex-wrap{display:flex;gap:5px;flex-wrap:wrap;padding:6px 8px;border-top:1px solid var(--border);align-items:center}
+.mgr-flex-wrap label{font-size:10px;font-weight:600;color:var(--sub);display:flex;align-items:center;gap:3px;cursor:pointer;padding:2px 6px;border-radius:4px;border:1px solid var(--border);background:#fafafa}
+.mgr-flex-wrap label:has(input:checked){background:#fef9c3;border-color:#fde047;color:#713f12}
+.mgr-flex-title{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;width:100%}
+.mgr-flex-wrap input[type=checkbox]{width:12px;height:12px;accent-color:#b45309}
 
-.pin-numpad{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:15px; }
-.numpad-btn{ background:var(--surface-2); border:1px solid var(--line); padding:16px; font-size:22px; font-weight:bold; border-radius:16px; cursor:pointer; transition:0.1s; touch-action: manipulation; }
-.numpad-btn:active{ transform:scale(0.95); background:var(--brand); color:white; }
-.numpad-btn.clear{ background:#64748b; color:white; }
+/* ── add staff panel ── */
+.add-staff-form{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px}
+.add-staff-form>div{display:flex;flex-direction:column;gap:3px}
 
-.login-error{ color:#e11d48; margin-top:12px; font-size:14px; min-height:40px; }
+/* ── NL input ── */
+.nl-row{display:flex;gap:8px;align-items:flex-start}
+.nl-row textarea{flex:1}
+.nl-col{display:flex;flex-direction:column;gap:5px}
 
-.avail-grid{ display:flex; flex-direction:column; gap:12px; margin-top:16px; }
-.avail-day-row{ display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:12px; background:var(--surface-2); border-radius:20px; border:1px solid var(--line);}
-.day-label{ width:70px; font-weight:700; }
-.time-range{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-.time-range input{ width:100px; padding:8px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--text); }
-.toggle-switch{ display:flex; align-items:center; gap:10px; margin-left:auto; }
-.switch{ position:relative; display:inline-block; width:52px; height:26px; }
-.switch input{ opacity:0; width:0; height:0; }
-.slider{ position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#ccc; transition:.3s; border-radius:34px; }
-.slider:before{ position:absolute; content:""; height:20px; width:20px; left:3px; bottom:3px; background-color:white; transition:.3s; border-radius:50%; }
-input:checked + .slider { background-color:var(--brand); }
-input:checked + .slider:before { transform:translateX(26px); }
-.avail-badge{ font-size:12px; padding:4px 8px; border-radius:40px; background:#e2e8f0; color:#0f172a; }
+/* ── schedule table ── */
+#schedule-content{background:#fff;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)}
+.sched-hdr{background:var(--red);color:#fff;padding:9px 16px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.sched-hdr h1{font-size:14px;font-weight:900;letter-spacing:.5px}
+.sched-hdr span{font-size:11px;opacity:.85}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:11px}
+thead tr{background:#f9fafb}
+th{border:1px solid var(--border);padding:6px 4px;font-weight:700;font-size:9.5px;text-align:center;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+th.nh{text-align:left;min-width:148px;padding-left:8px}
+th.dh{min-width:110px}
+th.dh.ta{background:#fff5f5}th.dh.tb{background:#eff6ff}
+.dtype{display:block;font-size:7.5px;font-weight:600;opacity:.65;margin-top:1px}
+td{border:1px solid var(--border);padding:0;vertical-align:middle}
+tr:nth-child(even) td{background:#fafafa}
+tr:hover td{background:#fff8f8!important}
+.nc{text-align:left;padding:6px 8px;font-weight:600;font-size:11px;white-space:nowrap}
+.nc small{display:block;font-size:9.5px;color:var(--muted);font-weight:400;margin-top:1px}
+.nc.mgrow{background:#fffbeb!important}
+[contenteditable]{padding:4px 3px;text-align:center;min-height:44px;cursor:text;outline:none;font-size:10px;line-height:1.4;white-space:pre-wrap;transition:background .1s}
+[contenteditable]:focus{background:#fffde7!important;outline:2px solid var(--amber-md)}
+[contenteditable]:empty::after{content:attr(data-ph);color:#d1d5db;font-size:8.5px}
+/* cell color classes */
+.cSM{background:var(--blue-lt)!important;color:var(--blue)!important;font-weight:600}
+.cSK{background:var(--purple-lt)!important;color:var(--purple)!important;font-weight:600}
+.cCM{background:var(--amber-lt)!important;color:var(--amber)!important;font-weight:600}
+.cCK{background:var(--green-lt)!important;color:var(--green)!important;font-weight:600}
+.cTM{background:#f9fafb!important;color:var(--sub)!important}
+.cOFF{background:var(--red-lt)!important;color:var(--red)!important;font-weight:700}
+.cMGR{background:#fef9c3!important;color:#713f12!important;font-weight:700}
+.wt{font-weight:700;text-align:center;padding:6px 4px;font-size:11px;background:#f9fafb!important;white-space:nowrap;min-width:55px}
+.wt.ok{color:var(--green)}.wt.over{color:var(--red)!important;background:var(--red-lt)!important}
+tfoot td{background:#f3f4f6!important;font-weight:700;font-size:10px;text-align:center;padding:5px 3px;border:1px solid var(--border);color:var(--sub)}
+tfoot td.dtot{color:var(--red);font-weight:800}
 
-.inventory-row{ display:flex; gap:12px; align-items:center; margin-bottom:12px; flex-wrap:wrap; border-bottom:1px solid var(--line); padding-bottom:8px; }
-.inventory-name{ flex:2; font-weight:500; }
-.inventory-have{ width:100px; }
-.inventory-need{ width:100px; }
+/* ── stats ── */
+.stats{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px}
+.stat{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:7px 12px;flex:1;min-width:90px;box-shadow:var(--sh)}
+.stat .sv{font-size:19px;font-weight:800;color:var(--red)}.stat .sl{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:1px}
 
-.position-badge{ display:inline-block; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; margin-left:8px; }
-.position-store-manager{ background:#1e3a5f; color:white; }
-.position-shift-manager{ background:#2c5f2d; color:white; }
-.position-cook{ background:#d97706; color:white; }
-.position-team-member{ background:#6b7280; color:white; }
+/* ── alerts ── */
+.wbox{background:var(--red-lt);border:1px solid var(--red-md);border-radius:var(--r);padding:9px 12px;margin-top:9px;font-size:11px;color:var(--red);line-height:1.7}
+.okbox{background:var(--green-lt);border:1px solid var(--green-md);border-radius:var(--r);padding:9px 12px;margin-top:9px;font-size:11px;color:var(--green);line-height:1.7}
 
-@media (max-width: 600px) {
-    .page{ padding:12px; }
-    .card-modern{ padding:16px; }
-    .pin-field{ width:50px; height:50px; font-size:24px; }
-    .numpad-btn{ padding:14px; font-size:20px; }
-    .avail-day-row{ flex-direction: column; align-items: stretch; }
-    .day-label{ width:100%; }
-    .toggle-switch{ margin-left:0; justify-content: space-between; }
-    .time-range{ justify-content: center; }
+/* ── modal ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:10px;padding:20px 22px;width:min(440px,95vw);box-shadow:0 8px 32px rgba(0,0,0,.18)}
+.modal h3{font-size:14px;font-weight:700;margin-bottom:14px}
+.modal-row{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+
+/* ── toast ── */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(14px);background:#111;color:#fff;padding:8px 18px;border-radius:99px;font-size:12px;font-weight:600;opacity:0;pointer-events:none;transition:all .25s;z-index:2000;max-width:90vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── spinner ── */
+.spin{display:inline-block;width:11px;height:11px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:sp .55s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ── section divider ── */
+.section-title{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+
+@media print{
+  body{background:#fff;padding:0}
+  .wrap>*:not(#sched-wrap){display:none!important}
+  #schedule-content{border:none;border-radius:0;box-shadow:none}
 }
 </style>
 </head>
 <body>
+<div class="wrap">
 
-<div id="splash">
-    <h1 style="color:white; font-weight:900;">KFC 1416</h1>
-    <p style="color:#94a3b8;">Loading Staff Portal...</p>
-    <div style="margin-top:20px;"><i class="fas fa-spinner fa-pulse" style="color:white; font-size:30px;"></i></div>
+<!-- ═══════════════ TOP BAR ═══════════════ -->
+<div class="topbar">
+  <div class="kfc">KFC</div>
+  <div class="topbar-info">
+    <h2>Store 1416 — ShiftCore Pro</h2>
+    <p>Set availability → Generate → Edit cells → Export PDF</p>
+  </div>
+  <div class="topbar-right">
+    <div class="wk-inp"><label>Week Starting (Monday)</label>
+      <input type="date" id="weekStart" value="2026-04-07">
+    </div>
+    <button class="btn b-green b-sm" onclick="exportPDF()">⬇ PDF</button>
+  </div>
 </div>
 
-<div id="globalLoginScreen" class="login-overlay" style="display:none;">
-    <div class="login-card">
-        <h2><i class="fas fa-store"></i> KFC 1416 Access</h2>
-        <div class="role-select">
-            <button class="role-btn active" id="roleStaffBtn">👥 Staff Login</button>
-            <button class="role-btn" id="roleManagerBtn">👑 Manager Login</button>
-        </div>
-        
-        <div id="staffLoginView">
-            <div class="staff-select-container">
-                <label><i class="fas fa-user"></i> Select Your Name</label>
-                <select id="staffNameSelect" class="staff-select">
-                    <option value="">-- Choose your name --</option>
-                </select>
-            </div>
-            <div class="pin-section">
-                <label><i class="fas fa-lock"></i> Enter Your PIN</label>
-                <div class="pin-input-wrapper">
-                    <input type="text" inputmode="none" readonly class="pin-field" id="pin1">
-                    <input type="text" inputmode="none" readonly class="pin-field" id="pin2">
-                    <input type="text" inputmode="none" readonly class="pin-field" id="pin3">
-                    <input type="text" inputmode="none" readonly class="pin-field" id="pin4">
-                </div>
-                <div class="pin-numpad" id="staffNumpad">
-                    <button class="numpad-btn" data-digit="1">1</button>
-                    <button class="numpad-btn" data-digit="2">2</button>
-                    <button class="numpad-btn" data-digit="3">3</button>
-                    <button class="numpad-btn" data-digit="4">4</button>
-                    <button class="numpad-btn" data-digit="5">5</button>
-                    <button class="numpad-btn" data-digit="6">6</button>
-                    <button class="numpad-btn" data-digit="7">7</button>
-                    <button class="numpad-btn" data-digit="8">8</button>
-                    <button class="numpad-btn" data-digit="9">9</button>
-                    <button class="numpad-btn" data-digit="0">0</button>
-                    <button class="numpad-btn clear" id="staffClearBtn">⌫ Clear</button>
-                    <button class="numpad-btn" id="staffEnterBtn" style="background:var(--brand); color:white;">✓ Enter</button>
-                </div>
-            </div>
-        </div>
-        
-        <div id="managerLoginView" style="display:none;">
-            <div class="pin-section">
-                <label><i class="fas fa-lock"></i> Manager Access Code</label>
-                <div class="pin-input-wrapper">
-                    <input type="text" inputmode="none" readonly class="pin-field" id="mgrPin1">
-                    <input type="text" inputmode="none" readonly class="pin-field" id="mgrPin2">
-                    <input type="text" inputmode="none" readonly class="pin-field" id="mgrPin3">
-                    <input type="text" inputmode="none" readonly class="pin-field" id="mgrPin4">
-                </div>
-                <div class="pin-numpad" id="managerNumpad">
-                    <button class="numpad-btn" data-digit="1">1</button>
-                    <button class="numpad-btn" data-digit="2">2</button>
-                    <button class="numpad-btn" data-digit="3">3</button>
-                    <button class="numpad-btn" data-digit="4">4</button>
-                    <button class="numpad-btn" data-digit="5">5</button>
-                    <button class="numpad-btn" data-digit="6">6</button>
-                    <button class="numpad-btn" data-digit="7">7</button>
-                    <button class="numpad-btn" data-digit="8">8</button>
-                    <button class="numpad-btn" data-digit="9">9</button>
-                    <button class="numpad-btn" data-digit="0">0</button>
-                    <button class="numpad-btn clear" id="mgrClearBtn">⌫ Clear</button>
-                    <button class="numpad-btn" id="mgrEnterBtn" style="background:var(--brand); color:white;">✓ Login</button>
-                </div>
-            </div>
-        </div>
-        
-        <div id="loginError" class="login-error"></div>
-    </div>
+<!-- ═══════════════ LEGEND ═══════════════ -->
+<div class="legend">
+  <div class="leg l-sm"><span class="dot"></span>SM Morning 9:30a–5:30p (8h)</div>
+  <div class="leg l-sk"><span class="dot"></span>SM Closing 5:00p–11:30p (6.5h)</div>
+  <div class="leg l-cm"><span class="dot"></span>Cook Morning 9:30a–5:00p (7.5h)</div>
+  <div class="leg l-ck"><span class="dot"></span>Cook Closing 5:00p–11:30p (6.5h)</div>
+  <div class="leg l-tm"><span class="dot"></span>TM Open 10a–6p (8h) · TM Close 5p–10:30p (5.5h) · TM Mid 12p–8p (8h, Tue/Thu/Fri/Sat only)</div>
+  <div class="leg l-mgr"><span class="dot"></span>Store Manager (flexible)</div>
+  <div class="leg l-off"><span class="dot"></span>OFF · Max 40h/week enforced</div>
 </div>
 
-<div id="staffPortal" style="display:none;">
-    <div class="app-header">
-        <span><i class="fas fa-user-clock"></i> Staff Portal</span>
-        <button class="btn-outline" style="color:white;" id="staffLogoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
-    </div>
-    <div style="padding:20px; max-width:800px; margin:0 auto;">
-        <div class="card-modern">
-            <h3>Hello, <span id="staffNameDisplay"></span> <span id="staffPositionDisplay" style="font-size:14px;"></span> 👋</h3>
-            <p>Set your weekly availability. Your manager will see your schedule.</p>
-            <div id="staffAvailabilityEditor"></div>
-            <button class="btn-primary" style="width:100%; margin-top:20px;" id="saveStaffAvailabilityBtn">Save My Availability</button>
-            <div id="staffPortalMsg" style="margin-top:15px;"></div>
-        </div>
-    </div>
+<!-- ═══════════════ STEP 1: ROLES ═══════════════ -->
+<div class="panel">
+  <div class="ph">
+    <span>① Employee Roles</span>
+    <span class="ph-note">Mon / Wed / Sun = Type-A (6 slots) &nbsp;|&nbsp; Tue / Thu / Fri / Sat = Type-B (7 slots, adds TM-Mid)</span>
+  </div>
+  <div class="pb">
+    <div class="rg" id="roleGrid"></div>
+  </div>
 </div>
 
-<div id="managerApp" style="display:none;">
-    <div class="app-header">
-        <span>KFC 1416 Manager Hub</span>
-        <button class="btn-outline" style="color:white;" id="themeToggleBtn"><i class="fas fa-moon"></i> Theme</button>
-        <button class="btn-outline" style="color:white; margin-left:8px;" id="managerLogoutBtn"><i class="fas fa-sign-out-alt"></i> Exit</button>
+<!-- ═══════════════ STEP 2: ADD / REMOVE STAFF ═══════════════ -->
+<div class="panel">
+  <div class="ph"><span>② Manage Staff</span></div>
+  <div class="pb">
+    <div class="section-title" style="margin-bottom:6px">Add New Employee</div>
+    <div class="add-staff-form">
+      <div style="flex:2;min-width:150px">
+        <label class="lbl">Full Name (Last, First)</label>
+        <input type="text" id="newName" placeholder="e.g. Smith, John">
+      </div>
+      <div style="flex:1.2;min-width:130px">
+        <label class="lbl">Short Name / Nickname</label>
+        <input type="text" id="newShort" placeholder="e.g. John">
+      </div>
+      <div style="flex:1.2;min-width:140px">
+        <label class="lbl">Primary Role</label>
+        <select id="newRole" style="width:100%">
+          <option value="TM">Team Member (TM)</option>
+          <option value="CM,CK,TM">Cook (Morning + Closing)</option>
+          <option value="CM,TM">Cook Morning Only</option>
+          <option value="CK,TM">Cook Closing Only</option>
+          <option value="SM,SK,CM,CK,TM">Shift Manager (All Shifts)</option>
+          <option value="SM,CM,CK,TM">Shift Manager — Morning Only</option>
+          <option value="SK,CM,CK,TM">Shift Manager — Closing Only</option>
+        </select>
+      </div>
+      <div>
+        <label class="lbl">&nbsp;</label>
+        <button class="btn b-blue" onclick="addStaff()">+ Add Staff</button>
+      </div>
     </div>
-    <div class="tabs-container">
-        <button class="tab on" data-tab="team">Team & PINs</button>
-        <button class="tab" data-tab="sched">Schedule</button>
-        <button class="tab" data-tab="inv">Inventory</button>
-        <button class="tab" data-tab="import">Import Staff</button>
-    </div>
-
-    <div class="page on" id="pg-team">
-        <div style="display:flex; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
-            <h3>Roster & PIN Management</h3>
-            <button class="btn-primary" id="addEmpBtn">+ Add Employee</button>
-        </div>
-        <div id="teamGrid"></div>
-    </div>
-
-    <div class="page" id="pg-sched">
-        <div class="card-modern">
-            <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
-                <input type="date" id="wkStart" class="input-field" style="width:auto;">
-                <button class="btn-primary" id="exportPdfBtn">Export PDF</button>
-                <button class="btn-primary" id="refreshBtn" style="background:#2c3e66;">⟳ Refresh</button>
-            </div>
-            <div id="schedOut" style="overflow-x:auto;"></div>
-        </div>
-    </div>
-
-    <div class="page" id="pg-inv">
-        <div id="invContent"></div>
-        <button class="btn-primary" style="margin-top:20px;" id="saveInventoryBtn">Save All Inventory Changes</button>
-    </div>
-
-    <div class="page" id="pg-import">
-        <div class="card-modern">
-            <h3>Detect Employees from Text</h3>
-            <textarea id="importText" class="input-field" style="height:200px;" placeholder="Paste names like 'Bouhoula, Mohamed Hedi' ..."></textarea>
-            <button class="btn-primary" id="scanImportBtn">Scan & Add Staff (default PIN 0000)</button>
-            <div id="importResult" style="margin-top:15px;"></div>
-        </div>
-    </div>
+  </div>
 </div>
+
+<!-- ═══════════════ STEP 3: AVAILABILITY ═══════════════ -->
+<div class="panel">
+  <div class="ph ph-red">
+    <span>③ Availability — check days each employee CAN work</span>
+    <div style="display:flex;gap:6px">
+      <button class="btn b-ghost b-sm" onclick="setAllAvail(true)">All Available</button>
+      <button class="btn b-ghost b-sm" onclick="setAllAvail(false)">Clear All</button>
+    </div>
+  </div>
+  <div class="pb">
+    <div class="ag" id="availGrid"></div>
+    <div style="margin-top:8px">
+      <label class="lbl" style="margin-bottom:4px">Plain-English availability notes (any spelling — AI corrects automatically):</label>
+      <div class="nl-row">
+        <textarea id="nlBox" rows="5" placeholder="Ghazala working monday to friday&#10;Adam off tuesday thursday saturday&#10;Mohamed Hedi off sunday&#10;Damilola off all week&#10;Brinto works every day&#10;Sunny is available from monday to thursday"></textarea>
+        <div class="nl-col">
+          <button class="btn b-ghost" onclick="parseNL()">Parse</button>
+          <button class="btn b-blue" id="aiBtn" onclick="aiParse()"><span id="aiLbl">✨ AI Parse</span></button>
+        </div>
+      </div>
+      <div id="nlRes"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ STEP 4: GENERATE ═══════════════ -->
+<div class="panel">
+  <div class="ph"><span>④ Generate &amp; Validate</span></div>
+  <div class="pb">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn b-blue" onclick="generate()">⚡ Auto-Generate Schedule</button>
+      <button class="btn b-ghost" onclick="clearSched()">Clear Schedule</button>
+      <button class="btn b-purple" onclick="validate()">✓ Validate Rules</button>
+      <button class="btn b-green" onclick="exportPDF()">⬇ Export PDF</button>
+    </div>
+    <div id="warnings"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ STATS ═══════════════ -->
+<div class="stats">
+  <div class="stat"><div class="sv" id="sHrs">—</div><div class="sl">Total Hours</div></div>
+  <div class="stat"><div class="sv" id="sEmp">—</div><div class="sl">Staff Working</div></div>
+  <div class="stat"><div class="sv" id="sOff">—</div><div class="sl">Days Off</div></div>
+  <div class="stat"><div class="sv" id="sAvg">—</div><div class="sl">Avg h/Person</div></div>
+  <div class="stat"><div class="sv" id="sCov">—</div><div class="sl">Days Covered</div></div>
+  <div class="stat"><div class="sv" id="sOver" style="color:var(--amber)">0</div><div class="sl">Over-40h</div></div>
+</div>
+
+<!-- ═══════════════ SCHEDULE TABLE ═══════════════ -->
+<div id="sched-wrap">
+<div id="schedule-content">
+  <div class="sched-hdr">
+    <h1>KFC Store 1416</h1>
+    <span id="wkLabel">Weekly Schedule</span>
+    <span style="margin-left:auto;font-size:10px;opacity:.8">Store Manager: Mohamed Hedi Bouhoula</span>
+  </div>
+  <div class="tw">
+    <table id="tbl">
+      <thead><tr id="tHead"></tr></thead>
+      <tbody id="tBody"></tbody>
+      <tfoot><tr id="tFoot"></tr></tfoot>
+    </table>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════ DELETE MODAL ═══════════════ -->
+<div class="modal-bg" id="delModal">
+  <div class="modal">
+    <h3>🗑 Remove Employee</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Select an employee to permanently remove from the schedule roster.</p>
+    <div class="modal-row">
+      <label class="lbl">Employee</label>
+      <select id="delSel" style="width:100%"></select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn b-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn b-danger" onclick="confirmDelete()">Remove Employee</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
 
 <script>
-const firebaseConfig = {
-    apiKey: "AIzaSyBF3T4E6ckYGzaL28YKMMVz9PRoJ_57pWA",
-    authDomain: "ottawa-arab-deals.firebaseapp.com",
-    projectId: "ottawa-arab-deals",
-    databaseURL: "https://ottawa-arab-deals-default-rtdb.firebaseio.com",
-    storageBucket: "ottawa-arab-deals.firebasestorage.app",
-    messagingSenderId: "271070834694",
-    appId: "1:271070834694:web:df94994328a8e503cdd387"
+'use strict';
+/* ═══════════════════════════════════════════════════════════
+   SHIFT DEFINITIONS  (immutable — business rules)
+
+   TYPE-A days: Mon(0), Wed(2), Sun(6)
+     Required slots: SM, SK, CM, CK, TM1, TM2
+
+   TYPE-B days: Tue(1), Thu(3), Fri(4), Sat(5)
+     Required slots: SM, SK, CM, CK, TM1, TM2, TM3
+
+   SM   Shift Mgr Morning    9:30a–5:30p    8.00 h
+   SK   Shift Mgr Closing    5:00p–11:30p   6.50 h
+   CM   Cook Morning         9:30a–5:00p    7.50 h
+   CK   Cook Closing         5:00p–11:30p   6.50 h
+   TM1  Team Member Opening  10:00a–6:00p   8.00 h
+   TM2  Team Member Closing  5:00p–10:30p   5.50 h
+   TM3  Team Member Mid      12:00p–8:00p   8.00 h  (Type-B only)
+═══════════════════════════════════════════════════════════ */
+
+const TYPE_A = new Set([0,2,6]); // Mon=0, Wed=2, Sun=6
+
+const SHIFT_DEF = {
+  SM : {label:'SM Morning',   time:'9:30a–5:30p',  hrs:8.00, cls:'cSM', disp:'SM Morning\n9:30a–5:30p\n(8.00h)'},
+  SK : {label:'SM Closing',   time:'5:00p–11:30p', hrs:6.50, cls:'cSK', disp:'SM Closing\n5:00p–11:30p\n(6.50h)'},
+  CM : {label:'Cook Morning', time:'9:30a–5:00p',  hrs:7.50, cls:'cCM', disp:'Cook Morn\n9:30a–5:00p\n(7.50h)'},
+  CK : {label:'Cook Closing', time:'5:00p–11:30p', hrs:6.50, cls:'cCK', disp:'Cook Close\n5:00p–11:30p\n(6.50h)'},
+  TM1: {label:'TM Opening',   time:'10:00a–6:00p', hrs:8.00, cls:'cTM', disp:'TM Open\n10:00a–6:00p\n(8.00h)'},
+  TM2: {label:'TM Closing',   time:'5:00p–10:30p', hrs:5.50, cls:'cTM', disp:'TM Close\n5:00p–10:30p\n(5.50h)'},
+  TM3: {label:'TM Mid',       time:'12:00p–8:00p', hrs:8.00, cls:'cTM', disp:'TM Mid\n12:00p–8:00p\n(8.00h)'},
 };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
 
-const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+// Per day type: which slots are required, in assignment priority order
+const SLOTS_A = ['SM','SK','CM','CK','TM1','TM2'];
+const SLOTS_B = ['SM','SK','CM','CK','TM1','TM2','TM3'];
 
-const FULL_INVENTORY = {
-    freezer: [ { name: "Fries", have: "7", need: "11" }, { name: "Hot wings", have: "7", need: "0" }, { name: "Popcorn", have: "4", need: "6" }, { name: "Onion rings", have: "1", need: "3" }, { name: "Buns", have: "3", need: "3" }, { name: "Slides", have: "1.5", need: "1" }, { name: "Cheese curd", have: "2", need: "0" }, { name: "Tortillas 10.25", have: "0.5", need: "1" }, { name: "zinger", have: "0", need: "1" }, { name: "Big crunch", have: "1.5", need: "0" } ],
-    kitchen: [ { name: "Flour", have: "1", need: "2" }, { name: "Oil", have: "3", need: "5" } ],
-    coles: [ { name: "Macaroni", have: "2", need: "1" }, { name: "Coleslaw", have: "2", need: "1" }, { name: "Mayo", have: "1", need: "0" }, { name: "SP Mayo", have: "0", need: "0" }, { name: "Pepper Mayo", have: "1", need: "0" }, { name: "Cheese", have: "1", need: "0" } ],
-    drinks: [ { name: "2L drinks", have: "0", need: "0" }, { name: "500mL Pepsi", have: "0", need: "0" }, { name: "500mL Diet Pepsi", have: "0", need: "0" }, { name: "500mL 7up", have: "0", need: "0" }, { name: "500ml ice tea", have: "0", need: "0" }, { name: "355 ml pepsi", have: "0", need: "0" }, { name: "355 ml pepsi diet", have: "0", need: "0" } ],
-    packing: [ { name: "Gloves (box)", have: "5", need: "2" }, { name: "Boxes No. 1", have: "0", need: "Yes" }, { name: "Boxes No. 2", have: "0", need: "Yes" }, { name: "Boxes No. 3", have: "0", need: "Yes" }, { name: "16 large side container", have: "0", need: "Yes" }, { name: "16 large side Lids", have: "0", need: "Yes" }, { name: "Small side Container", have: "0", need: "Yes" }, { name: "Small side Lids", have: "0", need: "Yes" } ],
-    bib: [ { name: "Super charger syrup", have: "0", need: "Yes" } ]
-};
+const MAX_H = 40;
 
-// CORRECTED STAFF WITH POSITIONS as requested
-const STAFF_WITH_POSITIONS = [
-    { name: "Bouhoula, Mohamed Hedi", position: "Store Manager" },
-    { name: "Adedunye, Damiola", position: "Team Member" },
-    { name: "Appidi, Nandakishore", position: "Team Member" },
-    { name: "Hashim, Agil", position: "Team Member" },
-    { name: "Legault-Agil, Alyza", position: "Team Member" },
-    { name: "Aghwach, Adam", position: "Cook" },
-    { name: "Belarbii, Anes", position: "Cook" },
-    { name: "Shaheen, Ghazala", position: "Shift Manager" },
-    { name: "Tiwari, Balveer", position: "Shift Manager" },
-    { name: "Gilotra, Arjun", position: "Shift Manager" }
+/* ═══════════════════════════════════════════════════════════
+   EMPLOYEE DATA  (mutable — can add/remove)
+
+   roles array controls what each employee CAN be assigned to:
+     MGR  = Store Manager — fills any slot but is last resort
+     SM   = can fill Shift Manager Morning slot
+     SK   = can fill Shift Manager Closing slot
+     SMO  = Shift Manager Morning ONLY (cannot fill SK slot ever)
+     CM   = can fill Cook Morning slot
+     CK   = can fill Cook Closing slot
+     TM   = can fill any Team Member slot
+
+   isMgr flag = true only for Mohamed Hedi (Store Manager)
+═══════════════════════════════════════════════════════════ */
+// ─────────────────────────────────────────────────────────────────────────────
+// EMPLOYEE ROSTER  (corrected per manager's instructions)
+//
+// Role key:
+//   SM  = Shift Manager Morning slot ONLY
+//   SK  = Shift Manager Closing slot ONLY
+//   SMO = Morning-only Shift Manager (alias for SM without SK)
+//   CM  = Cook Morning slot
+//   CK  = Cook Closing slot
+//   TM  = Team Member (any TM slot)
+//   MGR = Store Manager (fills any slot, last resort)
+//
+// defaultAvail[0..6] = Mon..Sun  — pre-set per manager's notes
+// ─────────────────────────────────────────────────────────────────────────────
+let EMPS = [
+  // Damilola — TM, all week (no specific restriction given)
+  {name:'Adedunye, Damilola',     short:'Damilola',     roles:['TM'],
+   defaultAvail:[true,true,true,true,true,true,true],  isMgr:false},
+
+  // Adam — Cook (morning + closing), all week
+  {name:'Aghwach, Adam',          short:'Adam',         roles:['CM','CK','TM'],
+   defaultAvail:[true,true,true,true,true,true,true],  isMgr:false},
+
+  // Nandakishore — Team Member ONLY (not cook), all week
+  {name:'Appidi, Nandakishore',   short:'Nanda',        roles:['TM'],
+   defaultAvail:[true,true,true,true,true,true,true],  isMgr:false},
+
+  // Anes — Cook (morning + closing), all week
+  {name:'Belarbi, Anes',          short:'Anes',         roles:['CM','CK','TM'],
+   defaultAvail:[true,true,true,true,true,true,true],  isMgr:false},
+
+  // Jorge — Cook MORNING ONLY, available Mon–Wed ONLY
+  //   slots: CM only (NOT CK). avail: Mon(0), Tue(1), Wed(2) = true; rest false
+  {name:'Figueroa, Jorge',        short:'Jorge',        roles:['CM','TM'],
+   defaultAvail:[true,true,true,false,false,false,false], isMgr:false,
+   morningOnly:true},
+
+  // Arjun — Shift Manager (morning + closing), all week
+  {name:'Gilotra, Arjun',         short:'Arjun',        roles:['SM','SK','CM','CK','TM'],
+   defaultAvail:[true,true,true,true,true,true,true],  isMgr:false},
+
+  // Agil — TM, all week
+  {name:'Hashim, Agil',           short:'Agil',         roles:['TM'],
+   defaultAvail:[true,true,true,true,true,true,true],  isMgr:false},
+
+  // Sunny — Cook (morning + closing), all week
+  {name:'Khandelwal, Sunny',      short:'Sunny',        roles:['CM','CK','TM'],
+   defaultAvail:[true,true,true,true,true,true,true],  isMgr:false},
+
+  // Brinto — TM, all week
+  {name:'Saaji, Brinto',          short:'Brinto',       roles:['TM'],
+   defaultAvail:[true,true,true,true,true,true,true],  isMgr:false},
+
+  // Amadrdeed — TM, all week
+  {name:'Saaji, Amadrdeed',       short:'Amadrdeed',    roles:['TM'],
+   defaultAvail:[true,true,true,true,true,true,true],  isMgr:false},
+
+  // Ghazala — Shift Manager MORNING ONLY (SM slot only, NOT SK/closing)
+  //   available Mon–Fri only (0=Mon … 4=Fri)
+  {name:'Shaheen, Ghazala',       short:'Ghazala',      roles:['SM','TM'],
+   defaultAvail:[true,true,true,true,true,false,false], isMgr:false,
+   morningOnly:true},
+
+  // Balveer — Shift Manager (morning + closing), all week
+  {name:'Tiwari, Balveer',        short:'Balveer',      roles:['SM','SK','CM','CK','TM'],
+   defaultAvail:[true,true,true,true,true,true,true],  isMgr:false},
+
+  // Mohamed Hedi — Store Manager, flexible, all week
+  {name:'Bouhoula, Mohamed Hedi', short:'Mohamed Hedi', roles:['MGR'],
+   defaultAvail:[true,true,true,true,true,true,true],  isMgr:true,
+   mgrFlexSlots:['SM','SK','CM','CK','TM1','TM2','TM3']},
 ];
 
-let D = { employees: [], inventory: null, weekStart: new Date().toISOString().split('T')[0] };
-let currentStaffId = null;
-let staffPinDigits = ['', '', '', ''];
-let mgrPinDigits = ['', '', '', ''];
-let currentRole = 'staff';
+// State arrays — rebuilt whenever EMPS changes
+let avail = [];   // avail[ei][di] = true/false
+let sched = [];   // sched[ei][di] = {cls,disp,hrs,label,slot} | null
 
-// Helper function to get position badge class
-function getPositionBadgeClass(position) {
-    switch(position) {
-        case 'Store Manager': return 'position-store-manager';
-        case 'Shift Manager': return 'position-shift-manager';
-        case 'Cook': return 'position-cook';
-        default: return 'position-team-member';
-    }
+function initState(){
+  const old_avail = avail.slice();
+  const old_sched = sched.slice();
+  // Use the employee's defaultAvail if no prior state exists
+  avail = EMPS.map((emp,i)=> old_avail[i] || (emp.defaultAvail ? [...emp.defaultAvail] : Array(7).fill(true)));
+  sched = EMPS.map((_,i)=> old_sched[i] || Array(7).fill(null));
+}
+initState();
+
+/* ═══════════════════════════════════════════════════════════
+   DAY / NAME MAPS
+═══════════════════════════════════════════════════════════ */
+const DAYS  = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const DAYSL = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+const DM    = {};
+DAYSL.forEach((d,i)=>{
+  DM[d]=i; DM[d.slice(0,3)]=i;
+});
+// Extra aliases
+Object.assign(DM,{mon:0,tue:1,tues:1,wed:2,thu:3,thur:3,thurs:3,fri:4,sat:5,sun:6,sund:6,su:6});
+
+/* ═══════════════════════════════════════════════════════════
+   DOM HELPERS
+═══════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g,'');
+
+let toastTimer;
+function toast(msg, ms=3200){
+  const el=$('toast'); el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),ms);
 }
 
-// PIN Display Functions
-function updateStaffPinDisplay() {
-    for(let i=0; i<4; i++) {
-        const field = document.getElementById(`pin${i+1}`);
-        if(field) field.value = staffPinDigits[i];
-    }
+/* ═══════════════════════════════════════════════════════════
+   ROLE HELPERS
+═══════════════════════════════════════════════════════════ */
+// Returns the badge label for display
+function dispRole(ei){
+  const r=EMPS[ei].roles;
+  if(EMPS[ei].isMgr) return 'MGR';
+  if(r.includes('SMO') && !r.includes('SK')) return 'SMO';
+  if(r.includes('SM')  && r.includes('SK'))  return 'SM';
+  if(r.includes('SM')  && !r.includes('SK')) return 'SMO';
+  if(r.includes('SK')  && !r.includes('SM')) return 'SK';
+  if(r.includes('CM')  && r.includes('CK'))  return 'CK';
+  if(r.includes('CM'))  return 'CM';
+  return 'TM';
 }
 
-function updateMgrPinDisplay() {
-    for(let i=0; i<4; i++) {
-        const field = document.getElementById(`mgrPin${i+1}`);
-        if(field) field.value = mgrPinDigits[i];
-    }
-}
+// Role options for dropdowns
+const ROLE_OPTIONS = [
+  {val:'TM',              label:'Team Member'},
+  {val:'CM,CK,TM',        label:'Cook (Morning + Closing)'},
+  {val:'CM,TM',           label:'Cook Morning Only'},
+  {val:'CK,TM',           label:'Cook Closing Only'},
+  {val:'SM,SK,CM,CK,TM', label:'Shift Manager (All Shifts)'},
+  {val:'SM,CM,CK,TM',    label:'Shift Manager — Morning Only'},
+  {val:'SK,CM,CK,TM',    label:'Shift Manager — Closing Only'},
+];
 
-function appendStaffDigit(digit) {
-    for(let i=0; i<4; i++) {
-        if(staffPinDigits[i] === '') {
-            staffPinDigits[i] = digit;
-            updateStaffPinDisplay();
-            break;
-        }
-    }
-}
+/* ═══════════════════════════════════════════════════════════
+   STEP 1 — ROLE GRID
+═══════════════════════════════════════════════════════════ */
+function buildRoleGrid(){
+  const g=$('roleGrid'); g.innerHTML='';
+  EMPS.forEach((emp,ei)=>{
+    const d=document.createElement('div');
+    d.className='re'+(emp.isMgr?' is-mgr':'');
+    const dr=dispRole(ei);
 
-function clearStaffPin() {
-    staffPinDigits = ['', '', '', ''];
-    updateStaffPinDisplay();
-}
-
-function appendMgrDigit(digit) {
-    for(let i=0; i<4; i++) {
-        if(mgrPinDigits[i] === '') {
-            mgrPinDigits[i] = digit;
-            updateMgrPinDisplay();
-            break;
-        }
-    }
-}
-
-function clearMgrPin() {
-    mgrPinDigits = ['', '', '', ''];
-    updateMgrPinDisplay();
-}
-
-function getStaffPin() { return staffPinDigits.join(''); }
-function getMgrPin() { return mgrPinDigits.join(''); }
-
-// Firebase Functions
-function saveToFirebase() {
-    if(D && D.employees) {
-        db.ref('kfc_data').set(D).then(() => {
-            console.log("Data saved to Firebase successfully");
-        }).catch(error => {
-            console.error("Error saving to Firebase:", error);
-        });
-    }
-}
-
-function loadFromFirebase() {
-    return db.ref('kfc_data').once('value').then((snap) => {
-        if(snap.val()) {
-            D = snap.val();
-            if(!D.inventory) D.inventory = JSON.parse(JSON.stringify(FULL_INVENTORY));
-            if(D.employees && D.employees.length > 0) {
-                D.employees.forEach(e => { 
-                    if(!e.pin) e.pin = '0000'; 
-                    if(!e.avail || e.avail.length !== 7) {
-                        e.avail = DAYS.map(()=>({on:false, s:'09:00', e:'17:00'}));
-                    }
-                });
-            } else {
-                // If no employees in Firebase, create the default ones
-                createDefaultEmployees();
-            }
-            return true;
-        } else {
-            // First time - create default employees
-            createDefaultEmployees();
-            return true;
-        }
-    });
-}
-
-function createDefaultEmployees() {
-    D.employees = STAFF_WITH_POSITIONS.map((staff, i) => ({ 
-        id: `emp_${i}_${Date.now()}`, 
-        name: staff.name, 
-        position: staff.position,
-        pin: '0000', 
-        avail: DAYS.map(()=>({on:false, s:'09:00', e:'17:00'}))
-    }));
-    D.inventory = JSON.parse(JSON.stringify(FULL_INVENTORY));
-    saveToFirebase();
-}
-
-function listenForChanges() {
-    db.ref('kfc_data').on('value', (snap) => {
-        if(snap.val()) {
-            const newData = snap.val();
-            D.employees = newData.employees || [];
-            D.inventory = newData.inventory || JSON.parse(JSON.stringify(FULL_INVENTORY));
-            D.weekStart = newData.weekStart || new Date().toISOString().split('T')[0];
-            
-            D.employees.forEach(e => { 
-                if(!e.pin) e.pin = '0000'; 
-                if(!e.avail || e.avail.length !== 7) {
-                    e.avail = DAYS.map(()=>({on:false, s:'09:00', e:'17:00'}));
-                }
-            });
-            
-            updateStaffDropdown();
-            if(document.getElementById('managerApp').style.display === 'block') {
-                refreshUI();
-            }
-        }
-    });
-}
-
-function updateStaffDropdown() {
-    const select = document.getElementById('staffNameSelect');
-    if(select && D.employees && D.employees.length > 0) {
-        const currentValue = select.value;
-        select.innerHTML = '<option value="">-- Choose your name --</option>';
-        D.employees.forEach(emp => {
-            const option = document.createElement('option');
-            option.value = emp.id;
-            option.textContent = `${emp.name} (${emp.position})`;
-            select.appendChild(option);
-        });
-        if(currentValue && D.employees.find(e => e.id === currentValue)) {
-            select.value = currentValue;
-        }
-    }
-}
-
-function refreshUI() { 
-    if(document.getElementById('managerApp').style.display === 'block') { 
-        renderTeam(); 
-        renderInventory(); 
-        buildSched(); 
-    } 
-}
-
-// Login Functions
-function verifyStaffLogin() {
-    const selectedId = document.getElementById('staffNameSelect').value;
-    if(!selectedId) {
-        document.getElementById('loginError').innerHTML = '⚠️ Please select your name first.';
-        return;
-    }
-    const pin = getStaffPin();
-    if(pin.length !== 4) {
-        document.getElementById('loginError').innerHTML = '⚠️ Please enter 4-digit PIN.';
-        return;
-    }
-    const employee = D.employees.find(e => e.id === selectedId);
-    if(employee && employee.pin === pin) {
-        currentStaffId = employee.id;
-        document.getElementById('staffNameDisplay').innerHTML = employee.name;
-        const positionSpan = document.getElementById('staffPositionDisplay');
-        positionSpan.innerHTML = `<span class="position-badge ${getPositionBadgeClass(employee.position)}">${employee.position}</span>`;
-        document.getElementById('globalLoginScreen').style.display = 'none';
-        document.getElementById('staffPortal').style.display = 'block';
-        loadStaffAvailabilityUI(employee);
-        document.getElementById('loginError').innerHTML = '';
-        clearStaffPin();
+    if(emp.isMgr){
+      d.innerHTML=`
+        <span class="re-name">${emp.short}</span>
+        <span class="rb rb-MGR">STORE MGR</span>
+        <span style="font-size:10px;color:var(--muted)">Flexible — set per day below</span>`;
     } else {
-        document.getElementById('loginError').innerHTML = '❌ Invalid PIN. Default is 0000. Contact manager.';
-        clearStaffPin();
-    }
-}
-
-function verifyManagerLogin() {
-    const pin = getMgrPin();
-    if(pin === '1416') {
-        document.getElementById('globalLoginScreen').style.display = 'none';
-        document.getElementById('managerApp').style.display = 'block';
-        refreshUI();
-        document.getElementById('loginError').innerHTML = '';
-        clearMgrPin();
-    } else {
-        document.getElementById('loginError').innerHTML = '❌ Invalid Manager Code.';
-        clearMgrPin();
-    }
-}
-
-function loadStaffAvailabilityUI(employee) {
-    const editorDiv = document.getElementById('staffAvailabilityEditor');
-    let html = `<div class="avail-grid">`;
-    DAYS.forEach((day, idx) => {
-        const slot = employee.avail[idx];
-        html += `<div class="avail-day-row">
-            <div class="day-label"><strong>${day}</strong></div>
-            <div class="time-range">
-                <input type="time" id="staff_start_${idx}" value="${slot.s}" step="900">
-                <span>➔</span>
-                <input type="time" id="staff_end_${idx}" value="${slot.e}" step="900">
-            </div>
-            <div class="toggle-switch">
-                <label class="switch">
-                    <input type="checkbox" class="staff-toggle" data-dayidx="${idx}" ${slot.on ? 'checked' : ''}>
-                    <span class="slider"></span>
-                </label>
-                <span class="avail-badge">${slot.on ? 'Available' : 'Unavailable'}</span>
-            </div>
+      const opts=ROLE_OPTIONS.map(o=>`<option value="${o.val}"${EMPS[ei].roles.join(',')===o.val?' selected':''}>${o.label}</option>`).join('');
+      d.innerHTML=`
+        <span class="re-name">${emp.short} <span class="rb rb-${dr}">${dr}</span></span>
+        <div class="re-actions">
+          <select id="rs${ei}" style="font-size:11px;padding:3px 7px">${opts}</select>
+          <button class="btn b-danger b-sm" onclick="openDeleteModal()" title="Remove staff">✕</button>
         </div>`;
+      d.querySelector('select').addEventListener('change',e=>{
+        EMPS[ei].roles=e.target.value.split(',');
+        buildRoleGrid(); buildAvailGrid();
+      });
+    }
+    g.appendChild(d);
+  });
+
+  // Delete button (non-MGR employees only) — open modal
+  // Already wired above
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ADD STAFF
+═══════════════════════════════════════════════════════════ */
+function addStaff(){
+  const name=$('newName').value.trim();
+  const short=$('newShort').value.trim();
+  const roleVal=$('newRole').value;
+  if(!name||!short){toast('⚠ Please enter both full name and short name.');return;}
+  if(EMPS.find(e=>norm(e.short)===norm(short))){toast('⚠ An employee with that short name already exists.');return;}
+
+  EMPS.push({name,short,roles:roleVal.split(','),isMgr:false,defaultAvail:Array(7).fill(true)});
+  avail.push(Array(7).fill(true));
+  sched.push(Array(7).fill(null));
+
+  $('newName').value=''; $('newShort').value='';
+  buildRoleGrid(); buildAvailGrid(); initEmptyRow(EMPS.length-1);
+  toast(`✅ ${short} added to the roster.`);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DELETE STAFF (modal)
+═══════════════════════════════════════════════════════════ */
+function openDeleteModal(){
+  const sel=$('delSel'); sel.innerHTML='';
+  EMPS.forEach((e,i)=>{
+    if(!e.isMgr){
+      const o=document.createElement('option');
+      o.value=i; o.textContent=`${e.short} — ${e.name}`;
+      sel.appendChild(o);
+    }
+  });
+  $('delModal').classList.add('open');
+}
+function closeModal(){ $('delModal').classList.remove('open'); }
+function confirmDelete(){
+  const idx=+$('delSel').value;
+  const name=EMPS[idx].short;
+  EMPS.splice(idx,1);
+  avail.splice(idx,1);
+  sched.splice(idx,1);
+  closeModal();
+  buildRoleGrid(); buildAvailGrid(); renderTable();
+  toast(`🗑 ${name} removed from roster.`);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   STEP 2 — AVAILABILITY GRID
+═══════════════════════════════════════════════════════════ */
+function buildAvailGrid(){
+  const g=$('availGrid'); g.innerHTML='';
+  EMPS.forEach((emp,ei)=>{ g.appendChild(buildAvailCard(ei)); });
+}
+
+function buildAvailCard(ei){
+  const emp=EMPS[ei];
+  const dr=dispRole(ei);
+  const wrap=document.createElement('div');
+  wrap.className='ae'+(emp.isMgr?' is-mgr':'');
+  wrap.id=`ac${ei}`;
+
+  // header
+  const hdr=document.createElement('div');
+  hdr.className='aeh';
+
+  const left=document.createElement('div');
+  left.className='aeh-left';
+  left.innerHTML=`<span id="abn${ei}" style="font-weight:700">${emp.short}</span>
+    <span class="rb rb-${dr}" id="abr${ei}">${dr}</span>
+    <span class="hrs-pill hp-ok" id="hpill${ei}">0.0h</span>`;
+
+  const qset=document.createElement('select');
+  qset.style.cssText='font-size:9.5px;padding:2px 4px;border:1px solid var(--border);border-radius:4px';
+  qset.innerHTML='<option value="">Quick…</option><option value="all">All 7</option><option value="wkd">Mon–Fri</option><option value="wke">Sat–Sun</option><option value="non">None</option>';
+  qset.addEventListener('change',e=>{ setPreset(ei,e.target.value); e.target.value=''; });
+
+  hdr.appendChild(left); hdr.appendChild(qset);
+  wrap.appendChild(hdr);
+
+  // checkboxes
+  const dc=document.createElement('div');
+  dc.className='dc'; dc.id=`dc${ei}`;
+  renderChecks(ei,dc);
+  wrap.appendChild(dc);
+
+  // MGR flexible shift selector
+  if(emp.isMgr){
+    const mbox=document.createElement('div');
+    mbox.className='mgr-flex-wrap';
+    mbox.innerHTML=`<span class="mgr-flex-title">Preferred shift per available day:</span>`;
+    DAYS.forEach((day,di)=>{
+      const uid=`mflex_${ei}_${di}`;
+      const grp=document.createElement('label');
+      grp.innerHTML=`
+        <input type="checkbox" id="${uid}" ${(emp.mgrFlexSlots||[]).includes('SM')?'checked':''}>
+        ${day} Morn`;
+      // Actually we want morning/closing toggle per day. Use a select per day.
+      mbox.appendChild(grp);
     });
-    html += `</div>`;
-    editorDiv.innerHTML = html;
-    document.querySelectorAll('.staff-toggle').forEach(toggle => {
-        toggle.addEventListener('change', function() {
-            const badge = this.closest('.toggle-switch')?.querySelector('.avail-badge');
-            if(badge) badge.textContent = this.checked ? 'Available' : 'Unavailable';
-        });
+
+    // Replace with a proper per-day select for MGR
+    mbox.innerHTML=`<span class="mgr-flex-title">Preferred shift type per day (when available):</span>`;
+    DAYS.forEach((day,di)=>{
+      const sel=document.createElement('select');
+      sel.id=`mflex_${ei}_${di}`;
+      sel.style.cssText='font-size:10px;padding:2px 5px;border:1px solid var(--border);border-radius:4px';
+      sel.innerHTML=`
+        <option value="SM">Morning (SM)</option>
+        <option value="SK">Closing (SM)</option>
+        <option value="CM">Cook Morn</option>
+        <option value="CK">Cook Close</option>
+        <option value="TM1">TM Open</option>
+        <option value="TM2">TM Close</option>
+        <option value="TM3">TM Mid</option>
+        <option value="any">Any (auto)</option>`;
+      sel.value='any';
+      const lbl=document.createElement('label');
+      lbl.style.cssText='font-size:10px;font-weight:600;color:var(--sub);display:flex;flex-direction:column;gap:2px;align-items:center';
+      lbl.innerHTML=`<span>${day}</span>`;
+      lbl.appendChild(sel);
+      mbox.appendChild(lbl);
     });
+    wrap.appendChild(mbox);
+  }
+
+  return wrap;
 }
 
-function saveStaffAvailabilityFromPortal() {
-    if(!currentStaffId) return;
-    const employeeIndex = D.employees.findIndex(e => e.id === currentStaffId);
-    if(employeeIndex === -1) return;
-    
-    for(let i=0; i<DAYS.length; i++) {
-        const start = document.getElementById(`staff_start_${i}`);
-        const end = document.getElementById(`staff_end_${i}`);
-        const toggle = document.querySelector(`.staff-toggle[data-dayidx="${i}"]`);
-        if(start && end && toggle) {
-            D.employees[employeeIndex].avail[i] = { on: toggle.checked, s: start.value, e: end.value };
-        }
+function renderChecks(ei, container){
+  if(!container) container=$(`dc${ei}`);
+  if(!container) return;
+  container.innerHTML='';
+  DAYS.forEach((d,di)=>{
+    const on=avail[ei][di];
+    const lbl=document.createElement('label');
+    lbl.className=on?'on':'off2';
+    const typeTag=TYPE_A.has(di)?'A':'B';
+    lbl.innerHTML=`<input type="checkbox" ${on?'checked':''} onchange="toggleAvail(${ei},${di},this.checked)">
+      ${d}<span class="dtype-tag">${typeTag}</span>`;
+    container.appendChild(lbl);
+  });
+}
+
+function toggleAvail(ei,di,val){
+  avail[ei][di]=val;
+  const lbl=$(`dc${ei}`);
+  if(lbl) lbl.children[di].className=val?'on':'off2';
+}
+
+function setPreset(ei,p){
+  if(!p) return;
+  const m={all:[0,1,2,3,4,5,6],wkd:[0,1,2,3,4],wke:[5,6],non:[]};
+  avail[ei]=Array(7).fill(false);
+  (m[p]||[]).forEach(di=>avail[ei][di]=true);
+  renderChecks(ei);
+}
+
+function setAllAvail(v){
+  EMPS.forEach((_,ei)=>{ avail[ei]=Array(7).fill(v); renderChecks(ei); });
+  toast(v?'All employees set available.':'All availability cleared.');
+}
+
+function updateHoursPill(ei,hrs){
+  const el=$(`hpill${ei}`);
+  if(!el) return;
+  el.textContent=hrs.toFixed(1)+'h';
+  el.className='hrs-pill '+(hrs>MAX_H?'hp-over':hrs>=35?'hp-warn':'hp-ok');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   NATURAL LANGUAGE PARSER (regex, manual)
+═══════════════════════════════════════════════════════════ */
+function findEmp(frag){
+  const q=norm(frag.trim());
+  if(!q) return -1;
+  // exact short name
+  let i=EMPS.findIndex(e=>norm(e.short)===q);
+  if(i>=0) return i;
+  // substring of short name
+  i=EMPS.findIndex(e=>norm(e.short).startsWith(q)||q.startsWith(norm(e.short).slice(0,4)));
+  if(i>=0) return i;
+  // substring of full name
+  i=EMPS.findIndex(e=>norm(e.name).includes(q)||q.includes(norm(e.short)));
+  return i;
+}
+
+function parseDayList(str){
+  str=str.trim().toLowerCase()
+    .replace(/\bthurs\b/g,'thu').replace(/\btues\b/g,'tue');
+
+  // range: "monday to friday" or "mon-fri"
+  const rng=str.match(/(\w+)\s*(?:to|through|thru|-)\s*(\w+)/);
+  if(rng){
+    const s=DM[rng[1]],e=DM[rng[2]];
+    if(s!==undefined&&e!==undefined){
+      const out=[];
+      if(s<=e) for(let d=s;d<=e;d++) out.push(d);
+      else { for(let d=s;d<7;d++) out.push(d); for(let d=0;d<=e;d++) out.push(d); }
+      return out;
     }
-    saveToFirebase();
-    const msgDiv = document.getElementById('staffPortalMsg');
-    msgDiv.innerHTML = '✅ Availability saved! Manager will see updates.';
-    msgDiv.style.color = '#10b981';
-    setTimeout(() => msgDiv.innerHTML = '', 2500);
+  }
+  // list: "tuesday, thursday and saturday"
+  const tokens=str.split(/[,\s]+(?:and\s*)?|\s+and\s+|\s+/);
+  const days=[...new Set(tokens.map(w=>DM[w.trim()]).filter(d=>d!==undefined))];
+  return days.length?days:null;
 }
 
-function renderTeam() {
-    const container = document.getElementById('teamGrid');
-    if(!container) return;
-    container.innerHTML = '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(340px,1fr)); gap:15px;">';
-    D.employees.forEach(emp => {
-        const availCount = emp.avail.filter(a=>a.on).length;
-        const positionClass = getPositionBadgeClass(emp.position);
-        container.innerHTML += `
-            <div class="card-modern">
-                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                    <div>
-                        <strong><i class="fas fa-user"></i> ${emp.name}</strong>
-                        <span class="position-badge ${positionClass}" style="margin-left:8px;">${emp.position}</span>
-                    </div>
-                    <span class="avail-badge">📅 ${availCount}/7</span>
-                </div>
-                <div style="margin:8px 0; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                    <span>🔐 PIN:</span>
-                    <input type="text" id="pin_${emp.id}" value="${emp.pin || '0000'}" maxlength="4" style="width:80px; text-align:center; border-radius:20px; border:1px solid var(--line); padding:6px;">
-                    <button class="btn-outline" style="padding:4px 12px;" onclick="window.updatePinFor('${emp.id}')">Set PIN</button>
-                </div>
-                <div style="font-size:12px; margin-top:8px;">${emp.avail.map((a,i)=> a.on ? `<span style="background:var(--brand); color:white; padding:2px 6px; border-radius:30px; margin:2px; display:inline-block;">${DAYS[i]} ${a.s}-${a.e}</span>` : '').join('') || 'No availability'}</div>
-            </div>`;
+function applyParsed(name,action,days,ok,warn){
+  const ei=findEmp(name);
+  if(ei<0){ warn.push(`Name not found: "${name.trim()}"`); return; }
+  if(action==='off_all'){
+    avail[ei]=Array(7).fill(false); renderChecks(ei);
+    ok.push(`${EMPS[ei].short}: off all week`); return;
+  }
+  if(action==='off'){
+    if(!days||!days.length){ warn.push(`No days parsed for: "${name.trim()}"`); return; }
+    days.forEach(di=>avail[ei][di]=false); renderChecks(ei);
+    ok.push(`${EMPS[ei].short}: off on ${days.map(d=>DAYS[d]).join(', ')}`); return;
+  }
+  if(action==='avail'){
+    if(!days||!days.length){ avail[ei]=Array(7).fill(true); renderChecks(ei); ok.push(`${EMPS[ei].short}: available all week`); return; }
+    avail[ei]=Array(7).fill(false); days.forEach(di=>avail[ei][di]=true); renderChecks(ei);
+    ok.push(`${EMPS[ei].short}: available ${days.map(d=>DAYS[d]).join(', ')}`);
+  }
+}
+
+function parseNL(){
+  const lines=$('nlBox').value.split(/[\n;]+/).map(l=>l.trim()).filter(Boolean);
+  const ok=[],warn=[];
+  lines.forEach(line=>{
+    const l=line.toLowerCase().trim();
+
+    // off all week
+    if(/off\s*(all\s*week|every\s*day|always)/.test(l)||/all\s*week.*off/.test(l)){
+      const name=l.replace(/\s*(is|are)?\s*off.*/,'').trim();
+      applyParsed(name,'off_all',null,ok,warn); return;
+    }
+    // "X off on day1 day2"
+    const offM=l.match(/^(.+?)\s+(is\s+|are\s+)?off(?:\s+on|\s+at)?\s+(.+?)(?:\s+this\s+week)?$/);
+    if(offM){
+      const days=parseDayList(offM[3]);
+      if(days&&days.length){ applyParsed(offM[1],'off',days,ok,warn); return; }
+    }
+    // "X working/works/available from day to day"
+    const workM=l.match(/^(.+?)\s+(is\s+)?(working|works|available|avail|on)(?:\s+from)?\s+(.+)/);
+    if(workM){
+      let ds=workM[4]
+        .replace(/from\s+[\d:]+\s*[apm]{0,2}\s+to\s+[\d:]+\s*[apm]{0,2}/gi,'')
+        .replace(/[\d:]+\s*[apm]{1,2}\s*[-–to]+\s*[\d:]+\s*[apm]{1,2}/gi,'')
+        .replace(/\s+/g,' ').trim();
+      let days;
+      if(!ds||/(every\s*day|all\s*week|daily)/.test(ds)) days=[0,1,2,3,4,5,6];
+      else days=parseDayList(ds);
+      applyParsed(workM[1],'avail',days,ok,warn); return;
+    }
+    warn.push(`Could not parse: "${line}"`);
+  });
+  showNLRes(ok,warn);
+  toast(ok.length?`✓ ${ok.length} rule(s) applied`:'⚠ Nothing matched — try ✨ AI Parse');
+}
+
+function showNLRes(ok,warn){
+  $('nlRes').innerHTML=
+    (ok.length?`<div class="okbox">${ok.map(s=>`✓ ${s}`).join('<br>')}</div>`:'')+
+    (warn.length?`<div class="wbox">${warn.map(s=>`⚠ ${s}`).join('<br>')}</div>`:'');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   AI PARSER (Claude API)
+   Sends the note text to Claude, gets structured JSON back,
+   applies the parsed availability changes.
+═══════════════════════════════════════════════════════════ */
+async function aiParse(){
+  const text=$('nlBox').value.trim();
+  if(!text){ toast('⚠ Enter availability notes first.'); return; }
+
+  const btn=$('aiBtn'),lbl=$('aiLbl');
+  btn.disabled=true;
+  lbl.innerHTML='<span class="spin"></span> Analyzing…';
+
+  const roster=EMPS.map(e=>`"${e.short}" (full: ${e.name})`).join('\n');
+
+  const prompt=`You are a KFC Store 1416 scheduling assistant. Parse availability notes that may contain spelling mistakes, abbreviations, casual language, or unconventional phrasing.
+
+EMPLOYEE ROSTER (use exact short names in output):
+${roster}
+
+DAY INDEX MAP: Monday=0, Tuesday=1, Wednesday=2, Thursday=3, Friday=4, Saturday=5, Sunday=6
+
+NOTES TO PARSE:
+${text}
+
+For each note produce one JSON object:
+{
+  "emp": "<exact short name from roster>",
+  "action": "available" | "off" | "off_all_week",
+  "days": [array of day indices 0-6],
+  "summary": "<one sentence what you parsed>"
+}
+
+Rules:
+- "available" means ONLY those days they work (all others become OFF for that person)
+- "off" means specifically those days they cannot work (other days unchanged)
+- "off_all_week" means employee cannot work any day this week (days=[0,1,2,3,4,5,6])
+- Correct spelling mistakes in names and day names
+- If someone says "working every day" or "works all week": action="available", days=[0,1,2,3,4,5,6]
+- Return ONLY a valid JSON array. No markdown, no code fences, no extra text.`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{role:'user',content:prompt}]
+      })
     });
-    container.innerHTML += '</div>';
-}
+    const data=await res.json();
+    let raw=(data.content||[]).map(c=>c.text||'').join('').trim();
+    raw=raw.replace(/```[a-z]*|```/g,'').trim();
+    const parsed=JSON.parse(raw);
 
-window.updatePinFor = function(empId) {
-    const inputField = document.getElementById(`pin_${empId}`);
-    const newPin = inputField.value.trim();
-    if(/^\d{4}$/.test(newPin)) {
-        const empIndex = D.employees.findIndex(e => e.id === empId);
-        if(empIndex !== -1) { 
-            D.employees[empIndex].pin = newPin; 
-            saveToFirebase(); 
-            alert(`PIN for ${D.employees[empIndex].name} updated to ${newPin}`); 
-        }
-    } else { alert('PIN must be exactly 4 digits.'); }
-};
-
-function openAddEmp() {
-    const name = prompt("Employee full name (Last, First):");
-    if(name && name.trim()) {
-        if(D.employees.find(e=>e.name.toLowerCase()===name.trim().toLowerCase())) alert("Already exists.");
-        else {
-            const position = prompt("Enter position (Store Manager, Shift Manager, Cook, Team Member):") || "Team Member";
-            D.employees.push({
-                id: 'e'+Date.now()+Math.random(),
-                name: name.trim(),
-                position: position,
-                pin: '0000',
-                avail: DAYS.map(()=>({on:false, s:'10:00', e:'18:00'}))
-            });
-            saveToFirebase();
-            updateStaffDropdown();
-        }
-    }
-}
-
-function autoDetectEmployees() {
-    const text = document.getElementById('importText').value;
-    const pattern = /([A-Za-z]+(?:[-\s][A-Za-z]+)*,\s*[A-Za-z]+(?:[\s][A-Za-z]+)*)/g;
-    let found = [], match;
-    while((match = pattern.exec(text)) !== null) {
-        let name = match[1].trim();
-        if(name && !D.employees.find(e => e.name.toLowerCase() === name.toLowerCase())) {
-            const position = prompt(`Enter position for ${name} (Store Manager, Shift Manager, Cook, Team Member):`) || "Team Member";
-            D.employees.push({ id:'e'+Date.now()+Math.random(), name, position: position, pin:'0000', avail: DAYS.map(()=>({on:false, s:'09:00', e:'17:00'})) });
-            found.push(`${name} (${position})`);
-        }
-    }
-    if(found.length) { saveToFirebase(); updateStaffDropdown(); }
-    document.getElementById('importResult').innerHTML = found.length ? `✅ Added: ${found.join(', ')} with PIN 0000` : "No new names.";
-}
-
-function renderInventory() {
-    let html = '<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(380px,1fr)); gap:20px;">';
-    for(let cat in D.inventory) {
-        html += `<div class="card-modern"><h3>${cat.toUpperCase()}</h3>`;
-        D.inventory[cat].forEach((item, idx) => {
-            html += `<div class="inventory-row">
-                <span class="inventory-name">${item.name}</span>
-                <input class="input-field inventory-have" value="${item.have}" onchange="D.inventory['${cat}'][${idx}].have=this.value">
-                <input class="input-field inventory-need" value="${item.need}" onchange="D.inventory['${cat}'][${idx}].need=this.value">
-            </div>`;
-        });
-        html += `</div>`;
-    }
-    html += '</div>';
-    document.getElementById('invContent').innerHTML = html;
-}
-
-function buildSched() {
-    let html = '<div style="overflow-x:auto;"><table style="min-width:800px; width:100%;"><thead><tr><th>Staff (Position)</th>'+DAYS.map(d=>`<th>${d}</th>`).join('')+'<tr></thead><tbody>';
-    D.employees.forEach(e => {
-        html += `<tr><td style="font-weight:600;">${e.name}<br><span style="font-size:11px; color:var(--muted);">${e.position}</span></td>`;
-        e.avail.forEach(a => html += `<td style="background:${a.on ? '#dcfce7' : '#ffe4e2'};">${a.on ? `${a.s}–${a.e}` : '—'}</td>`);
-        html += `</tr>`;
+    const ok=[],warn=[];
+    (Array.isArray(parsed)?parsed:[parsed]).forEach(item=>{
+      if(!item||!item.emp) return;
+      const ei=EMPS.findIndex(e=>norm(e.short)===norm(item.emp)||norm(e.name).includes(norm(item.emp)));
+      if(ei<0){ warn.push(`Could not match employee: "${item.emp}"`); return; }
+      const days=(item.days||[]).filter(d=>Number.isInteger(d)&&d>=0&&d<=6);
+      if(item.action==='off_all_week'){
+        avail[ei]=Array(7).fill(false);
+      } else if(item.action==='off'){
+        days.forEach(di=>avail[ei][di]=false);
+      } else {
+        avail[ei]=Array(7).fill(false);
+        days.forEach(di=>avail[ei][di]=true);
+      }
+      renderChecks(ei);
+      ok.push(`${EMPS[ei].short}: ${item.summary||item.action}`);
     });
-    html += `</tbody></table></div>`;
-    document.getElementById('schedOut').innerHTML = html;
+
+    showNLRes(ok,warn);
+    toast(ok.length?`✨ AI parsed ${ok.length} rule(s)`:'⚠ AI returned no matches');
+  }catch(err){
+    $('nlRes').innerHTML=`<div class="wbox">⚠ AI parse failed: ${err.message}. Use the manual Parse button instead.</div>`;
+    toast('⚠ AI error — use manual Parse');
+  }finally{
+    btn.disabled=false;
+    lbl.textContent='✨ AI Parse';
+  }
 }
 
-function exportPDF() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('l', 'pt');
-    doc.text(`KFC Schedule - ${D.weekStart}`, 40, 40);
-    const head = [['Staff', 'Position', ...DAYS]];
-    const body = D.employees.map(e => [e.name, e.position, ...e.avail.map(a => a.on ? `${a.s}-${a.e}` : 'OFF')]);
-    doc.autoTable({ head, body, startY: 60, headStyles: { fillColor: [225,29,72] } });
-    doc.save(`schedule_${D.weekStart}.pdf`);
+/* ═══════════════════════════════════════════════════════════
+   SCHEDULE ENGINE
+   ─────────────────────────────────────────────────────────
+   For each day:
+     1. Determine slots (Type-A or Type-B)
+     2. Build candidate pool: available employees, not yet
+        used today, sorted by fewest weekly hours (fairness).
+        MGR (Mohamed Hedi) is placed LAST in the pool always.
+     3. For each required slot, find first candidate that can
+        fill it (role match + hours cap).
+     4. All remaining available-but-unassigned → OFF.
+     5. All unavailable → OFF.
+
+   Slot eligibility rules:
+     SM slot  → needs SM or SMO role (OR MGR override)
+     SK slot  → needs SK role only; SMO employees BLOCKED
+     CM slot  → needs CM role (OR MGR override)
+     CK slot  → needs CK role (OR MGR override)
+     TM slots → any employee (last resort for everyone)
+
+   MGR flexible preference:
+     If employee is MGR and has a preferred slot set for
+     that day (via the per-day dropdown), that preference is
+     used ONLY if the slot is still unfilled. Otherwise any
+     slot is fair game.
+═══════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════
+   canFill — strict role + hours + shift-restriction gate
+═══════════════════════════════════════════════════════════ */
+function canFill(ei, slotKey, weekHrs){
+  const emp = EMPS[ei];
+  const r   = emp.roles;
+  const sh  = SHIFT_DEF[slotKey];
+
+  // ① Hard 40h weekly cap
+  if(weekHrs[ei] + sh.hrs > MAX_H + 0.001) return false;
+
+  // ② MGR override — store manager can fill any slot
+  if(emp.isMgr) return true;
+
+  // ③ morningOnly employees can NEVER be assigned a closing slot
+  const closingSlots = new Set(['SK','CK','TM2']);
+  if(emp.morningOnly && closingSlots.has(slotKey)) return false;
+
+  switch(slotKey){
+    case 'SM':
+      // Needs SM role. SMO is an alias we treat as SM here.
+      return r.includes('SM') || r.includes('SMO');
+
+    case 'SK':
+      // Needs SK role. Morning-only SM (SM without SK) is BLOCKED.
+      if(r.includes('SMO'))                       return false;
+      if(r.includes('SM') && !r.includes('SK'))   return false;
+      return r.includes('SK');
+
+    case 'CM':
+      return r.includes('CM');
+
+    case 'CK':
+      return r.includes('CK');
+
+    case 'TM1': // Opening TM  — any role qualifies
+      return r.includes('TM') || r.includes('CM') || r.includes('CK') ||
+             r.includes('SM') || r.includes('SK')  || r.includes('SMO');
+
+    case 'TM2': // Closing TM — blocked for morningOnly (already handled above)
+      return r.includes('TM') || r.includes('CM') || r.includes('CK') ||
+             r.includes('SM') || r.includes('SK')  || r.includes('SMO');
+
+    case 'TM3': // Mid TM (Type-B only) — morning-only blocked above
+      return r.includes('TM') || r.includes('CM') || r.includes('CK') ||
+             r.includes('SM') || r.includes('SK')  || r.includes('SMO');
+
+    default: return false;
+  }
 }
 
-function toggleTheme() { document.body.classList.toggle('dark'); }
-function logout() { 
-    document.getElementById('globalLoginScreen').style.display = 'flex'; 
-    document.getElementById('managerApp').style.display = 'none'; 
-    document.getElementById('staffPortal').style.display = 'none'; 
-    clearStaffPin(); clearMgrPin();
-    document.getElementById('loginError').innerHTML = ''; 
+function getMgrPreference(ei, di){
+  const sel = $(`mflex_${ei}_${di}`);
+  return sel ? sel.value : 'any';
 }
 
-function setRole(role) {
-    currentRole = role;
-    const staffBtn = document.getElementById('roleStaffBtn');
-    const managerBtn = document.getElementById('roleManagerBtn');
-    const staffView = document.getElementById('staffLoginView');
-    const managerView = document.getElementById('managerLoginView');
-    if(role === 'staff') {
-        staffBtn.classList.add('active');
-        managerBtn.classList.remove('active');
-        staffView.style.display = 'block';
-        managerView.style.display = 'none';
-    } else {
-        staffBtn.classList.remove('active');
-        managerBtn.classList.add('active');
-        staffView.style.display = 'none';
-        managerView.style.display = 'block';
+/* ═══════════════════════════════════════════════════════════
+   SCHEDULE ENGINE  v5 — maximum accuracy
+
+   RULES enforced:
+   ① avail[ei][di] === true is the absolute gate. No one
+     works a day they haven't ticked.
+   ② morningOnly employees (Ghazala, Jorge) can NEVER fill
+     SK / CK / TM2 (closing / mid slots).
+   ③ Specialist slots (SM, SK, CM, CK) are filled FIRST so
+     specialists are never "used up" on TM slots.
+   ④ Within each slot, candidates are ranked by:
+        a. roleScore  — how well their role fits the slot
+           (pure match beats multi-role, specialist beats TM)
+        b. weekHrs    — spread hours evenly (fairness)
+        c. daysWorked — spread rest days evenly
+   ⑤ MGR is the absolute last resort — only when zero
+     regular staff can fill a slot.
+   ⑥ Post-audit: any assignment that violates availability
+     is forcibly corrected to OFF + warning logged.
+═══════════════════════════════════════════════════════════ */
+
+/* roleScore — lower = better fit for that slot
+   0 = perfect specialist match
+   1 = qualified but has other roles too
+   5 = over-qualified specialist covering TM (wasteful)
+  10 = any-role fallback
+  99 = MGR (last resort)
+*/
+function roleScore(ei, slotKey){
+  const r   = EMPS[ei].roles;
+  const emp = EMPS[ei];
+  if(emp.isMgr) return 99;
+
+  switch(slotKey){
+    case 'SM': {
+      // Pure morning-SM specialist
+      if(r.includes('SM') && !r.includes('SK')) return 0;
+      if(r.includes('SM')) return 1;
+      if(r.includes('SMO')) return 2;
+      return 90; // shouldn't reach here if canFill is correct
     }
-    document.getElementById('loginError').innerHTML = '';
-    clearStaffPin(); clearMgrPin();
+    case 'SK': {
+      if(r.includes('SK') && !r.includes('SM')) return 0;
+      if(r.includes('SK')) return 1;
+      return 90;
+    }
+    case 'CM': {
+      // Cook who does morning only is the best fit
+      if(r.includes('CM') && !r.includes('CK')) return 0;
+      if(r.includes('CM')) return 1;
+      return 90;
+    }
+    case 'CK': {
+      if(r.includes('CK') && !r.includes('CM')) return 0;
+      if(r.includes('CK')) return 1;
+      return 90;
+    }
+    case 'TM1': case 'TM2': case 'TM3': {
+      // Pure TM is best; specialists covering TM are penalised
+      const isPureTM = r.length===1 && r[0]==='TM';
+      if(isPureTM) return 0;
+      const isTMonly = r.includes('TM') && !r.some(x=>['SM','SK','SMO','CM','CK'].includes(x));
+      if(isTMonly) return 1;
+      // Cook or SM covering TM — acceptable fallback but wasteful
+      return 5;
+    }
+    default: return 90;
+  }
 }
 
-function go(tabName) {
-    document.querySelectorAll('.page').forEach(x => x.classList.remove('on'));
-    document.querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
-    document.getElementById(`pg-${tabName}`).classList.add('on');
-    const activeTab = Array.from(document.querySelectorAll('.tab')).find(t => t.getAttribute('data-tab') === tabName);
-    if(activeTab) activeTab.classList.add('on');
+/* assign — helper that writes to sched + updates counters */
+function assign(ei, di, sk, weekHrs, daysWorked){
+  const sh    = SHIFT_DEF[sk];
+  const isMgr = EMPS[ei].isMgr;
+  sched[ei][di] = {
+    cls:   isMgr ? 'cMGR' : sh.cls,
+    disp:  isMgr
+             ? `MGR: ${sh.label}\n${sh.time}\n(${sh.hrs.toFixed(2)}h)`
+             : sh.disp,
+    hrs:   sh.hrs,
+    label: sh.label,
+    slot:  sk,
+  };
+  weekHrs[ei]    += sh.hrs;
+  daysWorked[ei] += 1;
 }
 
-// Initialize App
-async function initApp() {
-    await loadFromFirebase();
-    listenForChanges();
-    setTimeout(() => {
-        document.getElementById('splash').style.display = 'none';
-        document.getElementById('globalLoginScreen').style.display = 'flex';
-        updateStaffDropdown();
-    }, 1000);
+/* bestCandidate — picks the best available, role-legal,
+   hours-safe, not-yet-used employee for a given slot */
+function bestCandidate(pool, usedToday, sk, weekHrs, daysWorked){
+  return pool
+    .filter(ei => !usedToday.has(ei) && canFill(ei, sk, weekHrs))
+    .sort((a,b)=>{
+      const rs = roleScore(a,sk) - roleScore(b,sk);
+      if(rs !== 0) return rs;
+      const hd = weekHrs[a] - weekHrs[b];
+      if(Math.abs(hd) > 0.5) return hd;
+      return daysWorked[a] - daysWorked[b];
+    })[0]; // undefined if none found
 }
 
-// Event binding
-document.getElementById('roleStaffBtn').onclick = () => setRole('staff');
-document.getElementById('roleManagerBtn').onclick = () => setRole('manager');
-document.getElementById('staffLogoutBtn').onclick = () => logout();
-document.getElementById('managerLogoutBtn').onclick = () => logout();
-document.getElementById('themeToggleBtn').onclick = () => toggleTheme();
-document.getElementById('addEmpBtn').onclick = () => openAddEmp();
-document.getElementById('exportPdfBtn').onclick = () => exportPDF();
-document.getElementById('refreshBtn').onclick = () => refreshUI();
-document.getElementById('saveInventoryBtn').onclick = () => saveToFirebase();
-document.getElementById('scanImportBtn').onclick = () => autoDetectEmployees();
-document.getElementById('saveStaffAvailabilityBtn').onclick = () => saveStaffAvailabilityFromPortal();
-document.getElementById('staffClearBtn').onclick = () => clearStaffPin();
-document.getElementById('mgrClearBtn').onclick = () => clearMgrPin();
-document.getElementById('staffEnterBtn').onclick = () => verifyStaffLogin();
-document.getElementById('mgrEnterBtn').onclick = () => verifyManagerLogin();
+function generate(){
+  sched      = EMPS.map(()=>Array(7).fill(null));
+  const weekHrs    = new Array(EMPS.length).fill(0);
+  const daysWorked = new Array(EMPS.length).fill(0);
+  const warnings   = [];
 
-document.querySelectorAll('#staffNumpad .numpad-btn[data-digit]').forEach(btn => {
-    btn.onclick = () => appendStaffDigit(btn.getAttribute('data-digit'));
+  for(let di=0; di<7; di++){
+    const daySlots  = TYPE_A.has(di) ? [...SLOTS_A] : [...SLOTS_B];
+    const usedToday = new Set();
+
+    /* ── Strict availability pool ─────────────────────── */
+    const availIdx = EMPS.map((_,ei)=>ei).filter(ei => avail[ei][di] === true);
+    const mgrPool  = availIdx.filter(ei =>  EMPS[ei].isMgr);
+    const staffPool = availIdx.filter(ei => !EMPS[ei].isMgr);
+
+    /* ── Fill specialist slots first (SM → SK → CM → CK) ─ */
+    const specialSlots = daySlots.filter(s => !s.startsWith('TM'));
+    const tmSlots      = daySlots.filter(s =>  s.startsWith('TM'));
+
+    for(const sk of specialSlots){
+      const sh = SHIFT_DEF[sk];
+      let chosen = bestCandidate(staffPool, usedToday, sk, weekHrs, daysWorked);
+      if(chosen === undefined)
+        chosen = bestCandidate(mgrPool, usedToday, sk, weekHrs, daysWorked);
+
+      if(chosen !== undefined){
+        assign(chosen, di, sk, weekHrs, daysWorked);
+        usedToday.add(chosen);
+      } else {
+        warnings.push(
+          `<b>${DAYS[di]}</b>: ⚠ No eligible staff for <b>${sh.label}</b> (${sh.time})`
+        );
+      }
+    }
+
+    /* ── Fill TM slots with remaining available staff ─── */
+    for(const sk of tmSlots){
+      const sh = SHIFT_DEF[sk];
+      // For TM slots: combine remaining staff + mgr (mgr still last resort)
+      let chosen = bestCandidate(staffPool, usedToday, sk, weekHrs, daysWorked);
+      if(chosen === undefined)
+        chosen = bestCandidate(mgrPool, usedToday, sk, weekHrs, daysWorked);
+
+      if(chosen !== undefined){
+        assign(chosen, di, sk, weekHrs, daysWorked);
+        usedToday.add(chosen);
+      } else {
+        warnings.push(
+          `<b>${DAYS[di]}</b>: ⚠ No eligible staff for <b>${sh.label}</b> (${sh.time})`
+        );
+      }
+    }
+
+    /* ── Mark unassigned employees as OFF ─────────────── */
+    EMPS.forEach((_,ei)=>{
+      if(!sched[ei][di]){
+        sched[ei][di] = {cls:'cOFF', disp:'OFF', hrs:0, label:'OFF', slot:'OFF'};
+      }
+    });
+  }
+
+  /* ── Post-audit: 40h cap ──────────────────────────── */
+  EMPS.forEach((e,ei)=>{
+    if(weekHrs[ei] > MAX_H + 0.01)
+      warnings.unshift(`<b>${e.short}</b>: ${weekHrs[ei].toFixed(1)}h — over 40h cap!`);
+  });
+
+  /* ── Post-audit: availability violation correction ── */
+  EMPS.forEach((e,ei)=>{
+    for(let di=0;di<7;di++){
+      const cell = sched[ei][di];
+      if(cell && cell.slot !== 'OFF' && !avail[ei][di]){
+        sched[ei][di] = {cls:'cOFF', disp:'OFF', hrs:0, label:'OFF', slot:'OFF'};
+        warnings.push(`⚠ <b>${e.short}</b> auto-corrected to OFF on <b>${DAYS[di]}</b> (not available)`);
+      }
+    }
+  });
+
+  /* ── Post-audit: morningOnly violation correction ── */
+  const closingSlotSet = new Set(['SK','CK','TM2']);
+  EMPS.forEach((e,ei)=>{
+    if(!e.morningOnly) return;
+    for(let di=0;di<7;di++){
+      const cell = sched[ei][di];
+      if(cell && closingSlotSet.has(cell.slot)){
+        sched[ei][di] = {cls:'cOFF', disp:'OFF', hrs:0, label:'OFF', slot:'OFF'};
+        warnings.push(`⚠ <b>${e.short}</b> is morning-only — auto-corrected to OFF on <b>${DAYS[di]}</b> (closing slot removed)`);
+      }
+    }
+  });
+
+  renderTable();
+  showWarnings(warnings);
+
+  const totalSlots = [0,1,2,3,4,5,6]
+    .reduce((s,di)=> s+(TYPE_A.has(di)?SLOTS_A.length:SLOTS_B.length), 0);
+  const filled = EMPS.reduce((s,_,ei)=>
+    s+[0,1,2,3,4,5,6].filter(di=> sched[ei][di] && sched[ei][di].slot!=='OFF').length, 0);
+
+  toast(warnings.length
+    ? `⚠ ${warnings.length} issue(s) — ${filled}/${totalSlots} slots filled. See below.`
+    : `✅ Schedule generated! ${filled}/${totalSlots} slots filled.`
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   VALIDATE
+═══════════════════════════════════════════════════════════ */
+function validate(){
+  const issues=[];
+  const weekHrs=Array(EMPS.length).fill(0);
+
+  // Read hours from live DOM
+  EMPS.forEach((_,ei)=>{
+    for(let di=0;di<7;di++){
+      const div=document.querySelector(`[data-ei="${ei}"][data-di="${di}"]`);
+      if(div) weekHrs[ei]+=parseHrs(div.textContent||'');
+    }
+    if(weekHrs[ei]>MAX_H)
+      issues.push(`${EMPS[ei].short}: <b>${weekHrs[ei].toFixed(1)}h — over 40h limit</b>`);
+  });
+
+  // Check each day has mandatory slots filled
+  for(let di=0;di<7;di++){
+    const slots=TYPE_A.has(di)?SLOTS_A:SLOTS_B;
+    const filled=EMPS.filter((_,ei)=>{
+      const div=document.querySelector(`[data-ei="${ei}"][data-di="${di}"]`);
+      return div&&div.textContent.trim()&&div.textContent.trim().toUpperCase()!=='OFF';
+    }).length;
+    if(filled<slots.length)
+      issues.push(`${DAYS[di]} (Type-${TYPE_A.has(di)?'A':'B'}): ${filled}/${slots.length} slots filled`);
+  }
+
+  $('warnings').innerHTML = issues.length
+    ? `<div class="wbox" style="margin-top:9px"><b>⚠ ${issues.length} issue(s):</b><br>${issues.join('<br>')}</div>`
+    : `<div class="okbox" style="margin-top:9px">✅ All checks passed. No issues found.</div>`;
+  toast(issues.length?`⚠ ${issues.length} issue(s)`:'✅ Schedule valid!');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RENDER TABLE
+═══════════════════════════════════════════════════════════ */
+function buildHeader(){
+  const ws = new Date($('weekStart').value+'T00:00:00');
+  const tr = $('tHead'); tr.innerHTML='';
+
+  // Employee column
+  const th0=document.createElement('th'); th0.className='nh'; th0.textContent='Employee'; tr.appendChild(th0);
+
+  for(let i=0;i<7;i++){
+    const d=new Date(ws); d.setDate(d.getDate()+i);
+    const jsDay=d.getDay(); // 0=Sun,1=Mon,...
+    const di=jsDay===0?6:jsDay-1; // our index: 0=Mon...6=Sun
+    const isA=TYPE_A.has(di);
+    const th=document.createElement('th');
+    th.className=`dh ${isA?'ta':'tb'}`;
+    th.innerHTML=`${DAYS[di]} ${d.getMonth()+1}/${d.getDate()}<span class="dtype">${isA?'Type-A (6 slots)':'Type-B (7 slots)'}</span>`;
+    tr.appendChild(th);
+  }
+
+  tr.appendChild(Object.assign(document.createElement('th'),{textContent:'Week h',className:'wt'}));
+
+  // Footer
+  const fr=$('tFoot'); fr.innerHTML='';
+  fr.appendChild(Object.assign(document.createElement('td'),{textContent:'Day Total',className:'nh'}));
+  for(let i=0;i<7;i++)
+    fr.appendChild(Object.assign(document.createElement('td'),{className:'dtot',id:`dt${i}`,textContent:'—'}));
+  fr.appendChild(Object.assign(document.createElement('td'),{id:'dtTot',textContent:'—',style:'font-weight:800;color:var(--red)'}));
+
+  // Week label
+  const we=new Date(ws); we.setDate(we.getDate()+6);
+  $('wkLabel').textContent=`Weekly Schedule · ${ws.toLocaleDateString('en-US',{month:'short',day:'numeric'})} – ${we.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
+}
+
+function renderTable(){
+  buildHeader();
+  const tbody=$('tBody'); tbody.innerHTML='';
+  let grand=0, offC=0, overC=0;
+  const dtot=Array(7).fill(0);
+  const empSet=new Set();
+
+  EMPS.forEach((emp,ei)=>{
+    const tr=document.createElement('tr');
+    const dr=dispRole(ei);
+    const nc=document.createElement('td');
+    nc.className='nc'+(emp.isMgr?' mgrow':'');
+    nc.innerHTML=`${emp.short} <span class="rb rb-${dr}">${dr}</span><small>${emp.name}</small>`;
+    tr.appendChild(nc);
+
+    let et=0;
+    for(let di=0;di<7;di++){
+      const td=document.createElement('td');
+      const div=document.createElement('div');
+      div.contentEditable='true';
+      div.dataset.ei=String(ei);
+      div.dataset.di=String(di);
+      div.dataset.ph='—';
+      const cell=sched[ei][di];
+      if(cell){
+        div.textContent=cell.disp;
+        div.className=cell.cls;
+        if(cell.hrs>0){ et+=cell.hrs; dtot[di]+=cell.hrs; empSet.add(ei); }
+        if(cell.label==='OFF') offC++;
+      }
+      div.addEventListener('input', onEdit);
+      td.appendChild(div); tr.appendChild(td);
+    }
+
+    grand+=et;
+    if(et>MAX_H) overC++;
+    const wt=document.createElement('td');
+    wt.className='wt'+(et>0?' ok':'')+(et>MAX_H?' over':'');
+    wt.id=`wt${ei}`;
+    wt.textContent=et>0?et.toFixed(2):'0';
+    tr.appendChild(wt);
+    tbody.appendChild(tr);
+    updateHoursPill(ei,et);
+  });
+
+  dtot.forEach((v,i)=>{ const el=$(`dt${i}`); if(el) el.textContent=v.toFixed(1); });
+  if($('dtTot')) $('dtTot').textContent=grand.toFixed(1);
+
+  $('sHrs').textContent=grand.toFixed(1);
+  $('sEmp').textContent=empSet.size;
+  $('sOff').textContent=offC;
+  $('sAvg').textContent=empSet.size?(grand/empSet.size).toFixed(1):'—';
+  $('sOver').textContent=overC||'0';
+
+  // Coverage stat
+  let covered=0;
+  for(let di=0;di<7;di++){
+    const need=(TYPE_A.has(di)?SLOTS_A:SLOTS_B).length;
+    const have=EMPS.filter((_,ei)=>sched[ei][di]&&sched[ei][di].hrs>0).length;
+    if(have>=need) covered++;
+  }
+  $('sCov').textContent=`${covered}/7`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CELL EDITING (manual override)
+═══════════════════════════════════════════════════════════ */
+function onEdit(e){
+  const div=e.target;
+  const ei=+div.dataset.ei, di=+div.dataset.di;
+  const txt=div.textContent.trim();
+  if(txt.toUpperCase()==='OFF'){ div.className='cOFF'; }
+  const hrs=parseHrs(txt);
+  sched[ei][di]={cls:div.className,disp:txt,hrs,label:'MANUAL',slot:'MANUAL'};
+  recalcStats();
+}
+
+function parseHrs(txt){
+  let t=0; const re=/\((\d+(?:\.\d+)?)h?\)/g; let m;
+  while((m=re.exec(txt))!==null) t+=parseFloat(m[1]);
+  return t;
+}
+
+function recalcStats(){
+  let grand=0, offC=0, overC=0;
+  const dtot=Array(7).fill(0);
+  const empSet=new Set();
+
+  EMPS.forEach((_,ei)=>{
+    let et=0;
+    for(let di=0;di<7;di++){
+      const div=document.querySelector(`[data-ei="${ei}"][data-di="${di}"]`);
+      if(!div) continue;
+      const txt=div.textContent.trim();
+      if(txt.toUpperCase()==='OFF'||!txt){ offC++; continue; }
+      const h=parseHrs(txt); et+=h; dtot[di]+=h; if(h>0) empSet.add(ei);
+    }
+    grand+=et; if(et>MAX_H) overC++;
+    const wt=$(`wt${ei}`);
+    if(wt){ wt.textContent=et.toFixed(2); wt.className='wt'+(et>0?' ok':'')+(et>MAX_H?' over':''); }
+    updateHoursPill(ei,et);
+  });
+
+  dtot.forEach((v,i)=>{ const el=$(`dt${i}`); if(el) el.textContent=v.toFixed(1); });
+  if($('dtTot')) $('dtTot').textContent=grand.toFixed(1);
+  $('sHrs').textContent=grand.toFixed(1);
+  $('sEmp').textContent=empSet.size;
+  $('sOff').textContent=offC;
+  $('sAvg').textContent=empSet.size?(grand/empSet.size).toFixed(1):'—';
+  $('sOver').textContent=overC||'0';
+}
+
+function showWarnings(w){
+  const coverageLines = [];
+  for(let di=0;di<7;di++){
+    const slots = TYPE_A.has(di) ? SLOTS_A : SLOTS_B;
+    const filledSlots = slots.filter(sk=>EMPS.some((_,ei)=> sched[ei]&&sched[ei][di]&&sched[ei][di].slot===sk));
+    const icon = filledSlots.length===slots.length ? '✅' : filledSlots.length>=Math.ceil(slots.length*0.8) ? '🟡' : '🔴';
+    coverageLines.push(`${icon} <b>${DAYS[di]}</b>: ${filledSlots.length}/${slots.length} slots`);
+  }
+  const coverageHtml = `<div style="margin-top:9px;padding:8px 12px;background:#f9fafb;border:1px solid var(--border);border-radius:var(--r);font-size:11px;line-height:2">
+    <b style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Coverage by Day</b><br>
+    ${coverageLines.join('&nbsp;&nbsp;')}
+  </div>`;
+  if(w.length){
+    $('warnings').innerHTML = `<div class="wbox" style="margin-top:9px"><b>⚠ ${w.length} issue(s):</b><br>${w.join('<br>')}</div>${coverageHtml}`;
+  } else {
+    $('warnings').innerHTML = `<div class="okbox" style="margin-top:9px">✅ All slots filled. Availability &amp; role rules fully respected.</div>${coverageHtml}`;
+  }
+}
+
+function clearSched(){
+  sched=EMPS.map(()=>Array(7).fill(null));
+  renderTable(); $('warnings').innerHTML=''; toast('Schedule cleared.');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PDF EXPORT
+═══════════════════════════════════════════════════════════ */
+function exportPDF(){
+  const el=$('schedule-content');
+  const w=$('weekStart').value.replace(/-/g,'');
+  html2pdf().set({
+    margin:.28,
+    filename:`KFC_1416_${w}.pdf`,
+    image:{type:'jpeg',quality:.98},
+    html2canvas:{scale:2,useCORS:true,letterRendering:true},
+    jsPDF:{unit:'in',format:'letter',orientation:'landscape'}
+  }).from(el).save();
+  toast('Generating PDF…');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   EMPTY ROW HELPER (for newly added employee)
+═══════════════════════════════════════════════════════════ */
+function initEmptyRow(ei){
+  const tbody=$('tBody');
+  if(!tbody) return;
+  const emp=EMPS[ei];
+  const dr=dispRole(ei);
+  const tr=document.createElement('tr');
+  const nc=document.createElement('td');
+  nc.className='nc';
+  nc.innerHTML=`${emp.short} <span class="rb rb-${dr}">${dr}</span><small>${emp.name}</small>`;
+  tr.appendChild(nc);
+  for(let di=0;di<7;di++){
+    const td=document.createElement('td');
+    const div=document.createElement('div');
+    div.contentEditable='true';
+    div.dataset.ei=String(ei); div.dataset.di=String(di); div.dataset.ph='—';
+    div.addEventListener('input',onEdit);
+    td.appendChild(div); tr.appendChild(td);
+  }
+  const wt=document.createElement('td');
+  wt.className='wt'; wt.id=`wt${ei}`; wt.textContent='0';
+  tr.appendChild(wt); tbody.appendChild(tr);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════ */
+$('weekStart').addEventListener('change', ()=>{ buildHeader(); });
+window.addEventListener('click', e=>{ if(e.target===$('delModal')) closeModal(); });
+
+window.addEventListener('DOMContentLoaded',()=>{
+  buildRoleGrid();
+  buildAvailGrid();
+  buildHeader();
+
+  // Render empty schedule table
+  const tbody=$('tBody'); tbody.innerHTML='';
+  EMPS.forEach((emp,ei)=>{
+    const dr=dispRole(ei);
+    const tr=document.createElement('tr');
+    const nc=document.createElement('td');
+    nc.className='nc'+(emp.isMgr?' mgrow':'');
+    nc.innerHTML=`${emp.short} <span class="rb rb-${dr}">${dr}</span><small>${emp.name}</small>`;
+    tr.appendChild(nc);
+    for(let di=0;di<7;di++){
+      const td=document.createElement('td');
+      const div=document.createElement('div');
+      div.contentEditable='true';
+      div.dataset.ei=String(ei); div.dataset.di=String(di); div.dataset.ph='—';
+      div.addEventListener('input',onEdit);
+      td.appendChild(div); tr.appendChild(td);
+    }
+    const wt=document.createElement('td');
+    wt.className='wt'; wt.id=`wt${ei}`; wt.textContent='0';
+    tr.appendChild(wt); tbody.appendChild(tr);
+  });
 });
-document.querySelectorAll('#managerNumpad .numpad-btn[data-digit]').forEach(btn => {
-    btn.onclick = () => appendMgrDigit(btn.getAttribute('data-digit'));
-});
-
-document.querySelectorAll('.tab').forEach(tab => {
-    tab.onclick = () => { const tabName = tab.getAttribute('data-tab'); if(tabName) go(tabName); };
-});
-
-initApp();
 </script>
 </body>
 </html>
