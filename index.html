@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes" />
-<title>KFC Store 1416 — Mobile Optimized Staff Portal</title>
+<title>KFC Store 1416 — Persistent Staff Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -59,7 +59,6 @@ td{ padding:12px; border-bottom:1px solid var(--line); }
 .pin-section{ margin:20px 0; }
 .pin-input-wrapper{ display:flex; gap:10px; align-items:center; justify-content:center; margin-bottom:15px; }
 .pin-field{ width:60px; height:60px; text-align:center; font-size:28px; font-weight:bold; border:2px solid var(--line); border-radius:16px; background:var(--surface); color:var(--text); pointer-events: none; touch-action: manipulation; }
-.pin-field:focus{ outline:none; }
 
 .pin-numpad{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:15px; }
 .numpad-btn{ background:var(--surface-2); border:1px solid var(--line); padding:16px; font-size:22px; font-weight:bold; border-radius:16px; cursor:pointer; transition:0.1s; touch-action: manipulation; }
@@ -104,9 +103,10 @@ input:checked + .slider:before { transform:translateX(26px); }
 <div id="splash">
     <h1 style="color:white; font-weight:900;">KFC 1416</h1>
     <p style="color:#94a3b8;">Loading Staff Portal...</p>
+    <div style="margin-top:20px;"><i class="fas fa-spinner fa-pulse" style="color:white; font-size:30px;"></i></div>
 </div>
 
-<div id="globalLoginScreen" class="login-overlay">
+<div id="globalLoginScreen" class="login-overlay" style="display:none;">
     <div class="login-card">
         <h2><i class="fas fa-store"></i> KFC 1416 Access</h2>
         <div class="role-select">
@@ -118,7 +118,7 @@ input:checked + .slider:before { transform:translateX(26px); }
             <div class="staff-select-container">
                 <label><i class="fas fa-user"></i> Select Your Name</label>
                 <select id="staffNameSelect" class="staff-select">
-                    <option value="">-- Loading staff list --</option>
+                    <option value="">-- Choose your name --</option>
                 </select>
             </div>
             <div class="pin-section">
@@ -265,14 +265,14 @@ const FULL_INVENTORY = {
 
 const DEFAULT_STAFF_NAMES = ["Bouhoula, Mohamed Hedi","Adedunye, Damiola","Appidi, Nandakishore","Hashim, Agil","Legault-Agil, Alyza","Aghwach, Adam","Belarbii, Anes","Shaheen, Ghazala","Tiwari, Balveer","Gilotra, Arjun"];
 
-let D = { employees: [], inventory: JSON.parse(JSON.stringify(FULL_INVENTORY)), weekStart: new Date().toISOString().split('T')[0] };
+let D = { employees: [], inventory: null, weekStart: new Date().toISOString().split('T')[0] };
 let currentStaffId = null;
-
-// PIN Management
 let staffPinDigits = ['', '', '', ''];
 let mgrPinDigits = ['', '', '', ''];
 let currentRole = 'staff';
+let isDataLoaded = false;
 
+// PIN Display Functions
 function updateStaffPinDisplay() {
     for(let i=0; i<4; i++) {
         const field = document.getElementById(`pin${i+1}`);
@@ -320,21 +320,92 @@ function clearMgrPin() {
 function getStaffPin() { return staffPinDigits.join(''); }
 function getMgrPin() { return mgrPinDigits.join(''); }
 
-// Firebase functions
-function initializeDefault() { 
-    if(D.employees.length === 0) {
-        D.employees = DEFAULT_STAFF_NAMES.map((name,i)=> ({ 
-            id: `emp_${i}_${Date.now()}`, 
-            name, 
-            position: 'Staff', 
-            pin: '0000', 
-            avail: DAYS.map(()=>({on:false,s:'09:00',e:'17:00'}))
-        })); 
-        saveCloud(); 
+// Firebase Functions
+function saveToFirebase() {
+    if(D && D.employees) {
+        db.ref('kfc_data').set(D).then(() => {
+            console.log("Data saved to Firebase successfully");
+        }).catch(error => {
+            console.error("Error saving to Firebase:", error);
+        });
     }
 }
 
-function saveCloud() { db.ref('kfc_data').set(D); }
+function loadFromFirebase() {
+    return db.ref('kfc_data').once('value').then((snap) => {
+        if(snap.val()) {
+            D = snap.val();
+            // Ensure inventory exists
+            if(!D.inventory) D.inventory = JSON.parse(JSON.stringify(FULL_INVENTORY));
+            // Ensure each employee has proper structure
+            if(D.employees) {
+                D.employees.forEach(e => { 
+                    if(!e.pin) e.pin = '0000'; 
+                    if(!e.avail || e.avail.length !== 7) {
+                        e.avail = DAYS.map(()=>({on:false, s:'09:00', e:'17:00'}));
+                    }
+                });
+            } else {
+                D.employees = [];
+            }
+            return true;
+        } else {
+            // First time - initialize with default data
+            D.employees = DEFAULT_STAFF_NAMES.map((name,i)=> ({ 
+                id: `emp_${i}_${Date.now()}`, 
+                name, 
+                position: 'Staff', 
+                pin: '0000', 
+                avail: DAYS.map(()=>({on:false, s:'09:00', e:'17:00'}))
+            }));
+            D.inventory = JSON.parse(JSON.stringify(FULL_INVENTORY));
+            saveToFirebase();
+            return true;
+        }
+    });
+}
+
+// Real-time listener for changes
+function listenForChanges() {
+    db.ref('kfc_data').on('value', (snap) => {
+        if(snap.val()) {
+            const newData = snap.val();
+            D.employees = newData.employees || [];
+            D.inventory = newData.inventory || JSON.parse(JSON.stringify(FULL_INVENTORY));
+            D.weekStart = newData.weekStart || new Date().toISOString().split('T')[0];
+            
+            // Ensure proper structure
+            D.employees.forEach(e => { 
+                if(!e.pin) e.pin = '0000'; 
+                if(!e.avail || e.avail.length !== 7) {
+                    e.avail = DAYS.map(()=>({on:false, s:'09:00', e:'17:00'}));
+                }
+            });
+            
+            updateStaffDropdown();
+            if(document.getElementById('managerApp').style.display === 'block') {
+                refreshUI();
+            }
+        }
+    });
+}
+
+function updateStaffDropdown() {
+    const select = document.getElementById('staffNameSelect');
+    if(select && D.employees) {
+        const currentValue = select.value;
+        select.innerHTML = '<option value="">-- Choose your name --</option>';
+        D.employees.forEach(emp => {
+            const option = document.createElement('option');
+            option.value = emp.id;
+            option.textContent = emp.name;
+            select.appendChild(option);
+        });
+        if(currentValue && D.employees.find(e => e.id === currentValue)) {
+            select.value = currentValue;
+        }
+    }
+}
 
 function refreshUI() { 
     if(document.getElementById('managerApp').style.display === 'block') { 
@@ -344,37 +415,7 @@ function refreshUI() {
     } 
 }
 
-function updateStaffDropdown() {
-    const select = document.getElementById('staffNameSelect');
-    if(select && D.employees) {
-        select.innerHTML = '<option value="">-- Choose your name --</option>';
-        D.employees.forEach(emp => {
-            const option = document.createElement('option');
-            option.value = emp.id;
-            option.textContent = emp.name;
-            select.appendChild(option);
-        });
-    }
-}
-
-function listenCloud() { 
-    db.ref('kfc_data').on('value', (snap) => { 
-        if(snap.val()) { 
-            D = snap.val(); 
-            if(!D.inventory) D.inventory = JSON.parse(JSON.stringify(FULL_INVENTORY));
-            if(D.employees) {
-                D.employees.forEach(e => { 
-                    if(!e.pin) e.pin = '0000'; 
-                    if(!e.avail || e.avail.length !== 7) e.avail = DAYS.map(()=>({on:false,s:'09:00',e:'17:00'})); 
-                });
-            }
-            if(!D.employees || D.employees.length === 0) initializeDefault(); 
-            updateStaffDropdown();
-            refreshUI(); 
-        } else initializeDefault(); 
-    }); 
-}
-
+// Login Functions
 function verifyStaffLogin() {
     const selectedId = document.getElementById('staffNameSelect').value;
     if(!selectedId) {
@@ -406,7 +447,7 @@ function verifyManagerLogin() {
     if(pin === '1416') {
         document.getElementById('globalLoginScreen').style.display = 'none';
         document.getElementById('managerApp').style.display = 'block';
-        listenCloud();
+        refreshUI();
         document.getElementById('loginError').innerHTML = '';
         clearMgrPin();
     } else {
@@ -448,17 +489,18 @@ function loadStaffAvailabilityUI(employee) {
 
 function saveStaffAvailabilityFromPortal() {
     if(!currentStaffId) return;
-    const employee = D.employees.find(e => e.id === currentStaffId);
-    if(!employee) return;
+    const employeeIndex = D.employees.findIndex(e => e.id === currentStaffId);
+    if(employeeIndex === -1) return;
+    
     for(let i=0; i<DAYS.length; i++) {
         const start = document.getElementById(`staff_start_${i}`);
         const end = document.getElementById(`staff_end_${i}`);
         const toggle = document.querySelector(`.staff-toggle[data-dayidx="${i}"]`);
         if(start && end && toggle) {
-            employee.avail[i] = { on: toggle.checked, s: start.value, e: end.value };
+            D.employees[employeeIndex].avail[i] = { on: toggle.checked, s: start.value, e: end.value };
         }
     }
-    saveCloud();
+    saveToFirebase();
     const msgDiv = document.getElementById('staffPortalMsg');
     msgDiv.innerHTML = '✅ Availability saved! Manager will see updates.';
     msgDiv.style.color = '#10b981';
@@ -492,8 +534,12 @@ window.updatePinFor = function(empId) {
     const inputField = document.getElementById(`pin_${empId}`);
     const newPin = inputField.value.trim();
     if(/^\d{4}$/.test(newPin)) {
-        const emp = D.employees.find(e => e.id === empId);
-        if(emp) { emp.pin = newPin; saveCloud(); alert(`PIN for ${emp.name} updated to ${newPin}`); }
+        const empIndex = D.employees.findIndex(e => e.id === empId);
+        if(empIndex !== -1) { 
+            D.employees[empIndex].pin = newPin; 
+            saveToFirebase(); 
+            alert(`PIN for ${D.employees[empIndex].name} updated to ${newPin}`); 
+        }
     } else { alert('PIN must be exactly 4 digits.'); }
 };
 
@@ -509,7 +555,7 @@ function openAddEmp() {
                 pin: '0000',
                 avail: DAYS.map(()=>({on:false, s:'10:00', e:'18:00'}))
             });
-            saveCloud();
+            saveToFirebase();
             updateStaffDropdown();
         }
     }
@@ -526,7 +572,7 @@ function autoDetectEmployees() {
             found.push(name);
         }
     }
-    if(found.length) { saveCloud(); updateStaffDropdown(); }
+    if(found.length) { saveToFirebase(); updateStaffDropdown(); }
     document.getElementById('importResult').innerHTML = found.length ? `✅ Added: ${found.join(', ')} with PIN 0000` : "No new names.";
 }
 
@@ -554,7 +600,7 @@ function buildSched() {
         e.avail.forEach(a => html += `<td style="background:${a.on ? '#dcfce7' : '#ffe4e2'};">${a.on ? `${a.s}–${a.e}` : '—'}</td>`);
         html += `</tr>`;
     });
-    html += `</tbody></table></div>`;
+    html += `</tbody><table></div>`;
     document.getElementById('schedOut').innerHTML = html;
 }
 
@@ -606,6 +652,17 @@ function go(tabName) {
     if(activeTab) activeTab.classList.add('on');
 }
 
+// Initialize App
+async function initApp() {
+    await loadFromFirebase();
+    listenForChanges();
+    setTimeout(() => {
+        document.getElementById('splash').style.display = 'none';
+        document.getElementById('globalLoginScreen').style.display = 'flex';
+        updateStaffDropdown();
+    }, 1000);
+}
+
 // Event binding
 document.getElementById('roleStaffBtn').onclick = () => setRole('staff');
 document.getElementById('roleManagerBtn').onclick = () => setRole('manager');
@@ -615,7 +672,7 @@ document.getElementById('themeToggleBtn').onclick = () => toggleTheme();
 document.getElementById('addEmpBtn').onclick = () => openAddEmp();
 document.getElementById('exportPdfBtn').onclick = () => exportPDF();
 document.getElementById('refreshBtn').onclick = () => refreshUI();
-document.getElementById('saveInventoryBtn').onclick = () => saveCloud();
+document.getElementById('saveInventoryBtn').onclick = () => saveToFirebase();
 document.getElementById('scanImportBtn').onclick = () => autoDetectEmployees();
 document.getElementById('saveStaffAvailabilityBtn').onclick = () => saveStaffAvailabilityFromPortal();
 document.getElementById('staffClearBtn').onclick = () => clearStaffPin();
@@ -634,14 +691,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     tab.onclick = () => { const tabName = tab.getAttribute('data-tab'); if(tabName) go(tabName); };
 });
 
-// Initialize
-initializeDefault();
-setRole('staff');
-setTimeout(() => {
-    document.getElementById('splash').classList.add('hide');
-    // Force load staff dropdown after Firebase sync
-    setTimeout(() => updateStaffDropdown(), 1000);
-}, 800);
+initApp();
 </script>
 </body>
 </html>
