@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes" />
-<title>KFC Store 1416 — Persistent Staff Portal</title>
+<title>KFC Store 1416 — Staff Portal with Correct Positions</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -85,6 +85,12 @@ input:checked + .slider:before { transform:translateX(26px); }
 .inventory-name{ flex:2; font-weight:500; }
 .inventory-have{ width:100px; }
 .inventory-need{ width:100px; }
+
+.position-badge{ display:inline-block; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; margin-left:8px; }
+.position-store-manager{ background:#1e3a5f; color:white; }
+.position-shift-manager{ background:#2c5f2d; color:white; }
+.position-cook{ background:#d97706; color:white; }
+.position-team-member{ background:#6b7280; color:white; }
 
 @media (max-width: 600px) {
     .page{ padding:12px; }
@@ -183,7 +189,7 @@ input:checked + .slider:before { transform:translateX(26px); }
     </div>
     <div style="padding:20px; max-width:800px; margin:0 auto;">
         <div class="card-modern">
-            <h3>Hello, <span id="staffNameDisplay"></span> 👋</h3>
+            <h3>Hello, <span id="staffNameDisplay"></span> <span id="staffPositionDisplay" style="font-size:14px;"></span> 👋</h3>
             <p>Set your weekly availability. Your manager will see your schedule.</p>
             <div id="staffAvailabilityEditor"></div>
             <button class="btn-primary" style="width:100%; margin-top:20px;" id="saveStaffAvailabilityBtn">Save My Availability</button>
@@ -263,14 +269,35 @@ const FULL_INVENTORY = {
     bib: [ { name: "Super charger syrup", have: "0", need: "Yes" } ]
 };
 
-const DEFAULT_STAFF_NAMES = ["Bouhoula, Mohamed Hedi","Adedunye, Damiola","Appidi, Nandakishore","Hashim, Agil","Legault-Agil, Alyza","Aghwach, Adam","Belarbii, Anes","Shaheen, Ghazala","Tiwari, Balveer","Gilotra, Arjun"];
+// CORRECTED STAFF WITH POSITIONS as requested
+const STAFF_WITH_POSITIONS = [
+    { name: "Bouhoula, Mohamed Hedi", position: "Store Manager" },
+    { name: "Adedunye, Damiola", position: "Team Member" },
+    { name: "Appidi, Nandakishore", position: "Team Member" },
+    { name: "Hashim, Agil", position: "Team Member" },
+    { name: "Legault-Agil, Alyza", position: "Team Member" },
+    { name: "Aghwach, Adam", position: "Cook" },
+    { name: "Belarbii, Anes", position: "Cook" },
+    { name: "Shaheen, Ghazala", position: "Shift Manager" },
+    { name: "Tiwari, Balveer", position: "Shift Manager" },
+    { name: "Gilotra, Arjun", position: "Shift Manager" }
+];
 
 let D = { employees: [], inventory: null, weekStart: new Date().toISOString().split('T')[0] };
 let currentStaffId = null;
 let staffPinDigits = ['', '', '', ''];
 let mgrPinDigits = ['', '', '', ''];
 let currentRole = 'staff';
-let isDataLoaded = false;
+
+// Helper function to get position badge class
+function getPositionBadgeClass(position) {
+    switch(position) {
+        case 'Store Manager': return 'position-store-manager';
+        case 'Shift Manager': return 'position-shift-manager';
+        case 'Cook': return 'position-cook';
+        default: return 'position-team-member';
+    }
+}
 
 // PIN Display Functions
 function updateStaffPinDisplay() {
@@ -335,10 +362,8 @@ function loadFromFirebase() {
     return db.ref('kfc_data').once('value').then((snap) => {
         if(snap.val()) {
             D = snap.val();
-            // Ensure inventory exists
             if(!D.inventory) D.inventory = JSON.parse(JSON.stringify(FULL_INVENTORY));
-            // Ensure each employee has proper structure
-            if(D.employees) {
+            if(D.employees && D.employees.length > 0) {
                 D.employees.forEach(e => { 
                     if(!e.pin) e.pin = '0000'; 
                     if(!e.avail || e.avail.length !== 7) {
@@ -346,26 +371,30 @@ function loadFromFirebase() {
                     }
                 });
             } else {
-                D.employees = [];
+                // If no employees in Firebase, create the default ones
+                createDefaultEmployees();
             }
             return true;
         } else {
-            // First time - initialize with default data
-            D.employees = DEFAULT_STAFF_NAMES.map((name,i)=> ({ 
-                id: `emp_${i}_${Date.now()}`, 
-                name, 
-                position: 'Staff', 
-                pin: '0000', 
-                avail: DAYS.map(()=>({on:false, s:'09:00', e:'17:00'}))
-            }));
-            D.inventory = JSON.parse(JSON.stringify(FULL_INVENTORY));
-            saveToFirebase();
+            // First time - create default employees
+            createDefaultEmployees();
             return true;
         }
     });
 }
 
-// Real-time listener for changes
+function createDefaultEmployees() {
+    D.employees = STAFF_WITH_POSITIONS.map((staff, i) => ({ 
+        id: `emp_${i}_${Date.now()}`, 
+        name: staff.name, 
+        position: staff.position,
+        pin: '0000', 
+        avail: DAYS.map(()=>({on:false, s:'09:00', e:'17:00'}))
+    }));
+    D.inventory = JSON.parse(JSON.stringify(FULL_INVENTORY));
+    saveToFirebase();
+}
+
 function listenForChanges() {
     db.ref('kfc_data').on('value', (snap) => {
         if(snap.val()) {
@@ -374,7 +403,6 @@ function listenForChanges() {
             D.inventory = newData.inventory || JSON.parse(JSON.stringify(FULL_INVENTORY));
             D.weekStart = newData.weekStart || new Date().toISOString().split('T')[0];
             
-            // Ensure proper structure
             D.employees.forEach(e => { 
                 if(!e.pin) e.pin = '0000'; 
                 if(!e.avail || e.avail.length !== 7) {
@@ -392,13 +420,13 @@ function listenForChanges() {
 
 function updateStaffDropdown() {
     const select = document.getElementById('staffNameSelect');
-    if(select && D.employees) {
+    if(select && D.employees && D.employees.length > 0) {
         const currentValue = select.value;
         select.innerHTML = '<option value="">-- Choose your name --</option>';
         D.employees.forEach(emp => {
             const option = document.createElement('option');
             option.value = emp.id;
-            option.textContent = emp.name;
+            option.textContent = `${emp.name} (${emp.position})`;
             select.appendChild(option);
         });
         if(currentValue && D.employees.find(e => e.id === currentValue)) {
@@ -431,6 +459,8 @@ function verifyStaffLogin() {
     if(employee && employee.pin === pin) {
         currentStaffId = employee.id;
         document.getElementById('staffNameDisplay').innerHTML = employee.name;
+        const positionSpan = document.getElementById('staffPositionDisplay');
+        positionSpan.innerHTML = `<span class="position-badge ${getPositionBadgeClass(employee.position)}">${employee.position}</span>`;
         document.getElementById('globalLoginScreen').style.display = 'none';
         document.getElementById('staffPortal').style.display = 'block';
         loadStaffAvailabilityUI(employee);
@@ -513,10 +543,14 @@ function renderTeam() {
     container.innerHTML = '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(340px,1fr)); gap:15px;">';
     D.employees.forEach(emp => {
         const availCount = emp.avail.filter(a=>a.on).length;
+        const positionClass = getPositionBadgeClass(emp.position);
         container.innerHTML += `
             <div class="card-modern">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <strong><i class="fas fa-user"></i> ${emp.name}</strong>
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <div>
+                        <strong><i class="fas fa-user"></i> ${emp.name}</strong>
+                        <span class="position-badge ${positionClass}" style="margin-left:8px;">${emp.position}</span>
+                    </div>
                     <span class="avail-badge">📅 ${availCount}/7</span>
                 </div>
                 <div style="margin:8px 0; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
@@ -548,10 +582,11 @@ function openAddEmp() {
     if(name && name.trim()) {
         if(D.employees.find(e=>e.name.toLowerCase()===name.trim().toLowerCase())) alert("Already exists.");
         else {
+            const position = prompt("Enter position (Store Manager, Shift Manager, Cook, Team Member):") || "Team Member";
             D.employees.push({
                 id: 'e'+Date.now()+Math.random(),
                 name: name.trim(),
-                position: 'Staff',
+                position: position,
                 pin: '0000',
                 avail: DAYS.map(()=>({on:false, s:'10:00', e:'18:00'}))
             });
@@ -568,8 +603,9 @@ function autoDetectEmployees() {
     while((match = pattern.exec(text)) !== null) {
         let name = match[1].trim();
         if(name && !D.employees.find(e => e.name.toLowerCase() === name.toLowerCase())) {
-            D.employees.push({ id:'e'+Date.now()+Math.random(), name, position:'Staff', pin:'0000', avail: DAYS.map(()=>({on:false, s:'09:00', e:'17:00'})) });
-            found.push(name);
+            const position = prompt(`Enter position for ${name} (Store Manager, Shift Manager, Cook, Team Member):`) || "Team Member";
+            D.employees.push({ id:'e'+Date.now()+Math.random(), name, position: position, pin:'0000', avail: DAYS.map(()=>({on:false, s:'09:00', e:'17:00'})) });
+            found.push(`${name} (${position})`);
         }
     }
     if(found.length) { saveToFirebase(); updateStaffDropdown(); }
@@ -594,13 +630,13 @@ function renderInventory() {
 }
 
 function buildSched() {
-    let html = '<div style="overflow-x:auto;"><table style="min-width:800px; width:100%;"><thead><tr><th>Staff</th>'+DAYS.map(d=>`<th>${d}</th>`).join('')+'</tr></thead><tbody>';
+    let html = '<div style="overflow-x:auto;"><table style="min-width:800px; width:100%;"><thead><tr><th>Staff (Position)</th>'+DAYS.map(d=>`<th>${d}</th>`).join('')+'<tr></thead><tbody>';
     D.employees.forEach(e => {
-        html += `<tr><td style="font-weight:600;">${e.name}</td>`;
+        html += `<tr><td style="font-weight:600;">${e.name}<br><span style="font-size:11px; color:var(--muted);">${e.position}</span></td>`;
         e.avail.forEach(a => html += `<td style="background:${a.on ? '#dcfce7' : '#ffe4e2'};">${a.on ? `${a.s}–${a.e}` : '—'}</td>`);
         html += `</tr>`;
     });
-    html += `</tbody><table></div>`;
+    html += `</tbody></table></div>`;
     document.getElementById('schedOut').innerHTML = html;
 }
 
@@ -608,8 +644,8 @@ function exportPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('l', 'pt');
     doc.text(`KFC Schedule - ${D.weekStart}`, 40, 40);
-    const head = [['Staff', ...DAYS]];
-    const body = D.employees.map(e => [e.name, ...e.avail.map(a => a.on ? `${a.s}-${a.e}` : 'OFF')]);
+    const head = [['Staff', 'Position', ...DAYS]];
+    const body = D.employees.map(e => [e.name, e.position, ...e.avail.map(a => a.on ? `${a.s}-${a.e}` : 'OFF')]);
     doc.autoTable({ head, body, startY: 60, headStyles: { fillColor: [225,29,72] } });
     doc.save(`schedule_${D.weekStart}.pdf`);
 }
