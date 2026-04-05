@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>KFC Store 1416 — Staff PIN Login + Manager Controls</title>
+<title>KFC Store 1416 — Staff & Manager Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -46,15 +46,27 @@ td{ padding:12px; border-bottom:1px solid var(--line); }
 #splash.hide{ opacity:0; pointer-events:none; }
 
 .login-overlay{ position:fixed; inset:0; background:#020617; z-index:10001; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:20px; }
-.login-card{ max-width:400px; width:90%; background:var(--surface); border-radius:32px; padding:32px; text-align:center; }
-.pin-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:20px 0; }
-.pin-btn{ background:var(--surface-2); border:1px solid var(--line); padding:18px; font-size:24px; font-weight:bold; border-radius:20px; cursor:pointer; transition:0.1s; }
-.pin-btn:active{ transform:scale(0.96); background:var(--brand); color:white; }
-.pin-display{ font-size:32px; letter-spacing:12px; font-weight:700; background:var(--surface-2); padding:12px; border-radius:20px; margin-bottom:15px; font-family: monospace; }
-.clear-btn{ background:#64748b; color:white; border:none; padding:12px 24px; border-radius:40px; font-weight:bold; cursor:pointer; margin-top:10px; }
-.role-select{ display:flex; gap:12px; margin-bottom:20px; }
-.role-btn{ flex:1; padding:12px; border-radius:40px; background:var(--surface-2); border:1px solid var(--line); cursor:pointer; font-weight:600; }
+.login-card{ max-width:450px; width:90%; background:var(--surface); border-radius:32px; padding:32px; text-align:center; }
+
+.role-select{ display:flex; gap:12px; margin-bottom:25px; }
+.role-btn{ flex:1; padding:12px; border-radius:40px; background:var(--surface-2); border:1px solid var(--line); cursor:pointer; font-weight:600; font-size:16px; }
 .role-btn.active{ background:var(--brand); color:white; border-color:var(--brand); }
+
+.staff-select-container{ margin:20px 0; text-align:left; }
+.staff-select-container label{ display:block; margin-bottom:8px; font-weight:600; color:var(--text); }
+.staff-select{ width:100%; padding:14px; border-radius:16px; border:1px solid var(--line); background:var(--surface); font-size:16px; cursor:pointer; }
+
+.pin-section{ margin:20px 0; }
+.pin-input-wrapper{ display:flex; gap:10px; align-items:center; justify-content:center; margin-bottom:15px; }
+.pin-field{ width:60px; height:60px; text-align:center; font-size:28px; font-weight:bold; border:2px solid var(--line); border-radius:16px; background:var(--surface); color:var(--text); }
+.pin-field:focus{ outline:none; border-color:var(--brand); }
+
+.pin-numpad{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:15px; }
+.numpad-btn{ background:var(--surface-2); border:1px solid var(--line); padding:16px; font-size:22px; font-weight:bold; border-radius:16px; cursor:pointer; transition:0.1s; }
+.numpad-btn:active{ transform:scale(0.95); background:var(--brand); color:white; }
+.numpad-btn.clear{ background:#64748b; color:white; }
+
+.login-error{ color:#e11d48; margin-top:12px; font-size:14px; min-height:40px; }
 
 .avail-grid{ display:flex; flex-direction:column; gap:12px; margin-top:16px; }
 .avail-day-row{ display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:12px; background:var(--surface-2); border-radius:20px; border:1px solid var(--line);}
@@ -69,6 +81,7 @@ td{ padding:12px; border-bottom:1px solid var(--line); }
 input:checked + .slider { background-color:var(--brand); }
 input:checked + .slider:before { transform:translateX(26px); }
 .avail-badge{ font-size:12px; padding:4px 8px; border-radius:40px; background:#e2e8f0; color:#0f172a; }
+
 .inventory-row{ display:flex; gap:12px; align-items:center; margin-bottom:12px; flex-wrap:wrap; border-bottom:1px solid var(--line); padding-bottom:8px; }
 .inventory-name{ flex:2; font-weight:500; }
 .inventory-have{ width:100px; }
@@ -86,15 +99,71 @@ input:checked + .slider:before { transform:translateX(26px); }
     <div class="login-card">
         <h2><i class="fas fa-store"></i> KFC 1416 Access</h2>
         <div class="role-select">
-            <button class="role-btn active" id="roleStaffBtn">👥 Staff</button>
-            <button class="role-btn" id="roleManagerBtn">👑 Manager</button>
+            <button class="role-btn active" id="roleStaffBtn">👥 Staff Login</button>
+            <button class="role-btn" id="roleManagerBtn">👑 Manager Login</button>
         </div>
-        <div id="loginPrompt">Enter Staff PIN (default 0000)</div>
-        <div class="pin-display" id="pinDisplay">●●●●</div>
-        <div class="pin-grid" id="pinPad"></div>
-        <button class="clear-btn" id="clearPinBtn">Clear</button>
-        <button class="btn-primary" style="width:100%; margin-top:15px;" id="loginBtn">Login</button>
-        <div id="loginError" style="color:#e11d48; margin-top:12px; font-size:14px;"></div>
+        
+        <!-- Staff Login View -->
+        <div id="staffLoginView">
+            <div class="staff-select-container">
+                <label><i class="fas fa-user"></i> Select Your Name</label>
+                <select id="staffNameSelect" class="staff-select">
+                    <option value="">-- Choose your name --</option>
+                </select>
+            </div>
+            <div class="pin-section">
+                <label><i class="fas fa-lock"></i> Enter Your PIN</label>
+                <div class="pin-input-wrapper">
+                    <input type="password" maxlength="1" class="pin-field" id="pin1" onkeyup="moveToNext(1,2)">
+                    <input type="password" maxlength="1" class="pin-field" id="pin2" onkeyup="moveToNext(2,3)">
+                    <input type="password" maxlength="1" class="pin-field" id="pin3" onkeyup="moveToNext(3,4)">
+                    <input type="password" maxlength="1" class="pin-field" id="pin4" onkeyup="checkPinComplete()">
+                </div>
+                <div class="pin-numpad">
+                    <button class="numpad-btn" onclick="appendPinDigit('1')">1</button>
+                    <button class="numpad-btn" onclick="appendPinDigit('2')">2</button>
+                    <button class="numpad-btn" onclick="appendPinDigit('3')">3</button>
+                    <button class="numpad-btn" onclick="appendPinDigit('4')">4</button>
+                    <button class="numpad-btn" onclick="appendPinDigit('5')">5</button>
+                    <button class="numpad-btn" onclick="appendPinDigit('6')">6</button>
+                    <button class="numpad-btn" onclick="appendPinDigit('7')">7</button>
+                    <button class="numpad-btn" onclick="appendPinDigit('8')">8</button>
+                    <button class="numpad-btn" onclick="appendPinDigit('9')">9</button>
+                    <button class="numpad-btn" onclick="appendPinDigit('0')">0</button>
+                    <button class="numpad-btn clear" onclick="clearPinFields()">⌫ Clear</button>
+                    <button class="numpad-btn" style="background:var(--brand); color:white;" onclick="verifyStaffLogin()">✓ Enter</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Manager Login View (hidden by default) -->
+        <div id="managerLoginView" style="display:none;">
+            <div class="pin-section">
+                <label><i class="fas fa-lock"></i> Manager Access Code</label>
+                <div class="pin-input-wrapper">
+                    <input type="password" maxlength="1" class="pin-field" id="mgrPin1" onkeyup="moveToNextMgr(1,2)">
+                    <input type="password" maxlength="1" class="pin-field" id="mgrPin2" onkeyup="moveToNextMgr(2,3)">
+                    <input type="password" maxlength="1" class="pin-field" id="mgrPin3" onkeyup="moveToNextMgr(3,4)">
+                    <input type="password" maxlength="1" class="pin-field" id="mgrPin4" onkeyup="checkMgrPinComplete()">
+                </div>
+                <div class="pin-numpad">
+                    <button class="numpad-btn" onclick="appendMgrDigit('1')">1</button>
+                    <button class="numpad-btn" onclick="appendMgrDigit('2')">2</button>
+                    <button class="numpad-btn" onclick="appendMgrDigit('3')">3</button>
+                    <button class="numpad-btn" onclick="appendMgrDigit('4')">4</button>
+                    <button class="numpad-btn" onclick="appendMgrDigit('5')">5</button>
+                    <button class="numpad-btn" onclick="appendMgrDigit('6')">6</button>
+                    <button class="numpad-btn" onclick="appendMgrDigit('7')">7</button>
+                    <button class="numpad-btn" onclick="appendMgrDigit('8')">8</button>
+                    <button class="numpad-btn" onclick="appendMgrDigit('9')">9</button>
+                    <button class="numpad-btn" onclick="appendMgrDigit('0')">0</button>
+                    <button class="numpad-btn clear" onclick="clearMgrPinFields()">⌫ Clear</button>
+                    <button class="numpad-btn" style="background:var(--brand); color:white;" onclick="verifyManagerLogin()">✓ Login</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="loginError" class="login-error"></div>
     </div>
 </div>
 
@@ -106,7 +175,7 @@ input:checked + .slider:before { transform:translateX(26px); }
     <div style="padding:20px; max-width:800px; margin:0 auto;">
         <div class="card-modern">
             <h3>Hello, <span id="staffNameDisplay"></span> 👋</h3>
-            <p>Set your weekly availability. Manager will see your schedule.</p>
+            <p>Set your weekly availability. Your manager will see your schedule.</p>
             <div id="staffAvailabilityEditor"></div>
             <button class="btn-primary" style="width:100%; margin-top:20px;" id="saveStaffAvailabilityBtn">Save My Availability</button>
             <div id="staffPortalMsg" style="margin-top:15px;"></div>
@@ -162,7 +231,6 @@ input:checked + .slider:before { transform:translateX(26px); }
 </div>
 
 <script>
-// FIREBASE
 const firebaseConfig = {
     apiKey: "AIzaSyBF3T4E6ckYGzaL28YKMMVz9PRoJ_57pWA",
     authDomain: "ottawa-arab-deals.firebaseapp.com",
@@ -189,89 +257,167 @@ const FULL_INVENTORY = {
 const DEFAULT_STAFF_NAMES = ["Bouhoula, Mohamed Hedi","Adedunye, Damiola","Appidi, Nandakishore","Hashim, Agil","Legault-Agil, Alyza","Aghwach, Adam","Belarbii, Anes","Shaheen, Ghazala","Tiwari, Balveer","Gilotra, Arjun"];
 
 let D = { employees: [], inventory: JSON.parse(JSON.stringify(FULL_INVENTORY)), weekStart: new Date().toISOString().split('T')[0] };
-let currentRole = 'staff';
-let currentPinInput = '';
 let currentStaffId = null;
+let currentRole = 'staff';
 
-function buildPinPad() {
-    const pad = document.getElementById('pinPad');
-    if(!pad) return;
-    pad.innerHTML = '';
-    const numbers = [1,2,3,4,5,6,7,8,9];
-    numbers.forEach(num => {
-        const btn = document.createElement('button');
-        btn.className = 'pin-btn';
-        btn.textContent = num;
-        btn.onclick = function() { if(currentPinInput.length < 4) { currentPinInput += num.toString(); updatePinDisplay(); } };
-        pad.appendChild(btn);
-    });
-    const zeroBtn = document.createElement('button');
-    zeroBtn.className = 'pin-btn';
-    zeroBtn.textContent = '0';
-    zeroBtn.onclick = function() { if(currentPinInput.length < 4) { currentPinInput += '0'; updatePinDisplay(); } };
-    pad.appendChild(zeroBtn);
-    const delBtn = document.createElement('button');
-    delBtn.className = 'pin-btn';
-    delBtn.innerHTML = '<i class="fas fa-delete-left"></i>';
-    delBtn.onclick = function() { currentPinInput = currentPinInput.slice(0, -1); updatePinDisplay(); };
-    pad.appendChild(delBtn);
-}
-
-function updatePinDisplay() {
-    const display = document.getElementById('pinDisplay');
-    let masked = '';
-    for(let i = 0; i < 4; i++) {
-        masked += i < currentPinInput.length ? '●' : '○';
+function initializeDefault() { 
+    if(D.employees.length === 0) {
+        D.employees = DEFAULT_STAFF_NAMES.map((name,i)=> ({ 
+            id: `emp_${i}_${Date.now()}`, 
+            name, 
+            position: 'Staff', 
+            pin: '0000', 
+            avail: DAYS.map(()=>({on:false,s:'09:00',e:'17:00'}))
+        })); 
+        saveCloud(); 
     }
-    display.textContent = masked;
 }
 
-function clearPin() { currentPinInput = ''; updatePinDisplay(); }
+function saveCloud() { db.ref('kfc_data').set(D).then(() => refreshUI()); }
 
-function setRole(role) {
-    currentRole = role;
-    const staffBtn = document.getElementById('roleStaffBtn');
-    const managerBtn = document.getElementById('roleManagerBtn');
-    const prompt = document.getElementById('loginPrompt');
-    if(role === 'staff') {
-        staffBtn.classList.add('active');
-        managerBtn.classList.remove('active');
-        prompt.textContent = 'Enter Staff PIN (default 0000)';
-    } else {
-        staffBtn.classList.remove('active');
-        managerBtn.classList.add('active');
-        prompt.textContent = 'Enter Manager PIN (1416)';
+function refreshUI() { if(document.getElementById('managerApp').style.display === 'block') { renderTeam(); renderInventory(); buildSched(); } }
+
+function listenCloud() { 
+    db.ref('kfc_data').on('value', (snap) => { 
+        if(snap.val()) { 
+            D = snap.val(); 
+            if(!D.inventory) D.inventory = JSON.parse(JSON.stringify(FULL_INVENTORY));
+            if(D.employees) {
+                D.employees.forEach(e => { 
+                    if(!e.pin) e.pin = '0000'; 
+                    if(!e.avail || e.avail.length !== 7) e.avail = DAYS.map(()=>({on:false,s:'09:00',e:'17:00'})); 
+                });
+            }
+            if(!D.employees || D.employees.length === 0) initializeDefault(); 
+            updateStaffDropdown();
+            refreshUI(); 
+        } else initializeDefault(); 
+    }); 
+}
+
+function updateStaffDropdown() {
+    const select = document.getElementById('staffNameSelect');
+    if(select) {
+        select.innerHTML = '<option value="">-- Choose your name --</option>';
+        D.employees.forEach(emp => {
+            const option = document.createElement('option');
+            option.value = emp.id;
+            option.textContent = emp.name;
+            select.appendChild(option);
+        });
     }
-    clearPin();
-    document.getElementById('loginError').textContent = '';
 }
 
-function verifyLogin() {
-    if(currentRole === 'manager') {
-        if(currentPinInput === '1416') {
-            document.getElementById('globalLoginScreen').style.display = 'none';
-            document.getElementById('managerApp').style.display = 'block';
-            listenCloud();
-        } else {
-            document.getElementById('loginError').textContent = 'Invalid Manager PIN.';
+// Staff PIN functions
+function getStaffPin() {
+    return document.getElementById('pin1').value + document.getElementById('pin2').value + document.getElementById('pin3').value + document.getElementById('pin4').value;
+}
+
+function setStaffPin(pin) {
+    const digits = pin.toString().split('');
+    for(let i=0; i<4; i++) {
+        const field = document.getElementById(`pin${i+1}`);
+        if(field) field.value = digits[i] || '';
+    }
+}
+
+function clearPinFields() {
+    for(let i=1; i<=4; i++) document.getElementById(`pin${i}`).value = '';
+    document.getElementById('pin1').focus();
+}
+
+function appendPinDigit(digit) {
+    for(let i=1; i<=4; i++) {
+        if(document.getElementById(`pin${i}`).value === '') {
+            document.getElementById(`pin${i}`).value = digit;
+            if(i<4) document.getElementById(`pin${i+1}`).focus();
+            else checkPinComplete();
+            break;
         }
+    }
+}
+
+function moveToNext(current, next) {
+    if(document.getElementById(`pin${current}`).value.length === 1 && next<=4) {
+        document.getElementById(`pin${next}`).focus();
+    }
+}
+
+function checkPinComplete() {
+    const pin = getStaffPin();
+    if(pin.length === 4) verifyStaffLogin();
+}
+
+function verifyStaffLogin() {
+    const selectedId = document.getElementById('staffNameSelect').value;
+    if(!selectedId) {
+        document.getElementById('loginError').innerHTML = '⚠️ Please select your name first.';
+        return;
+    }
+    const pin = getStaffPin();
+    if(pin.length !== 4) {
+        document.getElementById('loginError').innerHTML = '⚠️ Please enter 4-digit PIN.';
+        return;
+    }
+    const employee = D.employees.find(e => e.id === selectedId);
+    if(employee && employee.pin === pin) {
+        currentStaffId = employee.id;
+        document.getElementById('staffNameDisplay').innerHTML = employee.name;
+        document.getElementById('globalLoginScreen').style.display = 'none';
+        document.getElementById('staffPortal').style.display = 'block';
+        loadStaffAvailabilityUI(employee);
+        document.getElementById('loginError').innerHTML = '';
     } else {
-        const emp = D.employees.find(e => e.pin === currentPinInput);
-        if(emp) {
-            currentStaffId = emp.id;
-            document.getElementById('staffNameDisplay').textContent = emp.name;
-            document.getElementById('globalLoginScreen').style.display = 'none';
-            document.getElementById('staffPortal').style.display = 'block';
-            loadStaffAvailabilityUI(emp);
-        } else {
-            document.getElementById('loginError').textContent = 'Invalid Staff PIN. Default is 0000. Contact manager.';
+        document.getElementById('loginError').innerHTML = '❌ Invalid PIN. Default is 0000. Contact manager if forgotten.';
+    }
+}
+
+// Manager PIN functions
+function getMgrPin() {
+    return document.getElementById('mgrPin1').value + document.getElementById('mgrPin2').value + document.getElementById('mgrPin3').value + document.getElementById('mgrPin4').value;
+}
+
+function clearMgrPinFields() {
+    for(let i=1; i<=4; i++) document.getElementById(`mgrPin${i}`).value = '';
+    document.getElementById('mgrPin1').focus();
+}
+
+function appendMgrDigit(digit) {
+    for(let i=1; i<=4; i++) {
+        if(document.getElementById(`mgrPin${i}`).value === '') {
+            document.getElementById(`mgrPin${i}`).value = digit;
+            if(i<4) document.getElementById(`mgrPin${i+1}`).focus();
+            else checkMgrPinComplete();
+            break;
         }
+    }
+}
+
+function moveToNextMgr(current, next) {
+    if(document.getElementById(`mgrPin${current}`).value.length === 1 && next<=4) {
+        document.getElementById(`mgrPin${next}`).focus();
+    }
+}
+
+function checkMgrPinComplete() {
+    const pin = getMgrPin();
+    if(pin.length === 4) verifyManagerLogin();
+}
+
+function verifyManagerLogin() {
+    const pin = getMgrPin();
+    if(pin === '1416') {
+        document.getElementById('globalLoginScreen').style.display = 'none';
+        document.getElementById('managerApp').style.display = 'block';
+        listenCloud();
+        document.getElementById('loginError').innerHTML = '';
+    } else {
+        document.getElementById('loginError').innerHTML = '❌ Invalid Manager Code.';
     }
 }
 
 function loadStaffAvailabilityUI(employee) {
     const editorDiv = document.getElementById('staffAvailabilityEditor');
-    while(employee.avail.length < DAYS.length) employee.avail.push({on:false, s:'09:00', e:'17:00'});
     let html = `<div class="avail-grid">`;
     DAYS.forEach((day, idx) => {
         const slot = employee.avail[idx];
@@ -315,9 +461,9 @@ function saveStaffAvailabilityFromPortal() {
     }
     saveCloud();
     const msgDiv = document.getElementById('staffPortalMsg');
-    msgDiv.textContent = '✅ Availability saved! Manager will see updates.';
+    msgDiv.innerHTML = '✅ Availability saved! Manager will see updates.';
     msgDiv.style.color = '#10b981';
-    setTimeout(() => msgDiv.textContent = '', 2500);
+    setTimeout(() => msgDiv.innerHTML = '', 2500);
 }
 
 function renderTeam() {
@@ -422,35 +568,35 @@ function exportPDF() {
     doc.save(`schedule_${D.weekStart}.pdf`);
 }
 
-function saveCloud() { db.ref('kfc_data').set(D).then(() => refreshUI()); }
-function refreshUI() { if(document.getElementById('managerApp').style.display === 'block') { renderTeam(); renderInventory(); buildSched(); } }
-
-function listenCloud() { 
-    db.ref('kfc_data').on('value', (snap) => { 
-        if(snap.val()) { 
-            D = snap.val(); 
-            if(!D.inventory) D.inventory = JSON.parse(JSON.stringify(FULL_INVENTORY));
-            if(D.employees) {
-                D.employees.forEach(e => { 
-                    if(!e.pin) e.pin = '0000'; 
-                    if(!e.avail || e.avail.length !== 7) e.avail = DAYS.map(()=>({on:false,s:'09:00',e:'17:00'})); 
-                });
-            }
-            if(!D.employees || D.employees.length === 0) initializeDefault(); 
-            refreshUI(); 
-        } else initializeDefault(); 
-    }); 
+function toggleTheme() { document.body.classList.toggle('dark'); }
+function logout() { 
+    document.getElementById('globalLoginScreen').style.display = 'flex'; 
+    document.getElementById('managerApp').style.display = 'none'; 
+    document.getElementById('staffPortal').style.display = 'none'; 
+    clearPinFields(); clearMgrPinFields();
+    document.getElementById('loginError').innerHTML = ''; 
 }
 
-function initializeDefault() { 
-    D.employees = DEFAULT_STAFF_NAMES.map((name,i)=> ({ 
-        id: `emp_${i}_${Date.now()}`, 
-        name, 
-        position: 'Staff', 
-        pin: '0000', 
-        avail: DAYS.map(()=>({on:false,s:'09:00',e:'17:00'}))
-    })); 
-    saveCloud(); 
+function setRole(role) {
+    currentRole = role;
+    const staffBtn = document.getElementById('roleStaffBtn');
+    const managerBtn = document.getElementById('roleManagerBtn');
+    const staffView = document.getElementById('staffLoginView');
+    const managerView = document.getElementById('managerLoginView');
+    if(role === 'staff') {
+        staffBtn.classList.add('active');
+        managerBtn.classList.remove('active');
+        staffView.style.display = 'block';
+        managerView.style.display = 'none';
+    } else {
+        staffBtn.classList.remove('active');
+        managerBtn.classList.add('active');
+        staffView.style.display = 'none';
+        managerView.style.display = 'block';
+    }
+    document.getElementById('loginError').innerHTML = '';
+    clearPinFields();
+    clearMgrPinFields();
 }
 
 function go(tabName) {
@@ -461,25 +607,8 @@ function go(tabName) {
     if(activeTab) activeTab.classList.add('on');
 }
 
-function toggleTheme() { document.body.classList.toggle('dark'); }
-function logout() { 
-    document.getElementById('globalLoginScreen').style.display = 'flex'; 
-    document.getElementById('managerApp').style.display = 'none'; 
-    document.getElementById('staffPortal').style.display = 'none'; 
-    currentPinInput = ''; currentStaffId = null; updatePinDisplay(); 
-    document.getElementById('loginError').textContent = ''; setRole('staff'); 
-}
-
-// Initialize
-buildPinPad();
-setRole('staff');
-initializeDefault();
-
-// Event listeners
 document.getElementById('roleStaffBtn').onclick = () => setRole('staff');
 document.getElementById('roleManagerBtn').onclick = () => setRole('manager');
-document.getElementById('clearPinBtn').onclick = () => clearPin();
-document.getElementById('loginBtn').onclick = () => verifyLogin();
 document.getElementById('staffLogoutBtn').onclick = () => logout();
 document.getElementById('managerLogoutBtn').onclick = () => logout();
 document.getElementById('themeToggleBtn').onclick = () => toggleTheme();
@@ -494,6 +623,8 @@ document.querySelectorAll('.tab').forEach(tab => {
     tab.onclick = () => { const tabName = tab.getAttribute('data-tab'); if(tabName) go(tabName); };
 });
 
+initializeDefault();
+setRole('staff');
 setTimeout(() => document.getElementById('splash').classList.add('hide'), 500);
 </script>
 </body>
