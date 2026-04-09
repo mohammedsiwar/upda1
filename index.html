@@ -287,29 +287,16 @@ function SessionTimer({planColor,label,onClose}){
   );
 }
 
-/* ── EXERCISE CARD (with photo support) ── */
-function ExCard({name,planColor,open,onToggle,onTimer}){
+/* ── EXERCISE CARD ── */
+function ExCard({name,planColor,onTimer}){
   const ex=EX[name]; if(!ex)return null;
-  const [vid,setVid]=useState(false);
-  const [imgErr,setImgErr]=useState(false);
-
-  // Photo src: looks for images/bench_press.jpg etc. in same folder as HTML
-  const photoSrc = `images/${ex.photo}`;
+  const [open,setOpen]=useState(false);
 
   return(
     <div style={{background:"#111",borderRadius:14,border:`1px solid ${open?planColor+"44":"#1e1e1e"}`,marginBottom:8,overflow:"hidden",transition:"border-color .2s",boxShadow:open?`0 0 18px ${planColor}0c`:"none"}}>
-      <div onClick={onToggle} style={{display:"flex",gap:10,alignItems:"center",padding:"11px 13px",cursor:"pointer"}}>
-        {/* Thumbnail photo */}
-        <div style={{width:48,height:48,borderRadius:9,overflow:"hidden",flexShrink:0,background:"#1a1a1a",border:"1px solid #2a2a2a"}}>
-          {!imgErr ? (
-            <img src={photoSrc} alt={name}
-              style={{width:"100%",height:"100%",objectFit:"cover"}}
-              onError={()=>setImgErr(true)}/>
-          ):(
-            <div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>
-              {name==="Brisk Walk"?"🚶":name==="Kegel"?"🎯":name==="Joint Mobility"?"🔄":"💪"}
-            </div>
-          )}
+      <div onClick={()=>setOpen(o=>!o)} style={{display:"flex",gap:10,alignItems:"center",padding:"11px 13px",cursor:"pointer"}}>
+        <div style={{width:48,height:48,borderRadius:9,flexShrink:0,background:"#1a1a1a",border:"1px solid #2a2a2a",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>
+          {name==="Brisk Walk"?"🚶":name==="Kegel"?"🎯":name==="Joint Mobility"?"🔄":name==="Plank"||name==="Side Plank"?"🧘":name==="Squat"||name==="Bodyweight Squat"?"🦵":name==="Leg Raise"||name==="Russian Twist"?"🔥":"💪"}
         </div>
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:14,fontWeight:700,color:"#fff",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{name}</div>
@@ -328,41 +315,6 @@ function ExCard({name,planColor,open,onToggle,onTimer}){
       </div>
       {open&&(
         <div style={{borderTop:"1px solid #1a1a1a",padding:"13px"}} onClick={e=>e.stopPropagation()}>
-          {/* PHOTO (large) */}
-          {!imgErr&&(
-            <div style={{borderRadius:11,overflow:"hidden",height:170,marginBottom:11,background:"#0d0d0d",border:"1px solid #1e1e1e"}}>
-              <img src={photoSrc} alt={name}
-                style={{width:"100%",height:"100%",objectFit:"cover"}}
-                onError={()=>setImgErr(true)}/>
-            </div>
-          )}
-          {/* VIDEO */}
-          {ex.ytId ? (
-            <div style={{marginBottom:11}}>
-              {!vid ? (
-                <div onClick={()=>setVid(true)} style={{borderRadius:11,overflow:"hidden",position:"relative",height:imgErr?150:100,cursor:"pointer",background:"#0d0d0d",border:"1px solid #222",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  <img src={`https://img.youtube.com/vi/${ex.ytId}/mqdefault.jpg`} alt={name}
-                    style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",opacity:.55}}
-                    onError={e=>{e.target.style.opacity="0";}}/>
-                  <div style={{position:"relative",zIndex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
-                    <div style={{width:44,height:44,borderRadius:"50%",background:"#ff0000cc",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,paddingLeft:4}}>▶</div>
-                    <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:11,color:"#fff",letterSpacing:2}}>WATCH VIDEO DEMO</div>
-                  </div>
-                </div>
-              ):(
-                <div style={{borderRadius:11,overflow:"hidden",position:"relative",paddingTop:"56.25%",background:"#000"}}>
-                  <iframe style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",border:"none"}}
-                    src={`https://www.youtube-nocookie.com/embed/${ex.ytId}?autoplay=1&rel=0&modestbranding=1`}
-                    allow="autoplay;encrypted-media" allowFullScreen title={name}/>
-                </div>
-              )}
-              {vid&&<button onClick={()=>setVid(false)} style={{width:"100%",marginTop:5,padding:"6px",background:"#1a1a1a",border:"1px solid #2a2a2a",borderRadius:7,color:"#555",fontSize:11,cursor:"pointer"}}>✕ Close Video</button>}
-            </div>
-          ):(
-            <div style={{background:"#0d0d0d",borderRadius:11,height:40,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:11,border:"1px solid #1a1a1a"}}>
-              <span style={{fontSize:11,color:"#333"}}>Bodyweight / walk — no video demo</span>
-            </div>
-          )}
           {/* WEIGHT + REST */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:9}}>
             <div style={{background:"#0d0d0d",borderRadius:10,padding:"11px",border:"1px solid #1e1e1e"}}>
@@ -394,12 +346,11 @@ function ExCard({name,planColor,open,onToggle,onTimer}){
 
 /* ── HOME CARDIO CARD ── */
 function HomeCardioCard({planColor,onTimer}){
-  const [open,setOpen]=useState(false),[vid,setVid]=useState(false);
-  const ytId="ml6cT4AZdqI";
+  const [open,setOpen]=useState(false);
   return(
     <div style={{background:"#111",borderRadius:14,border:`1px solid ${open?"#fb923c44":"#1e1e1e"}`,marginBottom:8,overflow:"hidden"}}>
       <div onClick={()=>setOpen(o=>!o)} style={{display:"flex",gap:10,alignItems:"center",padding:"11px 13px",cursor:"pointer"}}>
-        <div style={{width:48,height:48,borderRadius:9,overflow:"hidden",flexShrink:0,background:"#1a1a1a",border:"1px solid #2a2a2a",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>🏃</div>
+        <div style={{width:48,height:48,borderRadius:9,flexShrink:0,background:"#1a1a1a",border:"1px solid #2a2a2a",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>🏃</div>
         <div style={{flex:1}}>
           <div style={{fontSize:14,fontWeight:700,color:"#fff",marginBottom:2}}>Home Cardio Slot</div>
           <div style={{fontSize:10,color:"#555",marginBottom:4}}>9:30 – 10:00 AM · available most days</div>
@@ -412,23 +363,6 @@ function HomeCardioCard({planColor,onTimer}){
       </div>
       {open&&(
         <div style={{borderTop:"1px solid #1a1a1a",padding:"13px"}} onClick={e=>e.stopPropagation()}>
-          {!vid?(
-            <div onClick={()=>setVid(true)} style={{borderRadius:11,overflow:"hidden",position:"relative",height:140,cursor:"pointer",background:"#0d0d0d",border:"1px solid #222",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:11}}>
-              <img src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`} alt="cardio"
-                style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",opacity:.65}}/>
-              <div style={{position:"relative",zIndex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
-                <div style={{width:48,height:48,borderRadius:"50%",background:"#ff0000cc",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,paddingLeft:4}}>▶</div>
-                <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:12,color:"#fff",letterSpacing:2}}>WATCH CARDIO DEMO</div>
-              </div>
-            </div>
-          ):(
-            <div style={{borderRadius:11,overflow:"hidden",position:"relative",paddingTop:"56.25%",background:"#000",marginBottom:11}}>
-              <iframe style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",border:"none"}}
-                src={`https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1`}
-                allow="autoplay;encrypted-media" allowFullScreen title="Home Cardio"/>
-            </div>
-          )}
-          {vid&&<button onClick={()=>setVid(false)} style={{width:"100%",marginTop:-4,marginBottom:11,padding:"6px",background:"#1a1a1a",border:"1px solid #2a2a2a",borderRadius:7,color:"#555",fontSize:11,cursor:"pointer"}}>✕ Close</button>}
           <div style={{background:"#fb923c0e",borderRadius:10,padding:"11px 13px",marginBottom:9,border:"1px solid #fb923c22"}}>
             <div style={{fontSize:10,color:"#fb923c",letterSpacing:1,marginBottom:7}}>📅 YOUR 9:30–10:00 AM CIRCUIT</div>
             {[["High Knees","2 min on · 30s rest × 5"],["Jumping Jacks","3 min continuous × 3"],["Burpees","10 reps × 4 sets"],["Shadow Boxing","2 min rounds × 4"],["Stair Climbs","10 min continuous"]].map(([a,b])=>(
@@ -475,7 +409,6 @@ function MoeFitness(){
   const [selDay,setSelDay]=useState(todayIdx);
   const [editShift,setEditShift]=useState(null);
   const [section,setSection]=useState("exercises");
-  const [expandEx,setExpandEx]=useState(null);
   const [missedModal,setMissedModal]=useState(null);
   const [missedNote,setMissedNote]=useState("");
   const [toast,setToast]=useState(null);
@@ -501,12 +434,10 @@ function MoeFitness(){
   const selPlan=wd.assigned?PLAN[wd.assigned[selDay]]:null;
   const selKey=`${wk}_d${selDay}`;
 
-  const ExList=({plan,prefix})=>(
+  const ExList=({plan})=>(
     <>
-      {plan.exercises.map((name,ei)=>(
+      {plan.exercises.map((name)=>(
         <ExCard key={name} name={name} planColor={plan.color}
-          open={expandEx===`${prefix}${ei}`}
-          onToggle={()=>setExpandEx(expandEx===`${prefix}${ei}`?null:`${prefix}${ei}`)}
           onTimer={s=>setRestTimer(s)}/>
       ))}
       <HomeCardioCard planColor={plan.color} onTimer={s=>setRestTimer(s)}/>
@@ -598,7 +529,7 @@ function MoeFitness(){
               <>
                 <DayHeader plan={todayPlan} dKey={todayKey} dayIdx={todayIdx}/>
                 <div style={{fontFamily:FD,fontSize:16,color:"#fff",letterSpacing:2,marginBottom:9}}>TODAY'S EXERCISES</div>
-                <ExList plan={todayPlan} prefix="t"/>
+                <ExList plan={todayPlan}/>
                 <div style={{fontFamily:FD,fontSize:16,color:"#fff",letterSpacing:2,marginTop:13,marginBottom:9}}>MEALS</div>
                 {[["🍳 BREAKFAST","breakfast","8:30 AM"],["🍎 SNACK 1","snack1","11:30"],["🍽️ LUNCH","lunch","13:00"],["🥪 SNACK 2","snack2","16:30"],["🌙 DINNER","dinner","19:30"]].map(([k,mk,t])=>(
                   <div key={k} style={cs}>
@@ -738,7 +669,7 @@ function MoeFitness(){
                         </button>
                       ))}
                     </div>
-                    {section==="exercises"&&<ExList plan={selPlan} prefix="p"/>}
+                    {section==="exercises"&&<ExList plan={selPlan}/>}
                     {section==="schedule"&&selPlan.schedule.map((s,i)=>(
                       <div key={i} style={{display:"flex",gap:11,alignItems:"flex-start",marginBottom:6}}>
                         <div style={{minWidth:62,fontFamily:FD,fontSize:13,color:selPlan.color,paddingTop:9}}>{s.time}</div>
