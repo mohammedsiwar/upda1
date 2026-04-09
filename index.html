@@ -1,1493 +1,921 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KFC 1416 — ShiftCore Pro v5</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<style>
-:root{
-  --red:#c8102e;--red-lt:#fff1f2;--red-md:#fecaca;
-  --green:#166534;--green-lt:#f0fdf4;--green-md:#bbf7d0;
-  --amber:#92400e;--amber-lt:#fffbeb;--amber-md:#fde68a;
-  --blue:#1e40af;--blue-lt:#eff6ff;--blue-md:#bfdbfe;
-  --purple:#5b21b6;--purple-lt:#f5f3ff;--purple-md:#ddd6fe;
-  --teal:#0f766e;--teal-lt:#f0fdfa;
-  --ink:#111827;--sub:#374151;--muted:#6b7280;--faint:#9ca3af;
-  --border:#e5e7eb;--bg:#f3f4f6;--white:#fff;
-  --r:7px;--sh:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
-}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);min-height:100vh;padding:16px 12px;color:var(--ink);font-size:13px}
-
-/* ── layout ── */
-.wrap{max-width:1460px;margin:0 auto}
-.topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
-.kfc{background:var(--red);color:#fff;font-weight:900;font-size:21px;letter-spacing:1px;padding:4px 13px;border-radius:var(--r)}
-.topbar-info h2{font-size:14px;font-weight:700}
-.topbar-info p{font-size:11px;color:var(--muted);margin-top:1px}
-.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.wk-inp{display:flex;align-items:center;gap:6px}
-.wk-inp label{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
-input[type=date]{padding:5px 9px;border:1px solid var(--border);border-radius:var(--r);font-size:12px;font-family:inherit}
-
-/* ── legend ── */
-.legend{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:11px}
-.leg{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;border:1px solid}
-.dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
-.l-sm{background:var(--blue-lt);color:var(--blue);border-color:var(--blue-md)}
-.l-sk{background:var(--purple-lt);color:var(--purple);border-color:var(--purple-md)}
-.l-cm{background:var(--amber-lt);color:var(--amber);border-color:var(--amber-md)}
-.l-ck{background:var(--green-lt);color:var(--green);border-color:var(--green-md)}
-.l-tm{background:#f9fafb;color:var(--sub);border-color:var(--border)}
-.l-off{background:var(--red-lt);color:var(--red);border-color:var(--red-md)}
-.l-mgr{background:#fef9c3;color:#713f12;border-color:#fde047}
-
-/* ── panels ── */
-.panel{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);margin-bottom:11px}
-.ph{background:var(--ink);color:#fff;padding:8px 14px;font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
-.ph-red{background:var(--red)}
-.ph-note{font-size:10px;font-weight:400;opacity:.7}
-.pb{padding:12px 14px}
-
-/* ── form elements ── */
-.lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:3px}
-input[type=text],select,textarea{padding:6px 9px;border:1px solid var(--border);border-radius:var(--r);font-size:12px;outline:none;background:#fff;font-family:inherit;transition:border-color .15s;width:100%}
-input[type=text]:focus,select:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 0 2px rgba(200,16,46,.1)}
-select{width:auto}
-textarea{resize:vertical}
-
-/* ── buttons ── */
-.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border:none;border-radius:var(--r);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:filter .15s,transform .1s;font-family:inherit}
-.btn:hover{filter:brightness(.88)}.btn:active{transform:scale(.97)}
-.b-red{background:var(--red);color:#fff}.b-green{background:#15803d;color:#fff}
-.b-blue{background:#1d4ed8;color:#fff}.b-purple{background:#7c3aed;color:#fff}
-.b-amber{background:#b45309;color:#fff}
-.b-ghost{background:#f3f4f6;color:var(--ink);border:1px solid var(--border)}
-.b-danger{background:#fee2e2;color:var(--red);border:1px solid var(--red-md)}
-.b-sm{padding:4px 9px;font-size:11px}
-.btn:disabled{opacity:.5;cursor:not-allowed;filter:none}
-
-/* ── role grid (step 1) ── */
-.rg{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:6px}
-.re{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);background:#fafafa;font-size:12px;font-weight:600;min-height:38px}
-.re.is-mgr{border-color:var(--red-md);background:#fff5f5}
-.re-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.re-actions{display:flex;gap:4px;align-items:center;flex-shrink:0}
-
-/* ── role badges ── */
-.rb{font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;letter-spacing:.3px;flex-shrink:0}
-.rb-SM{background:var(--blue-lt);color:var(--blue)}.rb-SK{background:var(--purple-lt);color:var(--purple)}
-.rb-SMO{background:#dbeafe;color:#1e3a8a}.rb-CM{background:var(--amber-lt);color:var(--amber)}
-.rb-CK{background:var(--green-lt);color:var(--green)}.rb-TM{background:#f3f4f6;color:var(--sub)}
-.rb-MGR{background:#fef9c3;color:#713f12}
-
-/* ── availability grid (step 2) ── */
-.ag{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:7px;margin-bottom:10px}
-.ae{border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
-.ae.is-mgr{border-color:var(--red-md)}
-.aeh{background:#f9fafb;padding:6px 10px;font-size:11px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap}
-.ae.is-mgr .aeh{background:#fff5f5}
-.aeh-left{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
-.dc{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;padding:5px 8px}
-.dc label{display:flex;flex-direction:column;align-items:center;gap:1px;font-size:8.5px;font-weight:700;color:var(--muted);text-transform:uppercase;cursor:pointer;padding:3px 1px;border-radius:4px;line-height:1.2}
-.dc label:hover{background:#f3f4f6}
-.dc label.on{color:var(--green);background:var(--green-lt)}
-.dc label.off2{color:var(--red);background:var(--red-lt)}
-.dc input[type=checkbox]{width:13px;height:13px;accent-color:#15803d;cursor:pointer}
-.dtype-tag{font-size:6.5px;opacity:.6;font-weight:600}
-.hrs-pill{font-size:9px;font-weight:700;padding:1px 7px;border-radius:10px}
-.hp-ok{background:var(--green-lt);color:var(--green)}.hp-warn{background:#fef3c7;color:#92400e}.hp-over{background:var(--red-lt);color:var(--red)}
-
-/* ── mgr flexible shifts ── */
-.mgr-flex-wrap{display:flex;gap:5px;flex-wrap:wrap;padding:6px 8px;border-top:1px solid var(--border);align-items:center}
-.mgr-flex-wrap label{font-size:10px;font-weight:600;color:var(--sub);display:flex;align-items:center;gap:3px;cursor:pointer;padding:2px 6px;border-radius:4px;border:1px solid var(--border);background:#fafafa}
-.mgr-flex-wrap label:has(input:checked){background:#fef9c3;border-color:#fde047;color:#713f12}
-.mgr-flex-title{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;width:100%}
-.mgr-flex-wrap input[type=checkbox]{width:12px;height:12px;accent-color:#b45309}
-
-/* ── add staff panel ── */
-.add-staff-form{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px}
-.add-staff-form>div{display:flex;flex-direction:column;gap:3px}
-
-/* ── NL input ── */
-.nl-row{display:flex;gap:8px;align-items:flex-start}
-.nl-row textarea{flex:1}
-.nl-col{display:flex;flex-direction:column;gap:5px}
-
-/* ── schedule table ── */
-#schedule-content{background:#fff;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)}
-.sched-hdr{background:var(--red);color:#fff;padding:9px 16px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
-.sched-hdr h1{font-size:14px;font-weight:900;letter-spacing:.5px}
-.sched-hdr span{font-size:11px;opacity:.85}
-.tw{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:11px}
-thead tr{background:#f9fafb}
-th{border:1px solid var(--border);padding:6px 4px;font-weight:700;font-size:9.5px;text-align:center;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
-th.nh{text-align:left;min-width:148px;padding-left:8px}
-th.dh{min-width:110px}
-th.dh.ta{background:#fff5f5}th.dh.tb{background:#eff6ff}
-.dtype{display:block;font-size:7.5px;font-weight:600;opacity:.65;margin-top:1px}
-td{border:1px solid var(--border);padding:0;vertical-align:middle}
-tr:nth-child(even) td{background:#fafafa}
-tr:hover td{background:#fff8f8!important}
-.nc{text-align:left;padding:6px 8px;font-weight:600;font-size:11px;white-space:nowrap}
-.nc small{display:block;font-size:9.5px;color:var(--muted);font-weight:400;margin-top:1px}
-.nc.mgrow{background:#fffbeb!important}
-[contenteditable]{padding:4px 3px;text-align:center;min-height:44px;cursor:text;outline:none;font-size:10px;line-height:1.4;white-space:pre-wrap;transition:background .1s}
-[contenteditable]:focus{background:#fffde7!important;outline:2px solid var(--amber-md)}
-[contenteditable]:empty::after{content:attr(data-ph);color:#d1d5db;font-size:8.5px}
-/* cell color classes */
-.cSM{background:var(--blue-lt)!important;color:var(--blue)!important;font-weight:600}
-.cSK{background:var(--purple-lt)!important;color:var(--purple)!important;font-weight:600}
-.cCM{background:var(--amber-lt)!important;color:var(--amber)!important;font-weight:600}
-.cCK{background:var(--green-lt)!important;color:var(--green)!important;font-weight:600}
-.cTM{background:#f9fafb!important;color:var(--sub)!important}
-.cOFF{background:var(--red-lt)!important;color:var(--red)!important;font-weight:700}
-.cMGR{background:#fef9c3!important;color:#713f12!important;font-weight:700}
-.wt{font-weight:700;text-align:center;padding:6px 4px;font-size:11px;background:#f9fafb!important;white-space:nowrap;min-width:55px}
-.wt.ok{color:var(--green)}.wt.over{color:var(--red)!important;background:var(--red-lt)!important}
-tfoot td{background:#f3f4f6!important;font-weight:700;font-size:10px;text-align:center;padding:5px 3px;border:1px solid var(--border);color:var(--sub)}
-tfoot td.dtot{color:var(--red);font-weight:800}
-
-/* ── stats ── */
-.stats{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px}
-.stat{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:7px 12px;flex:1;min-width:90px;box-shadow:var(--sh)}
-.stat .sv{font-size:19px;font-weight:800;color:var(--red)}.stat .sl{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:1px}
-
-/* ── alerts ── */
-.wbox{background:var(--red-lt);border:1px solid var(--red-md);border-radius:var(--r);padding:9px 12px;margin-top:9px;font-size:11px;color:var(--red);line-height:1.7}
-.okbox{background:var(--green-lt);border:1px solid var(--green-md);border-radius:var(--r);padding:9px 12px;margin-top:9px;font-size:11px;color:var(--green);line-height:1.7}
-
-/* ── modal ── */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center}
-.modal-bg.open{display:flex}
-.modal{background:#fff;border-radius:10px;padding:20px 22px;width:min(440px,95vw);box-shadow:0 8px 32px rgba(0,0,0,.18)}
-.modal h3{font-size:14px;font-weight:700;margin-bottom:14px}
-.modal-row{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
-.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
-
-/* ── toast ── */
-#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(14px);background:#111;color:#fff;padding:8px 18px;border-radius:99px;font-size:12px;font-weight:600;opacity:0;pointer-events:none;transition:all .25s;z-index:2000;max-width:90vw;text-align:center}
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-/* ── spinner ── */
-.spin{display:inline-block;width:11px;height:11px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:sp .55s linear infinite}
-@keyframes sp{to{transform:rotate(360deg)}}
-
-/* ── section divider ── */
-.section-title{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
-
-@media print{
-  body{background:#fff;padding:0}
-  .wrap>*:not(#sched-wrap){display:none!important}
-  #schedule-content{border:none;border-radius:0;box-shadow:none}
-}
-</style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <title>Moe Fitness</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: #0a0a0a; height: 100%; }
+  </style>
 </head>
 <body>
-<div class="wrap">
+  <div id="root"></div>
+  <script type="text/babel">
+const { useState, useEffect, useRef } = React;
 
-<!-- ═══════════════ TOP BAR ═══════════════ -->
-<div class="topbar">
-  <div class="kfc">KFC</div>
-  <div class="topbar-info">
-    <h2>Store 1416 — ShiftCore Pro</h2>
-    <p>Set availability → Generate → Edit cells → Export PDF</p>
-  </div>
-  <div class="topbar-right">
-    <div class="wk-inp"><label>Week Starting (Monday)</label>
-      <input type="date" id="weekStart" value="2026-04-07">
-    </div>
-    <button class="btn b-green b-sm" onclick="exportPDF()">⬇ PDF</button>
-  </div>
-</div>
+const FontLink = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;600;700&display=swap');
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:#0a0a0a;}
+    ::-webkit-scrollbar{width:3px;}
+    ::-webkit-scrollbar-track{background:#111;}
+    ::-webkit-scrollbar-thumb{background:#b8d44a;border-radius:3px;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.5;}}
+    .fade-up{animation:fadeUp 0.35s ease forwards;}
+    .live-dot{animation:pulse 1.5s infinite;}
+    input[type=time]::-webkit-calendar-picker-indicator{filter:invert(0.4);}
+  `}</style>
+);
 
-<!-- ═══════════════ LEGEND ═══════════════ -->
-<div class="legend">
-  <div class="leg l-sm"><span class="dot"></span>SM Morning 9:30a–5:30p (8h)</div>
-  <div class="leg l-sk"><span class="dot"></span>SM Closing 5:00p–11:30p (6.5h)</div>
-  <div class="leg l-cm"><span class="dot"></span>Cook Morning 9:30a–5:00p (7.5h)</div>
-  <div class="leg l-ck"><span class="dot"></span>Cook Closing 5:00p–11:30p (6.5h)</div>
-  <div class="leg l-tm"><span class="dot"></span>TM Open 10a–6p (8h) · TM Close 5p–10:30p (5.5h) · TM Mid 12p–8p (8h, Tue/Thu/Fri/Sat only)</div>
-  <div class="leg l-mgr"><span class="dot"></span>Store Manager (flexible)</div>
-  <div class="leg l-off"><span class="dot"></span>OFF · Max 40h/week enforced</div>
-</div>
+const SK = "moefitness_v6";
+const load = () => { try { return JSON.parse(localStorage.getItem(SK)) || {}; } catch { return {}; } };
+const save = (d) => { try { localStorage.setItem(SK, JSON.stringify(d)); } catch {} };
 
-<!-- ═══════════════ STEP 1: ROLES ═══════════════ -->
-<div class="panel">
-  <div class="ph">
-    <span>① Employee Roles</span>
-    <span class="ph-note">Mon / Wed / Sun = Type-A (6 slots) &nbsp;|&nbsp; Tue / Thu / Fri / Sat = Type-B (7 slots, adds TM-Mid)</span>
-  </div>
-  <div class="pb">
-    <div class="rg" id="roleGrid"></div>
-  </div>
-</div>
-
-<!-- ═══════════════ STEP 2: ADD / REMOVE STAFF ═══════════════ -->
-<div class="panel">
-  <div class="ph"><span>② Manage Staff</span></div>
-  <div class="pb">
-    <div class="section-title" style="margin-bottom:6px">Add New Employee</div>
-    <div class="add-staff-form">
-      <div style="flex:2;min-width:150px">
-        <label class="lbl">Full Name (Last, First)</label>
-        <input type="text" id="newName" placeholder="e.g. Smith, John">
-      </div>
-      <div style="flex:1.2;min-width:130px">
-        <label class="lbl">Short Name / Nickname</label>
-        <input type="text" id="newShort" placeholder="e.g. John">
-      </div>
-      <div style="flex:1.2;min-width:140px">
-        <label class="lbl">Primary Role</label>
-        <select id="newRole" style="width:100%">
-          <option value="TM">Team Member (TM)</option>
-          <option value="CM,CK,TM">Cook (Morning + Closing)</option>
-          <option value="CM,TM">Cook Morning Only</option>
-          <option value="CK,TM">Cook Closing Only</option>
-          <option value="SM,SK,CM,CK,TM">Shift Manager (All Shifts)</option>
-          <option value="SM,CM,CK,TM">Shift Manager — Morning Only</option>
-          <option value="SK,CM,CK,TM">Shift Manager — Closing Only</option>
-        </select>
-      </div>
-      <div>
-        <label class="lbl">&nbsp;</label>
-        <button class="btn b-blue" onclick="addStaff()">+ Add Staff</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════ STEP 3: AVAILABILITY ═══════════════ -->
-<div class="panel">
-  <div class="ph ph-red">
-    <span>③ Availability — check days each employee CAN work</span>
-    <div style="display:flex;gap:6px">
-      <button class="btn b-ghost b-sm" onclick="setAllAvail(true)">All Available</button>
-      <button class="btn b-ghost b-sm" onclick="setAllAvail(false)">Clear All</button>
-    </div>
-  </div>
-  <div class="pb">
-    <div class="ag" id="availGrid"></div>
-    <div style="margin-top:8px">
-      <label class="lbl" style="margin-bottom:4px">Plain-English availability notes (any spelling — AI corrects automatically):</label>
-      <div class="nl-row">
-        <textarea id="nlBox" rows="5" placeholder="Ghazala working monday to friday&#10;Adam off tuesday thursday saturday&#10;Mohamed Hedi off sunday&#10;Damilola off all week&#10;Brinto works every day&#10;Sunny is available from monday to thursday"></textarea>
-        <div class="nl-col">
-          <button class="btn b-ghost" onclick="parseNL()">Parse</button>
-          <button class="btn b-blue" id="aiBtn" onclick="aiParse()"><span id="aiLbl">✨ AI Parse</span></button>
-        </div>
-      </div>
-      <div id="nlRes"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════ STEP 4: GENERATE ═══════════════ -->
-<div class="panel">
-  <div class="ph"><span>④ Generate &amp; Validate</span></div>
-  <div class="pb">
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn b-blue" onclick="generate()">⚡ Auto-Generate Schedule</button>
-      <button class="btn b-ghost" onclick="clearSched()">Clear Schedule</button>
-      <button class="btn b-purple" onclick="validate()">✓ Validate Rules</button>
-      <button class="btn b-green" onclick="exportPDF()">⬇ Export PDF</button>
-    </div>
-    <div id="warnings"></div>
-  </div>
-</div>
-
-<!-- ═══════════════ STATS ═══════════════ -->
-<div class="stats">
-  <div class="stat"><div class="sv" id="sHrs">—</div><div class="sl">Total Hours</div></div>
-  <div class="stat"><div class="sv" id="sEmp">—</div><div class="sl">Staff Working</div></div>
-  <div class="stat"><div class="sv" id="sOff">—</div><div class="sl">Days Off</div></div>
-  <div class="stat"><div class="sv" id="sAvg">—</div><div class="sl">Avg h/Person</div></div>
-  <div class="stat"><div class="sv" id="sCov">—</div><div class="sl">Days Covered</div></div>
-  <div class="stat"><div class="sv" id="sOver" style="color:var(--amber)">0</div><div class="sl">Over-40h</div></div>
-</div>
-
-<!-- ═══════════════ SCHEDULE TABLE ═══════════════ -->
-<div id="sched-wrap">
-<div id="schedule-content">
-  <div class="sched-hdr">
-    <h1>KFC Store 1416</h1>
-    <span id="wkLabel">Weekly Schedule</span>
-    <span style="margin-left:auto;font-size:10px;opacity:.8">Store Manager: Mohamed Hedi Bouhoula</span>
-  </div>
-  <div class="tw">
-    <table id="tbl">
-      <thead><tr id="tHead"></tr></thead>
-      <tbody id="tBody"></tbody>
-      <tfoot><tr id="tFoot"></tr></tfoot>
-    </table>
-  </div>
-</div>
-</div>
-
-<!-- ═══════════════ DELETE MODAL ═══════════════ -->
-<div class="modal-bg" id="delModal">
-  <div class="modal">
-    <h3>🗑 Remove Employee</h3>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Select an employee to permanently remove from the schedule roster.</p>
-    <div class="modal-row">
-      <label class="lbl">Employee</label>
-      <select id="delSel" style="width:100%"></select>
-    </div>
-    <div class="modal-btns">
-      <button class="btn b-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn b-danger" onclick="confirmDelete()">Remove Employee</button>
-    </div>
-  </div>
-</div>
-
-<div id="toast"></div>
-
-<script>
-'use strict';
-/* ═══════════════════════════════════════════════════════════
-   SHIFT DEFINITIONS  (immutable — business rules)
-
-   TYPE-A days: Mon(0), Wed(2), Sun(6)
-     Required slots: SM, SK, CM, CK, TM1, TM2
-
-   TYPE-B days: Tue(1), Thu(3), Fri(4), Sat(5)
-     Required slots: SM, SK, CM, CK, TM1, TM2, TM3
-
-   SM   Shift Mgr Morning    9:30a–5:30p    8.00 h
-   SK   Shift Mgr Closing    5:00p–11:30p   6.50 h
-   CM   Cook Morning         9:30a–5:00p    7.50 h
-   CK   Cook Closing         5:00p–11:30p   6.50 h
-   TM1  Team Member Opening  10:00a–6:00p   8.00 h
-   TM2  Team Member Closing  5:00p–10:30p   5.50 h
-   TM3  Team Member Mid      12:00p–8:00p   8.00 h  (Type-B only)
-═══════════════════════════════════════════════════════════ */
-
-const TYPE_A = new Set([0,2,6]); // Mon=0, Wed=2, Sun=6
-
-const SHIFT_DEF = {
-  SM : {label:'SM Morning',   time:'9:30a–5:30p',  hrs:8.00, cls:'cSM', disp:'SM Morning\n9:30a–5:30p\n(8.00h)'},
-  SK : {label:'SM Closing',   time:'5:00p–11:30p', hrs:6.50, cls:'cSK', disp:'SM Closing\n5:00p–11:30p\n(6.50h)'},
-  CM : {label:'Cook Morning', time:'9:30a–5:00p',  hrs:7.50, cls:'cCM', disp:'Cook Morn\n9:30a–5:00p\n(7.50h)'},
-  CK : {label:'Cook Closing', time:'5:00p–11:30p', hrs:6.50, cls:'cCK', disp:'Cook Close\n5:00p–11:30p\n(6.50h)'},
-  TM1: {label:'TM Opening',   time:'10:00a–6:00p', hrs:8.00, cls:'cTM', disp:'TM Open\n10:00a–6:00p\n(8.00h)'},
-  TM2: {label:'TM Closing',   time:'5:00p–10:30p', hrs:5.50, cls:'cTM', disp:'TM Close\n5:00p–10:30p\n(5.50h)'},
-  TM3: {label:'TM Mid',       time:'12:00p–8:00p', hrs:8.00, cls:'cTM', disp:'TM Mid\n12:00p–8:00p\n(8.00h)'},
+/* ─────────────────────────────────────────────────────────────
+   EXERCISE LIBRARY
+   photo field = exact filename to place in /images/ folder
+───────────────────────────────────────────────────────────── */
+const EX = {
+  "Bench Press":             { photo:"bench_press.jpg",           ytId:"SCVCLChPQEs", muscles:"Chest · Triceps · Front Delts",  weight:"60–70 kg",      wNote:"Barbell. Add 2.5kg/week when all reps easy.", sets:"4 × 8–10",    rest:"90s", restSec:90,  level:"moderate", tip:"Elbows 45°. Touch chest lightly. Full lockout at top." },
+  "Shoulder Press":          { photo:"shoulder_press.jpg",        ytId:"qEwKCR5JCog", muscles:"Shoulders · Triceps",             weight:"40–50 kg",      wNote:"Barbell or dumbbells 20–25kg each.",           sets:"3 × 10",      rest:"90s", restSec:90,  level:"moderate", tip:"Drive bar straight up. Brace core. Don't arch lower back." },
+  "Triceps Dips":            { photo:"triceps_dips.jpg",          ytId:"6kALZikXxLc", muscles:"Triceps · Chest",                 weight:"Bodyweight",    wNote:"Add 5–10kg plate when 12 reps easy.",          sets:"3 × 10–12",   rest:"60s", restSec:60,  level:"light",    tip:"Lean slightly forward. Lower to 90° elbow bend." },
+  "Lat Pulldown":            { photo:"lat_pulldown.jpg",          ytId:"CAwf7n6Luuc", muscles:"Lats · Biceps · Rear Delts",      weight:"55–65 kg",      wNote:"Pull to upper chest. Don't swing.",            sets:"4 × 10",      rest:"90s", restSec:90,  level:"moderate", tip:"Pull elbows down and back. Squeeze lats at bottom." },
+  "Barbell Row":             { photo:"barbell_row.jpg",           ytId:"G8l_8chR5BE", muscles:"Back · Biceps · Rear Delts",      weight:"60–70 kg",      wNote:"Hinge at hips. Bar to lower chest.",           sets:"3 × 8–10",    rest:"90s", restSec:90,  level:"moderate", tip:"Keep back flat. Drive elbows back past body." },
+  "Bicep Curl":              { photo:"bicep_curl.jpg",            ytId:"ykJmrZ5v0Oo", muscles:"Biceps · Forearms",               weight:"12–15 kg/side", wNote:"Barbell 30–35kg or dumbbells 12–15kg each.",   sets:"3 × 10–12",   rest:"60s", restSec:60,  level:"light",    tip:"No swinging. 3-second lowering phase." },
+  "Squat":                   { photo:"barbell_squat.jpg",         ytId:"ultWZbUMPL8", muscles:"Quads · Glutes · Hamstrings",     weight:"70–80 kg",      wNote:"Go below parallel. Back straight.",            sets:"4 × 8–10",    rest:"90s", restSec:90,  level:"hard",     tip:"Knees track over toes. Brace core before descent." },
+  "Leg Raise":               { photo:"leg_raise.jpg",             ytId:"JB2oyawG9KI", muscles:"Lower Abs · Hip Flexors",         weight:"Bodyweight",    wNote:"Add ankle weights when 15 reps easy.",         sets:"3 × 12–15",   rest:"30s", restSec:30,  level:"light",    tip:"Control the lowering. Don't swing legs." },
+  "Plank":                   { photo:"plank.jpg",                 ytId:"pSHjTRCQxIw", muscles:"Core · Shoulders · Glutes",       weight:"Bodyweight",    wNote:"Add plate on back when 60s easy.",             sets:"3 × 45s",     rest:"30s", restSec:30,  level:"light",    tip:"Straight line head to heel. Don't let hips sag." },
+  "Incline Dumbbell Press":  { photo:"incline_dumbbell_press.jpg",ytId:"8iPEnn-ltC8", muscles:"Upper Chest · Front Delts",       weight:"22–26 kg/side", wNote:"30–45° incline. Full stretch at bottom.",      sets:"3 × 10",      rest:"90s", restSec:90,  level:"moderate", tip:"Wide arc on the way down. Touch dumbbells at top." },
+  "Dumbbell Shoulder Press": { photo:"dumbbell_shoulder_press.jpg",ytId:"qEwKCR5JCog",muscles:"Shoulders · Triceps",             weight:"18–22 kg/side", wNote:"Seated or standing. Keep core tight.",         sets:"3 × 10",      rest:"60s", restSec:60,  level:"moderate", tip:"Push straight up. Don't arch lower back excessively." },
+  "Cable Triceps Pushdown":  { photo:"cable_triceps_pushdown.jpg",ytId:"2-LAMcpzODU", muscles:"Triceps",                         weight:"20–30 kg",      wNote:"Full lockout at bottom. Elbows fixed.",        sets:"3 × 12",      rest:"60s", restSec:60,  level:"light",    tip:"Keep elbows pinned to sides. Full extension each rep." },
+  "Seated Row":              { photo:"seated_row.jpg",            ytId:"GZbfZ033f74", muscles:"Mid Back · Biceps",               weight:"50–60 kg",      wNote:"Pull handles to lower chest.",                 sets:"3 × 10",      rest:"90s", restSec:90,  level:"moderate", tip:"Sit upright. Don't lean back. Squeeze shoulder blades." },
+  "Dumbbell Bicep Curl":     { photo:"dumbbell_bicep_curl.jpg",   ytId:"ykJmrZ5v0Oo", muscles:"Biceps · Forearms",               weight:"14–18 kg/side", wNote:"Alternate arms or both together.",             sets:"3 × 12",      rest:"60s", restSec:60,  level:"light",    tip:"Supinate wrist at top for peak contraction." },
+  "Leg Press (light)":       { photo:"leg_press.jpg",             ytId:"IZxyjW7MPJQ", muscles:"Quads · Glutes · Hamstrings",     weight:"80–100 kg",     wNote:"Light session. Don't lock knees fully.",       sets:"3 × 12",      rest:"90s", restSec:90,  level:"moderate", tip:"Feet shoulder width. 90° knee bend at bottom." },
+  "Push-ups":                { photo:"push_ups.jpg",              ytId:"IODxDxX7oi4", muscles:"Chest · Triceps · Core",          weight:"Bodyweight",    wNote:"Add vest or plate for resistance.",            sets:"3 × 15–20",   rest:"60s", restSec:60,  level:"light",    tip:"Body straight. Lower chest to 1cm above floor." },
+  "Bodyweight Squat":        { photo:"bodyweight_squat.jpg",      ytId:"aclHkVaku9U", muscles:"Quads · Glutes · Hamstrings",     weight:"Bodyweight",    wNote:"Hold dumbbells for extra challenge.",          sets:"3 × 20",      rest:"60s", restSec:60,  level:"light",    tip:"Go deep. Heels flat on floor." },
+  "Side Plank":              { photo:"side_plank.jpg",            ytId:"K_kMgvHK1fA", muscles:"Obliques · Core",                 weight:"Bodyweight",    wNote:"Hold dumbbell on hip when easy.",              sets:"3 × 45s each",rest:"30s", restSec:30,  level:"light",    tip:"Stack feet. Hips up. Hold steady." },
+  "Russian Twist":           { photo:"russian_twist.jpg",         ytId:"wkD8rjkodUI", muscles:"Obliques · Core",                 weight:"5–8 kg plate",  wNote:"Hold plate or dumbbell.",                     sets:"3 × 15–20",   rest:"30s", restSec:30,  level:"light",    tip:"Lean back 45°. Feet slightly off floor." },
+  "Joint Mobility":          { photo:"joint_mobility.jpg",        ytId:"FSSDLDhbacc", muscles:"Shoulder · Knee · Wrist · Hip",   weight:"No weight",     wNote:"Focus on range of motion.",                   sets:"10 min",      rest:"—",   restSec:0,   level:"light",    tip:"Circles, arm swings, leg swings." },
+  "Brisk Walk":              { photo:"brisk_walk.jpg",            ytId:"",            muscles:"Cardio · Legs",                   weight:"No weight",     wNote:"Target 100–120 BPM heart rate.",              sets:"15–30 min",   rest:"—",   restSec:0,   level:"light",    tip:"Swing arms. Keep pace where you can still talk." },
+  "Kegel":                   { photo:"kegel_exercise.jpg",        ytId:"",            muscles:"Pelvic Floor",                    weight:"No weight",     wNote:"Squeeze and hold 3–5 sec each rep.",          sets:"3 × 15–20",   rest:"30s", restSec:30,  level:"light",    tip:"Contract pelvic floor. Hold 3–5s. Release fully." },
+  "Home Cardio":             { photo:"home_cardio.jpg",           ytId:"ml6cT4AZdqI", muscles:"Full Body · Cardio",              weight:"No weight",     wNote:"High knees, jumping jacks, burpees.",          sets:"10–20 min",   rest:"—",   restSec:0,   level:"moderate", tip:"Keep intensity moderate. 9:30–10:00 AM slot." },
 };
 
-// Per day type: which slots are required, in assignment priority order
-const SLOTS_A = ['SM','SK','CM','CK','TM1','TM2'];
-const SLOTS_B = ['SM','SK','CM','CK','TM1','TM2','TM3'];
+/* ─────────────────────────────────────────────────────────────
+   WORKOUT PLANS
+───────────────────────────────────────────────────────────── */
+const PLAN = {
+  gym1: { label:"GYM DAY 1", type:"gym", color:"#b8d44a", duration:"75–90 min", desc:"Full Body · Push + Pull + Legs",
+    exercises:["Bench Press","Shoulder Press","Triceps Dips","Lat Pulldown","Barbell Row","Bicep Curl","Squat","Leg Raise","Plank"],
+    cardio:"Fast walk 15–20 min after workout", kegel:"3 × 15–20 reps",
+    schedule:[{time:"00:00",activity:"Warm-up"},{time:"00:10",activity:"Bench Press 4×8–10"},{time:"00:22",activity:"Shoulder Press 3×10"},{time:"00:31",activity:"Triceps Dips 3×10–12"},{time:"00:40",activity:"Lat Pulldown 4×10"},{time:"00:52",activity:"Barbell Row 3×8–10"},{time:"01:01",activity:"Bicep Curl 3×10–12"},{time:"01:09",activity:"Squat 4×8–10"},{time:"01:22",activity:"Leg Raise 3×12–15"},{time:"01:28",activity:"Plank 3×45s"},{time:"01:33",activity:"Cardio: Fast walk 15–20 min"}],
+    meals:{breakfast:"3 boiled eggs + 50g oats + nuts + coffee",snack1:"150g yogurt + banana + chia",lunch:"150g chicken + 150g rice + salad",snack2:"Apple + 20g almonds",dinner:"200g fish/beef + vegetables + olive oil"} },
+  gym2: { label:"GYM DAY 2", type:"gym", color:"#f59e0b", duration:"60–75 min", desc:"Light Session · Push or Pull",
+    exercises:["Incline Dumbbell Press","Dumbbell Shoulder Press","Cable Triceps Pushdown","Seated Row","Dumbbell Bicep Curl","Leg Press (light)"],
+    cardio:"Fast walk 15 min after workout", kegel:"3 × 15–20 reps",
+    schedule:[{time:"00:00",activity:"Warm-up"},{time:"00:08",activity:"Incline DB Press 3×10"},{time:"00:18",activity:"DB Shoulder Press 3×10"},{time:"00:27",activity:"Cable Triceps 3×12"},{time:"00:35",activity:"Seated Row 3×10"},{time:"00:44",activity:"DB Bicep Curl 3×12"},{time:"00:53",activity:"Leg Press 3×12"},{time:"01:03",activity:"Cardio: Fast walk 15 min"}],
+    meals:{breakfast:"3 eggs + 50g oats + nuts + coffee",snack1:"Yogurt + fruit + chia",lunch:"Chicken + rice + salad",snack2:"Apple + almonds",dinner:"Fish or beef + veggies"} },
+  active: { label:"ACTIVE REST", type:"active", color:"#38bdf8", duration:"40–50 min", desc:"Joint Work · Home Cardio · Kegel",
+    exercises:["Joint Mobility","Brisk Walk","Plank","Russian Twist","Kegel","Home Cardio"],
+    cardio:"Walk 20–30 min OR Home Cardio 9:30–10:00 AM", kegel:"3 × 15–20 reps",
+    schedule:[{time:"09:30",activity:"Home Cardio 10 min (optional)"},{time:"00:00",activity:"Joint Mobility 10 min"},{time:"00:10",activity:"Brisk Walk 20–30 min"},{time:"00:40",activity:"Plank 3×45s"},{time:"00:46",activity:"Russian Twist 3×15–20"},{time:"00:52",activity:"Kegel 3×15–20"}],
+    meals:{breakfast:"3 eggs + 50g oats + nuts + coffee",snack1:"150g yogurt + fruit",lunch:"Chicken + veggies",snack2:"Apple + nuts",dinner:"Lean protein + salad"} },
+  home: { label:"HOME WORKOUT", type:"home", color:"#34d399", duration:"40–50 min", desc:"Bodyweight · Home Cardio · Kegel",
+    exercises:["Push-ups","Bodyweight Squat","Plank","Side Plank","Home Cardio","Kegel"],
+    cardio:"Home Cardio 9:30–10:00 AM + Walk 20 min", kegel:"3 × 15–20 reps",
+    schedule:[{time:"09:30",activity:"Home Cardio 10 min"},{time:"00:00",activity:"Warm-up 5 min"},{time:"00:05",activity:"Push-ups 3×15–20"},{time:"00:15",activity:"Bodyweight Squat 3×20"},{time:"00:24",activity:"Plank 3×45s"},{time:"00:30",activity:"Side Plank 3×45s each"},{time:"00:38",activity:"Walk 20 min"},{time:"00:58",activity:"Kegel 3×15–20"}],
+    meals:{breakfast:"3 eggs + oats + nuts + coffee",snack1:"Yogurt + fruit + chia",lunch:"Chicken + rice + salad",snack2:"Apple + nuts",dinner:"Beef or fish + veggies"} },
+  rest: { label:"REST DAY", type:"rest", color:"#818cf8", duration:"20–30 min", desc:"Light Walk · Kegel · Recovery",
+    exercises:["Brisk Walk","Joint Mobility","Kegel"],
+    cardio:"Walk 15–20 min", kegel:"3 × 15–20 reps",
+    schedule:[{time:"00:00",activity:"Joint Mobility 10 min"},{time:"00:10",activity:"Walk 15–20 min"},{time:"00:30",activity:"Kegel 3×15–20"}],
+    meals:{breakfast:"3 eggs + oats + nuts + coffee",snack1:"Yogurt + fruit",lunch:"Chicken + veggies + rice",snack2:"Apple + almonds",dinner:"Lean protein + salad"} },
+  kfc: { label:"KFC SHIFT", type:"work", color:"#f87171", duration:"On shift", desc:"Break Exercises · Kegel · Stay Active",
+    exercises:["Joint Mobility","Kegel","Brisk Walk"],
+    cardio:"Walk during shift whenever possible", kegel:"3 × 15–20 on breaks",
+    schedule:[{time:"Break 1",activity:"Joint Mobility 5 min"},{time:"Break 2",activity:"Kegel 3×15–20"},{time:"Break 3",activity:"Walk 10 min"},{time:"Post-shift",activity:"Light stretch 10 min"}],
+    meals:{breakfast:"3 eggs + oats + nuts — eat before shift",snack1:"Yogurt + fruit on break",lunch:"Chicken + rice (avoid KFC)",snack2:"Apple + almonds",dinner:"Lean protein + veggies at home"} },
+  kfc_gym: { label:"NIGHT SHIFT + GYM 🔥", type:"work_gym", color:"#fb923c", duration:"Shift + 75 min gym", desc:"Go gym BEFORE your night shift · You can do both!",
+    exercises:["Bench Press","Shoulder Press","Triceps Dips","Lat Pulldown","Barbell Row","Bicep Curl","Squat","Leg Raise","Plank"],
+    cardio:"Fast walk 15 min post-gym", kegel:"3 × 15–20 on shift breaks",
+    note:"🌙 Night shift starts 22:00 → Hit the gym 18:00–20:00. You have 2h free before shift. Sleep after shift is your recovery window.",
+    schedule:[{time:"18:00",activity:"Gym session starts"},{time:"18:10",activity:"Bench Press 4×8–10"},{time:"18:22",activity:"Shoulder Press 3×10"},{time:"18:40",activity:"Lat Pulldown 4×10"},{time:"18:52",activity:"Squat 4×8–10"},{time:"19:10",activity:"Fast walk 15 min"},{time:"19:30",activity:"Shower + meal before shift"},{time:"22:00",activity:"KFC shift starts"},{time:"Break",activity:"Kegel + Joint Mobility"},{time:"Post-shift",activity:"Sleep = recovery!"}],
+    meals:{breakfast:"High protein: 4 eggs + oats + nuts before gym",snack1:"Protein shake after gym",lunch:"Chicken + rice before shift (21:00)",snack2:"Yogurt + fruit on break",dinner:"Light meal post-shift. Avoid heavy food after midnight."} },
+  /* ── NEW: GYM on a day off (no shift) ── */
+  gym_off: { label:"GYM · DAY OFF 💪", type:"gym_off", color:"#a78bfa", duration:"75–90 min", desc:"Full Gym Session · Day Off · No rush!",
+    exercises:["Bench Press","Shoulder Press","Triceps Dips","Lat Pulldown","Barbell Row","Bicep Curl","Squat","Leg Raise","Plank"],
+    cardio:"Walk 20–30 min after gym", kegel:"3 × 15–20 reps",
+    note:"🟣 Day off = best gym day. No time pressure. Hit it hard, recover well.",
+    schedule:[{time:"09:00",activity:"Breakfast + coffee"},{time:"10:00",activity:"Gym session starts"},{time:"10:10",activity:"Bench Press 4×8–10"},{time:"10:25",activity:"Shoulder Press 3×10"},{time:"10:35",activity:"Triceps Dips 3×10–12"},{time:"10:45",activity:"Lat Pulldown 4×10"},{time:"10:58",activity:"Barbell Row 3×8–10"},{time:"11:08",activity:"Bicep Curl 3×10–12"},{time:"11:17",activity:"Squat 4×8–10"},{time:"11:32",activity:"Leg Raise + Plank"},{time:"11:45",activity:"Walk 20–30 min"},{time:"12:15",activity:"Protein shake + lunch"}],
+    meals:{breakfast:"4 eggs + 60g oats + nuts + coffee (9:00 AM)",snack1:"Banana + protein bar pre-gym",lunch:"150g chicken + 150g rice + salad (12:30)",snack2:"Greek yogurt + berries + chia",dinner:"200g salmon or beef + veggies + olive oil"} },
+  /* ── NEW: Gym before NON-night shift (morning or afternoon off before shift) ── */
+  gym_before_shift: { label:"GYM BEFORE SHIFT 🏋️", type:"gym_shift", color:"#22d3ee", duration:"60–75 min gym + shift", desc:"Hit gym in your free window · Then go to work",
+    exercises:["Incline Dumbbell Press","Dumbbell Shoulder Press","Cable Triceps Pushdown","Seated Row","Dumbbell Bicep Curl","Leg Press (light)"],
+    cardio:"Fast walk 15 min post-gym", kegel:"3 × 15–20 on shift breaks",
+    note:"💡 Use your free time before shift to hit GYM DAY 2. Light session — saves energy for the shift.",
+    schedule:[{time:"Free window",activity:"Gym session (60–75 min)"},{time:"Post-gym",activity:"Protein shake + light meal"},{time:"Pre-shift",activity:"Rest 30–45 min"},{time:"Shift",activity:"Stay active — walk + kegel on breaks"}],
+    meals:{breakfast:"3 eggs + oats + nuts + coffee",snack1:"Protein shake after gym",lunch:"Chicken + rice before shift",snack2:"Yogurt + fruit on break",dinner:"Lean protein + veggies post-shift"} },
+  /* ── NEW: Babysitting day — kids home, gym impossible ── */
+  babysitting: { label:"BABYSITTING DAY 👶", type:"babysitting", color:"#f472b6", duration:"30–40 min", desc:"Kids are home · Home workout + active play",
+    exercises:["Push-ups","Bodyweight Squat","Plank","Side Plank","Russian Twist","Kegel"],
+    cardio:"Walk with kids 20–30 min", kegel:"3 × 15–20 reps (anytime)",
+    note:"👨‍👧 Kids are home today — no gym possible. Do bodyweight workout during nap or quiet time. Walk with them counts as cardio!",
+    schedule:[{time:"Morning",activity:"Breakfast + kids routine"},{time:"Nap/quiet time",activity:"Push-ups 3×15–20"},{time:"Nap/quiet time",activity:"Bodyweight Squat 3×20"},{time:"Nap/quiet time",activity:"Plank + Side Plank 3×45s"},{time:"Anytime",activity:"Kegel 3×15–20"},{time:"Afternoon",activity:"Walk with kids 20–30 min"}],
+    meals:{breakfast:"3 eggs + oats + nuts + coffee",snack1:"Yogurt + fruit + chia",lunch:"Chicken + rice + salad (meal prep)",snack2:"Apple + almonds + kids snack",dinner:"Easy family meal — lean protein + veggies"} },
+  family: { label:"FAMILY DAY", type:"family", color:"#e879f9", duration:"Free", desc:"Rest · Family · Light Activity",
+    exercises:["Kegel","Brisk Walk"],
+    cardio:"Optional family walk", kegel:"3 × 15–20 reps",
+    schedule:[{time:"Morning",activity:"Family time"},{time:"Anytime",activity:"Light walk if possible"},{time:"Evening",activity:"Kegel 3×15–20"}],
+    meals:{breakfast:"3 eggs + oats + nuts + coffee",snack1:"Fruit + nuts",lunch:"Balanced family meal",snack2:"Light snack",dinner:"Normal family dinner, portion control"} },
+};
 
-const MAX_H = 40;
-
-/* ═══════════════════════════════════════════════════════════
-   EMPLOYEE DATA  (mutable — can add/remove)
-
-   roles array controls what each employee CAN be assigned to:
-     MGR  = Store Manager — fills any slot but is last resort
-     SM   = can fill Shift Manager Morning slot
-     SK   = can fill Shift Manager Closing slot
-     SMO  = Shift Manager Morning ONLY (cannot fill SK slot ever)
-     CM   = can fill Cook Morning slot
-     CK   = can fill Cook Closing slot
-     TM   = can fill any Team Member slot
-
-   isMgr flag = true only for Mohamed Hedi (Store Manager)
-═══════════════════════════════════════════════════════════ */
-// ─────────────────────────────────────────────────────────────────────────────
-// EMPLOYEE ROSTER  (corrected per manager's instructions)
-//
-// Role key:
-//   SM  = Shift Manager Morning slot ONLY
-//   SK  = Shift Manager Closing slot ONLY
-//   SMO = Morning-only Shift Manager (alias for SM without SK)
-//   CM  = Cook Morning slot
-//   CK  = Cook Closing slot
-//   TM  = Team Member (any TM slot)
-//   MGR = Store Manager (fills any slot, last resort)
-//
-// defaultAvail[0..6] = Mon..Sun  — pre-set per manager's notes
-// ─────────────────────────────────────────────────────────────────────────────
-let EMPS = [
-  // Damilola — TM, all week (no specific restriction given)
-  {name:'Adedunye, Damilola',     short:'Damilola',     roles:['TM'],
-   defaultAvail:[true,true,true,true,true,true,true],  isMgr:false},
-
-  // Adam — Cook (morning + closing), all week
-  {name:'Aghwach, Adam',          short:'Adam',         roles:['CM','CK','TM'],
-   defaultAvail:[true,true,true,true,true,true,true],  isMgr:false},
-
-  // Nandakishore — Team Member ONLY (not cook), all week
-  {name:'Appidi, Nandakishore',   short:'Nanda',        roles:['TM'],
-   defaultAvail:[true,true,true,true,true,true,true],  isMgr:false},
-
-  // Anes — Cook (morning + closing), all week
-  {name:'Belarbi, Anes',          short:'Anes',         roles:['CM','CK','TM'],
-   defaultAvail:[true,true,true,true,true,true,true],  isMgr:false},
-
-  // Jorge — Cook MORNING ONLY, available Mon–Wed ONLY
-  //   slots: CM only (NOT CK). avail: Mon(0), Tue(1), Wed(2) = true; rest false
-  {name:'Figueroa, Jorge',        short:'Jorge',        roles:['CM','TM'],
-   defaultAvail:[true,true,true,false,false,false,false], isMgr:false,
-   morningOnly:true},
-
-  // Arjun — Shift Manager (morning + closing), all week
-  {name:'Gilotra, Arjun',         short:'Arjun',        roles:['SM','SK','CM','CK','TM'],
-   defaultAvail:[true,true,true,true,true,true,true],  isMgr:false},
-
-  // Agil — TM, all week
-  {name:'Hashim, Agil',           short:'Agil',         roles:['TM'],
-   defaultAvail:[true,true,true,true,true,true,true],  isMgr:false},
-
-  // Sunny — Cook (morning + closing), all week
-  {name:'Khandelwal, Sunny',      short:'Sunny',        roles:['CM','CK','TM'],
-   defaultAvail:[true,true,true,true,true,true,true],  isMgr:false},
-
-  // Brinto — TM, all week
-  {name:'Saaji, Brinto',          short:'Brinto',       roles:['TM'],
-   defaultAvail:[true,true,true,true,true,true,true],  isMgr:false},
-
-  // Amadrdeed — TM, all week
-  {name:'Saaji, Amadrdeed',       short:'Amadrdeed',    roles:['TM'],
-   defaultAvail:[true,true,true,true,true,true,true],  isMgr:false},
-
-  // Ghazala — Shift Manager MORNING ONLY (SM slot only, NOT SK/closing)
-  //   available Mon–Fri only (0=Mon … 4=Fri)
-  {name:'Shaheen, Ghazala',       short:'Ghazala',      roles:['SM','TM'],
-   defaultAvail:[true,true,true,true,true,false,false], isMgr:false,
-   morningOnly:true},
-
-  // Balveer — Shift Manager (morning + closing), all week
-  {name:'Tiwari, Balveer',        short:'Balveer',      roles:['SM','SK','CM','CK','TM'],
-   defaultAvail:[true,true,true,true,true,true,true],  isMgr:false},
-
-  // Mohamed Hedi — Store Manager, flexible, all week
-  {name:'Bouhoula, Mohamed Hedi', short:'Mohamed Hedi', roles:['MGR'],
-   defaultAvail:[true,true,true,true,true,true,true],  isMgr:true,
-   mgrFlexSlots:['SM','SK','CM','CK','TM1','TM2','TM3']},
+const TYPE_ICON = { gym:"🏋️", active:"🚶", rest:"😴", work:"👨‍🍳", work_gym:"🔥", home:"🏠", family:"👨‍👩‍👧", gym_off:"💪", gym_shift:"🏋️", babysitting:"👶" };
+const DAYS_FULL = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const DAYS_SHORT = ["MON","TUE","WED","THU","FRI","SAT","SUN"];
+const SHIFT_OPTS = [
+  { value:"off",          label:"Day Off",          emoji:"😴",  color:"#4ade80" },
+  { value:"off_gym",      label:"Off + Gym",         emoji:"💪",  sub:"Day off → gym today!", color:"#a78bfa" },
+  { value:"morning",      label:"Morning",           emoji:"🌅",  sub:"6:00–14:00",   color:"#facc15" },
+  { value:"morning_gym",  label:"Morning + Gym",     emoji:"🏋️", sub:"Free time → gym before/after", color:"#22d3ee" },
+  { value:"afternoon",    label:"Afternoon",         emoji:"🌤️", sub:"14:00–22:00",  color:"#fb923c" },
+  { value:"afternoon_gym",label:"Afternoon + Gym",   emoji:"🏋️", sub:"Gym in the morning first", color:"#22d3ee" },
+  { value:"night",        label:"Night Shift",       emoji:"🌙",  sub:"22:00–06:00",  color:"#818cf8" },
+  { value:"night_gym",    label:"Night + Gym 🔥",    emoji:"🔥",  sub:"22:00 shift → gym 18:00–20:00", color:"#fb923c" },
+  { value:"double",       label:"Double",            emoji:"💪",  sub:"Full day",     color:"#f87171" },
+  { value:"babysitting",  label:"Babysitting 👶",    emoji:"👶",  sub:"Kids home — no school", color:"#f472b6" },
+  { value:"custom",       label:"Custom",            emoji:"⚙️",  sub:"Set own time", color:"#a78bfa" },
 ];
 
-// State arrays — rebuilt whenever EMPS changes
-let avail = [];   // avail[ei][di] = true/false
-let sched = [];   // sched[ei][di] = {cls,disp,hrs,label,slot} | null
+/* ─────────────────────────────────────────────────────────────
+   SMART WEEK ASSIGNMENT
+   Rules:
+   - Sat/Sun → family
+   - off_gym         → gym_off (full gym, no shift)
+   - night_gym       → kfc_gym (gym 18–20 before night shift)
+   - morning_gym / afternoon_gym → gym_before_shift
+   - babysitting     → babysitting
+   - night (no gym)  → kfc_gym if a gym slot is needed, else kfc
+   - morning/afternoon/double → kfc
+   - pure off        → active or home (alternating)
+   - 2 gym days auto-assigned on best off/gym days
+───────────────────────────────────────────────────────────── */
+function assignWeek(shifts) {
+  const res = Array(7).fill(null);
+  res[5] = "family"; res[6] = "family";
 
-function initState(){
-  const old_avail = avail.slice();
-  const old_sched = sched.slice();
-  // Use the employee's defaultAvail if no prior state exists
-  avail = EMPS.map((emp,i)=> old_avail[i] || (emp.defaultAvail ? [...emp.defaultAvail] : Array(7).fill(true)));
-  sched = EMPS.map((_,i)=> old_sched[i] || Array(7).fill(null));
-}
-initState();
-
-/* ═══════════════════════════════════════════════════════════
-   DAY / NAME MAPS
-═══════════════════════════════════════════════════════════ */
-const DAYS  = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-const DAYSL = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
-const DM    = {};
-DAYSL.forEach((d,i)=>{
-  DM[d]=i; DM[d.slice(0,3)]=i;
-});
-// Extra aliases
-Object.assign(DM,{mon:0,tue:1,tues:1,wed:2,thu:3,thur:3,thurs:3,fri:4,sat:5,sun:6,sund:6,su:6});
-
-/* ═══════════════════════════════════════════════════════════
-   DOM HELPERS
-═══════════════════════════════════════════════════════════ */
-const $ = id => document.getElementById(id);
-const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g,'');
-
-let toastTimer;
-function toast(msg, ms=3200){
-  const el=$('toast'); el.textContent=msg; el.classList.add('show');
-  clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),ms);
-}
-
-/* ═══════════════════════════════════════════════════════════
-   ROLE HELPERS
-═══════════════════════════════════════════════════════════ */
-// Returns the badge label for display
-function dispRole(ei){
-  const r=EMPS[ei].roles;
-  if(EMPS[ei].isMgr) return 'MGR';
-  if(r.includes('SMO') && !r.includes('SK')) return 'SMO';
-  if(r.includes('SM')  && r.includes('SK'))  return 'SM';
-  if(r.includes('SM')  && !r.includes('SK')) return 'SMO';
-  if(r.includes('SK')  && !r.includes('SM')) return 'SK';
-  if(r.includes('CM')  && r.includes('CK'))  return 'CK';
-  if(r.includes('CM'))  return 'CM';
-  return 'TM';
-}
-
-// Role options for dropdowns
-const ROLE_OPTIONS = [
-  {val:'TM',              label:'Team Member'},
-  {val:'CM,CK,TM',        label:'Cook (Morning + Closing)'},
-  {val:'CM,TM',           label:'Cook Morning Only'},
-  {val:'CK,TM',           label:'Cook Closing Only'},
-  {val:'SM,SK,CM,CK,TM', label:'Shift Manager (All Shifts)'},
-  {val:'SM,CM,CK,TM',    label:'Shift Manager — Morning Only'},
-  {val:'SK,CM,CK,TM',    label:'Shift Manager — Closing Only'},
-];
-
-/* ═══════════════════════════════════════════════════════════
-   STEP 1 — ROLE GRID
-═══════════════════════════════════════════════════════════ */
-function buildRoleGrid(){
-  const g=$('roleGrid'); g.innerHTML='';
-  EMPS.forEach((emp,ei)=>{
-    const d=document.createElement('div');
-    d.className='re'+(emp.isMgr?' is-mgr':'');
-    const dr=dispRole(ei);
-
-    if(emp.isMgr){
-      d.innerHTML=`
-        <span class="re-name">${emp.short}</span>
-        <span class="rb rb-MGR">STORE MGR</span>
-        <span style="font-size:10px;color:var(--muted)">Flexible — set per day below</span>`;
-    } else {
-      const opts=ROLE_OPTIONS.map(o=>`<option value="${o.val}"${EMPS[ei].roles.join(',')===o.val?' selected':''}>${o.label}</option>`).join('');
-      d.innerHTML=`
-        <span class="re-name">${emp.short} <span class="rb rb-${dr}">${dr}</span></span>
-        <div class="re-actions">
-          <select id="rs${ei}" style="font-size:11px;padding:3px 7px">${opts}</select>
-          <button class="btn b-danger b-sm" onclick="openDeleteModal()" title="Remove staff">✕</button>
-        </div>`;
-      d.querySelector('select').addEventListener('change',e=>{
-        EMPS[ei].roles=e.target.value.split(',');
-        buildRoleGrid(); buildAvailGrid();
-      });
-    }
-    g.appendChild(d);
-  });
-
-  // Delete button (non-MGR employees only) — open modal
-  // Already wired above
-}
-
-/* ═══════════════════════════════════════════════════════════
-   ADD STAFF
-═══════════════════════════════════════════════════════════ */
-function addStaff(){
-  const name=$('newName').value.trim();
-  const short=$('newShort').value.trim();
-  const roleVal=$('newRole').value;
-  if(!name||!short){toast('⚠ Please enter both full name and short name.');return;}
-  if(EMPS.find(e=>norm(e.short)===norm(short))){toast('⚠ An employee with that short name already exists.');return;}
-
-  EMPS.push({name,short,roles:roleVal.split(','),isMgr:false,defaultAvail:Array(7).fill(true)});
-  avail.push(Array(7).fill(true));
-  sched.push(Array(7).fill(null));
-
-  $('newName').value=''; $('newShort').value='';
-  buildRoleGrid(); buildAvailGrid(); initEmptyRow(EMPS.length-1);
-  toast(`✅ ${short} added to the roster.`);
-}
-
-/* ═══════════════════════════════════════════════════════════
-   DELETE STAFF (modal)
-═══════════════════════════════════════════════════════════ */
-function openDeleteModal(){
-  const sel=$('delSel'); sel.innerHTML='';
-  EMPS.forEach((e,i)=>{
-    if(!e.isMgr){
-      const o=document.createElement('option');
-      o.value=i; o.textContent=`${e.short} — ${e.name}`;
-      sel.appendChild(o);
-    }
-  });
-  $('delModal').classList.add('open');
-}
-function closeModal(){ $('delModal').classList.remove('open'); }
-function confirmDelete(){
-  const idx=+$('delSel').value;
-  const name=EMPS[idx].short;
-  EMPS.splice(idx,1);
-  avail.splice(idx,1);
-  sched.splice(idx,1);
-  closeModal();
-  buildRoleGrid(); buildAvailGrid(); renderTable();
-  toast(`🗑 ${name} removed from roster.`);
-}
-
-/* ═══════════════════════════════════════════════════════════
-   STEP 2 — AVAILABILITY GRID
-═══════════════════════════════════════════════════════════ */
-function buildAvailGrid(){
-  const g=$('availGrid'); g.innerHTML='';
-  EMPS.forEach((emp,ei)=>{ g.appendChild(buildAvailCard(ei)); });
-}
-
-function buildAvailCard(ei){
-  const emp=EMPS[ei];
-  const dr=dispRole(ei);
-  const wrap=document.createElement('div');
-  wrap.className='ae'+(emp.isMgr?' is-mgr':'');
-  wrap.id=`ac${ei}`;
-
-  // header
-  const hdr=document.createElement('div');
-  hdr.className='aeh';
-
-  const left=document.createElement('div');
-  left.className='aeh-left';
-  left.innerHTML=`<span id="abn${ei}" style="font-weight:700">${emp.short}</span>
-    <span class="rb rb-${dr}" id="abr${ei}">${dr}</span>
-    <span class="hrs-pill hp-ok" id="hpill${ei}">0.0h</span>`;
-
-  const qset=document.createElement('select');
-  qset.style.cssText='font-size:9.5px;padding:2px 4px;border:1px solid var(--border);border-radius:4px';
-  qset.innerHTML='<option value="">Quick…</option><option value="all">All 7</option><option value="wkd">Mon–Fri</option><option value="wke">Sat–Sun</option><option value="non">None</option>';
-  qset.addEventListener('change',e=>{ setPreset(ei,e.target.value); e.target.value=''; });
-
-  hdr.appendChild(left); hdr.appendChild(qset);
-  wrap.appendChild(hdr);
-
-  // checkboxes
-  const dc=document.createElement('div');
-  dc.className='dc'; dc.id=`dc${ei}`;
-  renderChecks(ei,dc);
-  wrap.appendChild(dc);
-
-  // MGR flexible shift selector
-  if(emp.isMgr){
-    const mbox=document.createElement('div');
-    mbox.className='mgr-flex-wrap';
-    mbox.innerHTML=`<span class="mgr-flex-title">Preferred shift per available day:</span>`;
-    DAYS.forEach((day,di)=>{
-      const uid=`mflex_${ei}_${di}`;
-      const grp=document.createElement('label');
-      grp.innerHTML=`
-        <input type="checkbox" id="${uid}" ${(emp.mgrFlexSlots||[]).includes('SM')?'checked':''}>
-        ${day} Morn`;
-      // Actually we want morning/closing toggle per day. Use a select per day.
-      mbox.appendChild(grp);
-    });
-
-    // Replace with a proper per-day select for MGR
-    mbox.innerHTML=`<span class="mgr-flex-title">Preferred shift type per day (when available):</span>`;
-    DAYS.forEach((day,di)=>{
-      const sel=document.createElement('select');
-      sel.id=`mflex_${ei}_${di}`;
-      sel.style.cssText='font-size:10px;padding:2px 5px;border:1px solid var(--border);border-radius:4px';
-      sel.innerHTML=`
-        <option value="SM">Morning (SM)</option>
-        <option value="SK">Closing (SM)</option>
-        <option value="CM">Cook Morn</option>
-        <option value="CK">Cook Close</option>
-        <option value="TM1">TM Open</option>
-        <option value="TM2">TM Close</option>
-        <option value="TM3">TM Mid</option>
-        <option value="any">Any (auto)</option>`;
-      sel.value='any';
-      const lbl=document.createElement('label');
-      lbl.style.cssText='font-size:10px;font-weight:600;color:var(--sub);display:flex;flex-direction:column;gap:2px;align-items:center';
-      lbl.innerHTML=`<span>${day}</span>`;
-      lbl.appendChild(sel);
-      mbox.appendChild(lbl);
-    });
-    wrap.appendChild(mbox);
+  // First pass: assign explicitly requested plans Mon–Fri
+  for (let i = 0; i < 5; i++) {
+    const s = shifts[i];
+    if (s === "off_gym")         res[i] = "gym_off";
+    else if (s === "night_gym")  res[i] = "kfc_gym";
+    else if (s === "morning_gym" || s === "afternoon_gym") res[i] = "gym_before_shift";
+    else if (s === "babysitting") res[i] = "babysitting";
+    else if (s === "double")     res[i] = "kfc";
   }
 
-  return wrap;
-}
+  // Count how many gym days are already assigned
+  let gymCount = res.filter(r => r === "gym_off" || r === "kfc_gym" || r === "gym_before_shift").length;
 
-function renderChecks(ei, container){
-  if(!container) container=$(`dc${ei}`);
-  if(!container) return;
-  container.innerHTML='';
-  DAYS.forEach((d,di)=>{
-    const on=avail[ei][di];
-    const lbl=document.createElement('label');
-    lbl.className=on?'on':'off2';
-    const typeTag=TYPE_A.has(di)?'A':'B';
-    lbl.innerHTML=`<input type="checkbox" ${on?'checked':''} onchange="toggleAvail(${ei},${di},this.checked)">
-      ${d}<span class="dtype-tag">${typeTag}</span>`;
-    container.appendChild(lbl);
-  });
-}
+  // Try to auto-assign 2 gym days on plain "off" or "night" days if not enough gym days
+  if (gymCount < 2) {
+    const candidates = [];
+    for (let i = 0; i < 5; i++) {
+      if (res[i] !== null) continue; // already assigned
+      const s = shifts[i];
+      if (s === "off" || s === "night") candidates.push(i);
+    }
+    let g1 = -1, g2 = -1;
+    // pick 2 candidates at least 2 days apart
+    for (let ci = 0; ci < candidates.length; ci++) {
+      if (g1 === -1) { g1 = candidates[ci]; continue; }
+      if (g2 === -1 && candidates[ci] - g1 >= 2) { g2 = candidates[ci]; break; }
+    }
+    if (g1 === -1 && candidates.length > 0) g1 = candidates[0];
+    if (g2 === -1 && candidates.length > 1) g2 = candidates[candidates.length - 1];
 
-function toggleAvail(ei,di,val){
-  avail[ei][di]=val;
-  const lbl=$(`dc${ei}`);
-  if(lbl) lbl.children[di].className=val?'on':'off2';
-}
-
-function setPreset(ei,p){
-  if(!p) return;
-  const m={all:[0,1,2,3,4,5,6],wkd:[0,1,2,3,4],wke:[5,6],non:[]};
-  avail[ei]=Array(7).fill(false);
-  (m[p]||[]).forEach(di=>avail[ei][di]=true);
-  renderChecks(ei);
-}
-
-function setAllAvail(v){
-  EMPS.forEach((_,ei)=>{ avail[ei]=Array(7).fill(v); renderChecks(ei); });
-  toast(v?'All employees set available.':'All availability cleared.');
-}
-
-function updateHoursPill(ei,hrs){
-  const el=$(`hpill${ei}`);
-  if(!el) return;
-  el.textContent=hrs.toFixed(1)+'h';
-  el.className='hrs-pill '+(hrs>MAX_H?'hp-over':hrs>=35?'hp-warn':'hp-ok');
-}
-
-/* ═══════════════════════════════════════════════════════════
-   NATURAL LANGUAGE PARSER (regex, manual)
-═══════════════════════════════════════════════════════════ */
-function findEmp(frag){
-  const q=norm(frag.trim());
-  if(!q) return -1;
-  // exact short name
-  let i=EMPS.findIndex(e=>norm(e.short)===q);
-  if(i>=0) return i;
-  // substring of short name
-  i=EMPS.findIndex(e=>norm(e.short).startsWith(q)||q.startsWith(norm(e.short).slice(0,4)));
-  if(i>=0) return i;
-  // substring of full name
-  i=EMPS.findIndex(e=>norm(e.name).includes(q)||q.includes(norm(e.short)));
-  return i;
-}
-
-function parseDayList(str){
-  str=str.trim().toLowerCase()
-    .replace(/\bthurs\b/g,'thu').replace(/\btues\b/g,'tue');
-
-  // range: "monday to friday" or "mon-fri"
-  const rng=str.match(/(\w+)\s*(?:to|through|thru|-)\s*(\w+)/);
-  if(rng){
-    const s=DM[rng[1]],e=DM[rng[2]];
-    if(s!==undefined&&e!==undefined){
-      const out=[];
-      if(s<=e) for(let d=s;d<=e;d++) out.push(d);
-      else { for(let d=s;d<7;d++) out.push(d); for(let d=0;d<=e;d++) out.push(d); }
-      return out;
+    if (gymCount === 0) {
+      if (g1 !== -1) { res[g1] = shifts[g1] === "night" ? "kfc_gym" : "gym1"; gymCount++; }
+      if (g2 !== -1) { res[g2] = shifts[g2] === "night" ? "kfc_gym" : "gym2"; gymCount++; }
+    } else if (gymCount === 1) {
+      // Only need one more
+      const used = g1 !== -1 && res[g1] === null ? g1 : g2;
+      if (used !== -1) res[used] = shifts[used] === "night" ? "kfc_gym" : "gym2";
     }
   }
-  // list: "tuesday, thursday and saturday"
-  const tokens=str.split(/[,\s]+(?:and\s*)?|\s+and\s+|\s+/);
-  const days=[...new Set(tokens.map(w=>DM[w.trim()]).filter(d=>d!==undefined))];
-  return days.length?days:null;
-}
 
-function applyParsed(name,action,days,ok,warn){
-  const ei=findEmp(name);
-  if(ei<0){ warn.push(`Name not found: "${name.trim()}"`); return; }
-  if(action==='off_all'){
-    avail[ei]=Array(7).fill(false); renderChecks(ei);
-    ok.push(`${EMPS[ei].short}: off all week`); return;
-  }
-  if(action==='off'){
-    if(!days||!days.length){ warn.push(`No days parsed for: "${name.trim()}"`); return; }
-    days.forEach(di=>avail[ei][di]=false); renderChecks(ei);
-    ok.push(`${EMPS[ei].short}: off on ${days.map(d=>DAYS[d]).join(', ')}`); return;
-  }
-  if(action==='avail'){
-    if(!days||!days.length){ avail[ei]=Array(7).fill(true); renderChecks(ei); ok.push(`${EMPS[ei].short}: available all week`); return; }
-    avail[ei]=Array(7).fill(false); days.forEach(di=>avail[ei][di]=true); renderChecks(ei);
-    ok.push(`${EMPS[ei].short}: available ${days.map(d=>DAYS[d]).join(', ')}`);
-  }
-}
-
-function parseNL(){
-  const lines=$('nlBox').value.split(/[\n;]+/).map(l=>l.trim()).filter(Boolean);
-  const ok=[],warn=[];
-  lines.forEach(line=>{
-    const l=line.toLowerCase().trim();
-
-    // off all week
-    if(/off\s*(all\s*week|every\s*day|always)/.test(l)||/all\s*week.*off/.test(l)){
-      const name=l.replace(/\s*(is|are)?\s*off.*/,'').trim();
-      applyParsed(name,'off_all',null,ok,warn); return;
-    }
-    // "X off on day1 day2"
-    const offM=l.match(/^(.+?)\s+(is\s+|are\s+)?off(?:\s+on|\s+at)?\s+(.+?)(?:\s+this\s+week)?$/);
-    if(offM){
-      const days=parseDayList(offM[3]);
-      if(days&&days.length){ applyParsed(offM[1],'off',days,ok,warn); return; }
-    }
-    // "X working/works/available from day to day"
-    const workM=l.match(/^(.+?)\s+(is\s+)?(working|works|available|avail|on)(?:\s+from)?\s+(.+)/);
-    if(workM){
-      let ds=workM[4]
-        .replace(/from\s+[\d:]+\s*[apm]{0,2}\s+to\s+[\d:]+\s*[apm]{0,2}/gi,'')
-        .replace(/[\d:]+\s*[apm]{1,2}\s*[-–to]+\s*[\d:]+\s*[apm]{1,2}/gi,'')
-        .replace(/\s+/g,' ').trim();
-      let days;
-      if(!ds||/(every\s*day|all\s*week|daily)/.test(ds)) days=[0,1,2,3,4,5,6];
-      else days=parseDayList(ds);
-      applyParsed(workM[1],'avail',days,ok,warn); return;
-    }
-    warn.push(`Could not parse: "${line}"`);
-  });
-  showNLRes(ok,warn);
-  toast(ok.length?`✓ ${ok.length} rule(s) applied`:'⚠ Nothing matched — try ✨ AI Parse');
-}
-
-function showNLRes(ok,warn){
-  $('nlRes').innerHTML=
-    (ok.length?`<div class="okbox">${ok.map(s=>`✓ ${s}`).join('<br>')}</div>`:'')+
-    (warn.length?`<div class="wbox">${warn.map(s=>`⚠ ${s}`).join('<br>')}</div>`:'');
-}
-
-/* ═══════════════════════════════════════════════════════════
-   AI PARSER (Claude API)
-   Sends the note text to Claude, gets structured JSON back,
-   applies the parsed availability changes.
-═══════════════════════════════════════════════════════════ */
-async function aiParse(){
-  const text=$('nlBox').value.trim();
-  if(!text){ toast('⚠ Enter availability notes first.'); return; }
-
-  const btn=$('aiBtn'),lbl=$('aiLbl');
-  btn.disabled=true;
-  lbl.innerHTML='<span class="spin"></span> Analyzing…';
-
-  const roster=EMPS.map(e=>`"${e.short}" (full: ${e.name})`).join('\n');
-
-  const prompt=`You are a KFC Store 1416 scheduling assistant. Parse availability notes that may contain spelling mistakes, abbreviations, casual language, or unconventional phrasing.
-
-EMPLOYEE ROSTER (use exact short names in output):
-${roster}
-
-DAY INDEX MAP: Monday=0, Tuesday=1, Wednesday=2, Thursday=3, Friday=4, Saturday=5, Sunday=6
-
-NOTES TO PARSE:
-${text}
-
-For each note produce one JSON object:
-{
-  "emp": "<exact short name from roster>",
-  "action": "available" | "off" | "off_all_week",
-  "days": [array of day indices 0-6],
-  "summary": "<one sentence what you parsed>"
-}
-
-Rules:
-- "available" means ONLY those days they work (all others become OFF for that person)
-- "off" means specifically those days they cannot work (other days unchanged)
-- "off_all_week" means employee cannot work any day this week (days=[0,1,2,3,4,5,6])
-- Correct spelling mistakes in names and day names
-- If someone says "working every day" or "works all week": action="available", days=[0,1,2,3,4,5,6]
-- Return ONLY a valid JSON array. No markdown, no code fences, no extra text.`;
-
-  try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        messages:[{role:'user',content:prompt}]
-      })
-    });
-    const data=await res.json();
-    let raw=(data.content||[]).map(c=>c.text||'').join('').trim();
-    raw=raw.replace(/```[a-z]*|```/g,'').trim();
-    const parsed=JSON.parse(raw);
-
-    const ok=[],warn=[];
-    (Array.isArray(parsed)?parsed:[parsed]).forEach(item=>{
-      if(!item||!item.emp) return;
-      const ei=EMPS.findIndex(e=>norm(e.short)===norm(item.emp)||norm(e.name).includes(norm(item.emp)));
-      if(ei<0){ warn.push(`Could not match employee: "${item.emp}"`); return; }
-      const days=(item.days||[]).filter(d=>Number.isInteger(d)&&d>=0&&d<=6);
-      if(item.action==='off_all_week'){
-        avail[ei]=Array(7).fill(false);
-      } else if(item.action==='off'){
-        days.forEach(di=>avail[ei][di]=false);
-      } else {
-        avail[ei]=Array(7).fill(false);
-        days.forEach(di=>avail[ei][di]=true);
-      }
-      renderChecks(ei);
-      ok.push(`${EMPS[ei].short}: ${item.summary||item.action}`);
-    });
-
-    showNLRes(ok,warn);
-    toast(ok.length?`✨ AI parsed ${ok.length} rule(s)`:'⚠ AI returned no matches');
-  }catch(err){
-    $('nlRes').innerHTML=`<div class="wbox">⚠ AI parse failed: ${err.message}. Use the manual Parse button instead.</div>`;
-    toast('⚠ AI error — use manual Parse');
-  }finally{
-    btn.disabled=false;
-    lbl.textContent='✨ AI Parse';
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════
-   SCHEDULE ENGINE
-   ─────────────────────────────────────────────────────────
-   For each day:
-     1. Determine slots (Type-A or Type-B)
-     2. Build candidate pool: available employees, not yet
-        used today, sorted by fewest weekly hours (fairness).
-        MGR (Mohamed Hedi) is placed LAST in the pool always.
-     3. For each required slot, find first candidate that can
-        fill it (role match + hours cap).
-     4. All remaining available-but-unassigned → OFF.
-     5. All unavailable → OFF.
-
-   Slot eligibility rules:
-     SM slot  → needs SM or SMO role (OR MGR override)
-     SK slot  → needs SK role only; SMO employees BLOCKED
-     CM slot  → needs CM role (OR MGR override)
-     CK slot  → needs CK role (OR MGR override)
-     TM slots → any employee (last resort for everyone)
-
-   MGR flexible preference:
-     If employee is MGR and has a preferred slot set for
-     that day (via the per-day dropdown), that preference is
-     used ONLY if the slot is still unfilled. Otherwise any
-     slot is fair game.
-═══════════════════════════════════════════════════════════ */
-
-/* ═══════════════════════════════════════════════════════════
-   canFill — strict role + hours + shift-restriction gate
-═══════════════════════════════════════════════════════════ */
-function canFill(ei, slotKey, weekHrs){
-  const emp = EMPS[ei];
-  const r   = emp.roles;
-  const sh  = SHIFT_DEF[slotKey];
-
-  // ① Hard 40h weekly cap
-  if(weekHrs[ei] + sh.hrs > MAX_H + 0.001) return false;
-
-  // ② MGR override — store manager can fill any slot
-  if(emp.isMgr) return true;
-
-  // ③ morningOnly employees can NEVER be assigned a closing slot
-  const closingSlots = new Set(['SK','CK','TM2']);
-  if(emp.morningOnly && closingSlots.has(slotKey)) return false;
-
-  switch(slotKey){
-    case 'SM':
-      // Needs SM role. SMO is an alias we treat as SM here.
-      return r.includes('SM') || r.includes('SMO');
-
-    case 'SK':
-      // Needs SK role. Morning-only SM (SM without SK) is BLOCKED.
-      if(r.includes('SMO'))                       return false;
-      if(r.includes('SM') && !r.includes('SK'))   return false;
-      return r.includes('SK');
-
-    case 'CM':
-      return r.includes('CM');
-
-    case 'CK':
-      return r.includes('CK');
-
-    case 'TM1': // Opening TM  — any role qualifies
-      return r.includes('TM') || r.includes('CM') || r.includes('CK') ||
-             r.includes('SM') || r.includes('SK')  || r.includes('SMO');
-
-    case 'TM2': // Closing TM — blocked for morningOnly (already handled above)
-      return r.includes('TM') || r.includes('CM') || r.includes('CK') ||
-             r.includes('SM') || r.includes('SK')  || r.includes('SMO');
-
-    case 'TM3': // Mid TM (Type-B only) — morning-only blocked above
-      return r.includes('TM') || r.includes('CM') || r.includes('CK') ||
-             r.includes('SM') || r.includes('SK')  || r.includes('SMO');
-
-    default: return false;
-  }
-}
-
-function getMgrPreference(ei, di){
-  const sel = $(`mflex_${ei}_${di}`);
-  return sel ? sel.value : 'any';
-}
-
-/* ═══════════════════════════════════════════════════════════
-   SCHEDULE ENGINE  v5 — maximum accuracy
-
-   RULES enforced:
-   ① avail[ei][di] === true is the absolute gate. No one
-     works a day they haven't ticked.
-   ② morningOnly employees (Ghazala, Jorge) can NEVER fill
-     SK / CK / TM2 (closing / mid slots).
-   ③ Specialist slots (SM, SK, CM, CK) are filled FIRST so
-     specialists are never "used up" on TM slots.
-   ④ Within each slot, candidates are ranked by:
-        a. roleScore  — how well their role fits the slot
-           (pure match beats multi-role, specialist beats TM)
-        b. weekHrs    — spread hours evenly (fairness)
-        c. daysWorked — spread rest days evenly
-   ⑤ MGR is the absolute last resort — only when zero
-     regular staff can fill a slot.
-   ⑥ Post-audit: any assignment that violates availability
-     is forcibly corrected to OFF + warning logged.
-═══════════════════════════════════════════════════════════ */
-
-/* roleScore — lower = better fit for that slot
-   0 = perfect specialist match
-   1 = qualified but has other roles too
-   5 = over-qualified specialist covering TM (wasteful)
-  10 = any-role fallback
-  99 = MGR (last resort)
-*/
-function roleScore(ei, slotKey){
-  const r   = EMPS[ei].roles;
-  const emp = EMPS[ei];
-  if(emp.isMgr) return 99;
-
-  switch(slotKey){
-    case 'SM': {
-      // Pure morning-SM specialist
-      if(r.includes('SM') && !r.includes('SK')) return 0;
-      if(r.includes('SM')) return 1;
-      if(r.includes('SMO')) return 2;
-      return 90; // shouldn't reach here if canFill is correct
-    }
-    case 'SK': {
-      if(r.includes('SK') && !r.includes('SM')) return 0;
-      if(r.includes('SK')) return 1;
-      return 90;
-    }
-    case 'CM': {
-      // Cook who does morning only is the best fit
-      if(r.includes('CM') && !r.includes('CK')) return 0;
-      if(r.includes('CM')) return 1;
-      return 90;
-    }
-    case 'CK': {
-      if(r.includes('CK') && !r.includes('CM')) return 0;
-      if(r.includes('CK')) return 1;
-      return 90;
-    }
-    case 'TM1': case 'TM2': case 'TM3': {
-      // Pure TM is best; specialists covering TM are penalised
-      const isPureTM = r.length===1 && r[0]==='TM';
-      if(isPureTM) return 0;
-      const isTMonly = r.includes('TM') && !r.some(x=>['SM','SK','SMO','CM','CK'].includes(x));
-      if(isTMonly) return 1;
-      // Cook or SM covering TM — acceptable fallback but wasteful
-      return 5;
-    }
-    default: return 90;
-  }
-}
-
-/* assign — helper that writes to sched + updates counters */
-function assign(ei, di, sk, weekHrs, daysWorked){
-  const sh    = SHIFT_DEF[sk];
-  const isMgr = EMPS[ei].isMgr;
-  sched[ei][di] = {
-    cls:   isMgr ? 'cMGR' : sh.cls,
-    disp:  isMgr
-             ? `MGR: ${sh.label}\n${sh.time}\n(${sh.hrs.toFixed(2)}h)`
-             : sh.disp,
-    hrs:   sh.hrs,
-    label: sh.label,
-    slot:  sk,
-  };
-  weekHrs[ei]    += sh.hrs;
-  daysWorked[ei] += 1;
-}
-
-/* bestCandidate — picks the best available, role-legal,
-   hours-safe, not-yet-used employee for a given slot */
-function bestCandidate(pool, usedToday, sk, weekHrs, daysWorked){
-  return pool
-    .filter(ei => !usedToday.has(ei) && canFill(ei, sk, weekHrs))
-    .sort((a,b)=>{
-      const rs = roleScore(a,sk) - roleScore(b,sk);
-      if(rs !== 0) return rs;
-      const hd = weekHrs[a] - weekHrs[b];
-      if(Math.abs(hd) > 0.5) return hd;
-      return daysWorked[a] - daysWorked[b];
-    })[0]; // undefined if none found
-}
-
-function generate(){
-  sched      = EMPS.map(()=>Array(7).fill(null));
-  const weekHrs    = new Array(EMPS.length).fill(0);
-  const daysWorked = new Array(EMPS.length).fill(0);
-  const warnings   = [];
-
-  for(let di=0; di<7; di++){
-    const daySlots  = TYPE_A.has(di) ? [...SLOTS_A] : [...SLOTS_B];
-    const usedToday = new Set();
-
-    /* ── Strict availability pool ─────────────────────── */
-    const availIdx = EMPS.map((_,ei)=>ei).filter(ei => avail[ei][di] === true);
-    const mgrPool  = availIdx.filter(ei =>  EMPS[ei].isMgr);
-    const staffPool = availIdx.filter(ei => !EMPS[ei].isMgr);
-
-    /* ── Fill specialist slots first (SM → SK → CM → CK) ─ */
-    const specialSlots = daySlots.filter(s => !s.startsWith('TM'));
-    const tmSlots      = daySlots.filter(s =>  s.startsWith('TM'));
-
-    for(const sk of specialSlots){
-      const sh = SHIFT_DEF[sk];
-      let chosen = bestCandidate(staffPool, usedToday, sk, weekHrs, daysWorked);
-      if(chosen === undefined)
-        chosen = bestCandidate(mgrPool, usedToday, sk, weekHrs, daysWorked);
-
-      if(chosen !== undefined){
-        assign(chosen, di, sk, weekHrs, daysWorked);
-        usedToday.add(chosen);
-      } else {
-        warnings.push(
-          `<b>${DAYS[di]}</b>: ⚠ No eligible staff for <b>${sh.label}</b> (${sh.time})`
-        );
-      }
-    }
-
-    /* ── Fill TM slots with remaining available staff ─── */
-    for(const sk of tmSlots){
-      const sh = SHIFT_DEF[sk];
-      // For TM slots: combine remaining staff + mgr (mgr still last resort)
-      let chosen = bestCandidate(staffPool, usedToday, sk, weekHrs, daysWorked);
-      if(chosen === undefined)
-        chosen = bestCandidate(mgrPool, usedToday, sk, weekHrs, daysWorked);
-
-      if(chosen !== undefined){
-        assign(chosen, di, sk, weekHrs, daysWorked);
-        usedToday.add(chosen);
-      } else {
-        warnings.push(
-          `<b>${DAYS[di]}</b>: ⚠ No eligible staff for <b>${sh.label}</b> (${sh.time})`
-        );
-      }
-    }
-
-    /* ── Mark unassigned employees as OFF ─────────────── */
-    EMPS.forEach((_,ei)=>{
-      if(!sched[ei][di]){
-        sched[ei][di] = {cls:'cOFF', disp:'OFF', hrs:0, label:'OFF', slot:'OFF'};
-      }
-    });
+  // Second pass: fill remaining unassigned Mon–Fri
+  let altCount = 0;
+  for (let i = 0; i < 5; i++) {
+    if (res[i] !== null) continue;
+    const s = shifts[i];
+    if (s === "night")     res[i] = "kfc";
+    else if (s !== "off")  res[i] = "kfc";
+    else { res[i] = altCount % 2 === 0 ? "active" : "home"; altCount++; }
   }
 
-  /* ── Post-audit: 40h cap ──────────────────────────── */
-  EMPS.forEach((e,ei)=>{
-    if(weekHrs[ei] > MAX_H + 0.01)
-      warnings.unshift(`<b>${e.short}</b>: ${weekHrs[ei].toFixed(1)}h — over 40h cap!`);
-  });
+  return res;
+}
 
-  /* ── Post-audit: availability violation correction ── */
-  EMPS.forEach((e,ei)=>{
-    for(let di=0;di<7;di++){
-      const cell = sched[ei][di];
-      if(cell && cell.slot !== 'OFF' && !avail[ei][di]){
-        sched[ei][di] = {cls:'cOFF', disp:'OFF', hrs:0, label:'OFF', slot:'OFF'};
-        warnings.push(`⚠ <b>${e.short}</b> auto-corrected to OFF on <b>${DAYS[di]}</b> (not available)`);
-      }
-    }
-  });
+function getWeekDates(n) {
+  const now=new Date(),day=now.getDay(),mon=new Date(now);
+  mon.setDate(now.getDate()-(day===0?6:day-1)+(n-1)*7);
+  return Array.from({length:7},(_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return d;});
+}
+function fmtDate(d){return d.toLocaleDateString("en-GB",{day:"2-digit",month:"short"});}
+function fmtElapsed(s){
+  const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
+  if(h>0) return `${h}:${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;
+  return `${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;
+}
 
-  /* ── Post-audit: morningOnly violation correction ── */
-  const closingSlotSet = new Set(['SK','CK','TM2']);
-  EMPS.forEach((e,ei)=>{
-    if(!e.morningOnly) return;
-    for(let di=0;di<7;di++){
-      const cell = sched[ei][di];
-      if(cell && closingSlotSet.has(cell.slot)){
-        sched[ei][di] = {cls:'cOFF', disp:'OFF', hrs:0, label:'OFF', slot:'OFF'};
-        warnings.push(`⚠ <b>${e.short}</b> is morning-only — auto-corrected to OFF on <b>${DAYS[di]}</b> (closing slot removed)`);
-      }
-    }
-  });
+const LVL = {light:"#34d399",moderate:"#f59e0b",hard:"#f87171"};
 
-  renderTable();
-  showWarnings(warnings);
-
-  const totalSlots = [0,1,2,3,4,5,6]
-    .reduce((s,di)=> s+(TYPE_A.has(di)?SLOTS_A.length:SLOTS_B.length), 0);
-  const filled = EMPS.reduce((s,_,ei)=>
-    s+[0,1,2,3,4,5,6].filter(di=> sched[ei][di] && sched[ei][di].slot!=='OFF').length, 0);
-
-  toast(warnings.length
-    ? `⚠ ${warnings.length} issue(s) — ${filled}/${totalSlots} slots filled. See below.`
-    : `✅ Schedule generated! ${filled}/${totalSlots} slots filled.`
+/* ── REST TIMER ── */
+function RestTimer({seconds,onClose}){
+  const [rem,setRem]=useState(seconds),[run,setRun]=useState(true);
+  useEffect(()=>{if(!run||rem<=0)return;const t=setTimeout(()=>setRem(r=>r-1),1000);return()=>clearTimeout(t);},[rem,run]);
+  const pct=rem/seconds,R=50,circ=2*Math.PI*R;
+  return(
+    <div style={{position:"fixed",inset:0,background:"#000d",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9999}}>
+      <div style={{background:"#141414",borderRadius:24,padding:28,textAlign:"center",width:290,border:"1px solid #2a2a2a"}}>
+        <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:14,color:"#555",letterSpacing:3,marginBottom:14}}>REST TIMER</div>
+        <div style={{position:"relative",width:130,height:130,margin:"0 auto 18px"}}>
+          <svg width="130" height="130" style={{transform:"rotate(-90deg)"}}>
+            <circle cx="65" cy="65" r={R} fill="none" stroke="#1e1e1e" strokeWidth="10"/>
+            <circle cx="65" cy="65" r={R} fill="none" stroke={rem<=10?"#f87171":"#b8d44a"}
+              strokeWidth="10" strokeDasharray={circ} strokeDashoffset={circ*(1-pct)}
+              strokeLinecap="round" style={{transition:"stroke-dashoffset 1s linear"}}/>
+          </svg>
+          <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+            <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:48,color:rem<=10?"#f87171":"#b8d44a",lineHeight:1}}>{rem}</div>
+            <div style={{fontSize:9,color:"#444",letterSpacing:2}}>SEC</div>
+          </div>
+        </div>
+        {rem===0&&<div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:20,color:"#b8d44a",marginBottom:10,letterSpacing:2}}>✅ GO AGAIN!</div>}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          <button onClick={()=>setRun(r=>!r)} style={{padding:"12px",background:"#1e1e1e",border:"1px solid #333",borderRadius:12,color:"#fff",fontFamily:"Bebas Neue,sans-serif",fontSize:17,cursor:"pointer"}}>{run?"⏸ PAUSE":"▶ GO"}</button>
+          <button onClick={onClose} style={{padding:"12px",background:"#b8d44a22",border:"1px solid #b8d44a44",borderRadius:12,color:"#b8d44a",fontFamily:"Bebas Neue,sans-serif",fontSize:17,cursor:"pointer"}}>DONE</button>
+        </div>
+      </div>
+    </div>
   );
 }
 
-/* ═══════════════════════════════════════════════════════════
-   VALIDATE
-═══════════════════════════════════════════════════════════ */
-function validate(){
-  const issues=[];
-  const weekHrs=Array(EMPS.length).fill(0);
+/* ── SESSION TIMER ── */
+function SessionTimer({planColor,label,onClose}){
+  const [elapsed,setElapsed]=useState(0),[run,setRun]=useState(true),[status,setStatus]=useState("IN PROGRESS");
+  useEffect(()=>{if(!run)return;const t=setInterval(()=>setElapsed(e=>e+1),1000);return()=>clearInterval(t);},[run]);
+  return(
+    <div style={{position:"fixed",inset:0,background:"#000e",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9998}}>
+      <div style={{background:"#141414",borderRadius:24,padding:28,textAlign:"center",width:290,border:`1px solid ${planColor}33`}}>
+        <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:13,color:"#555",letterSpacing:3,marginBottom:6}}>SESSION TIMER</div>
+        <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:15,color:planColor,letterSpacing:2,marginBottom:18}}>{label}</div>
+        <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:68,color:"#fff",lineHeight:1,letterSpacing:4,marginBottom:8}}>{fmtElapsed(elapsed)}</div>
+        <div style={{fontSize:13,color:"#555",marginBottom:22,letterSpacing:1}}>{status}</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          <button onClick={()=>setRun(r=>!r)} style={{padding:"13px",background:"#1e1e1e",border:"1px solid #333",borderRadius:12,color:"#fff",fontFamily:"Bebas Neue,sans-serif",fontSize:17,cursor:"pointer"}}>{run?"⏸ PAUSE":"▶ GO"}</button>
+          <button onClick={onClose} style={{padding:"13px",background:`${planColor}22`,border:`1px solid ${planColor}44`,borderRadius:12,color:planColor,fontFamily:"Bebas Neue,sans-serif",fontSize:17,cursor:"pointer"}}>FINISH</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-  // Read hours from live DOM
-  EMPS.forEach((_,ei)=>{
-    for(let di=0;di<7;di++){
-      const div=document.querySelector(`[data-ei="${ei}"][data-di="${di}"]`);
-      if(div) weekHrs[ei]+=parseHrs(div.textContent||'');
-    }
-    if(weekHrs[ei]>MAX_H)
-      issues.push(`${EMPS[ei].short}: <b>${weekHrs[ei].toFixed(1)}h — over 40h limit</b>`);
+/* ── EXERCISE CARD (with photo support) ── */
+function ExCard({name,planColor,open,onToggle,onTimer}){
+  const ex=EX[name]; if(!ex)return null;
+  const [vid,setVid]=useState(false);
+  const [imgErr,setImgErr]=useState(false);
+
+  // Photo src: looks for images/bench_press.jpg etc. in same folder as HTML
+  const photoSrc = `images/${ex.photo}`;
+
+  return(
+    <div style={{background:"#111",borderRadius:14,border:`1px solid ${open?planColor+"44":"#1e1e1e"}`,marginBottom:8,overflow:"hidden",transition:"border-color .2s",boxShadow:open?`0 0 18px ${planColor}0c`:"none"}}>
+      <div onClick={onToggle} style={{display:"flex",gap:10,alignItems:"center",padding:"11px 13px",cursor:"pointer"}}>
+        {/* Thumbnail photo */}
+        <div style={{width:48,height:48,borderRadius:9,overflow:"hidden",flexShrink:0,background:"#1a1a1a",border:"1px solid #2a2a2a"}}>
+          {!imgErr ? (
+            <img src={photoSrc} alt={name}
+              style={{width:"100%",height:"100%",objectFit:"cover"}}
+              onError={()=>setImgErr(true)}/>
+          ):(
+            <div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>
+              {name==="Brisk Walk"?"🚶":name==="Kegel"?"🎯":name==="Joint Mobility"?"🔄":"💪"}
+            </div>
+          )}
+        </div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:14,fontWeight:700,color:"#fff",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{name}</div>
+          <div style={{fontSize:10,color:"#555",marginBottom:4}}>{ex.muscles}</div>
+          <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+            <span style={{fontSize:10,background:`${planColor}22`,color:planColor,borderRadius:4,padding:"2px 7px",fontWeight:600}}>{ex.sets}</span>
+            <span style={{fontSize:10,background:"#1a1a1a",color:"#666",borderRadius:4,padding:"2px 7px"}}>⏱ {ex.rest}</span>
+            <span style={{fontSize:10,background:`${LVL[ex.level]}18`,color:LVL[ex.level],borderRadius:4,padding:"2px 7px"}}>{ex.level}</span>
+          </div>
+        </div>
+        <div style={{textAlign:"center",flexShrink:0}}>
+          <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:16,color:planColor,lineHeight:1}}>{ex.weight.split(" ")[0]}</div>
+          <div style={{fontSize:8,color:"#444",letterSpacing:1,marginBottom:4}}>KG</div>
+          <div style={{color:"#333",fontSize:12}}>{open?"▲":"▼"}</div>
+        </div>
+      </div>
+      {open&&(
+        <div style={{borderTop:"1px solid #1a1a1a",padding:"13px"}} onClick={e=>e.stopPropagation()}>
+          {/* PHOTO (large) */}
+          {!imgErr&&(
+            <div style={{borderRadius:11,overflow:"hidden",height:170,marginBottom:11,background:"#0d0d0d",border:"1px solid #1e1e1e"}}>
+              <img src={photoSrc} alt={name}
+                style={{width:"100%",height:"100%",objectFit:"cover"}}
+                onError={()=>setImgErr(true)}/>
+            </div>
+          )}
+          {/* VIDEO */}
+          {ex.ytId ? (
+            <div style={{marginBottom:11}}>
+              {!vid ? (
+                <div onClick={()=>setVid(true)} style={{borderRadius:11,overflow:"hidden",position:"relative",height:imgErr?150:100,cursor:"pointer",background:"#0d0d0d",border:"1px solid #222",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <img src={`https://img.youtube.com/vi/${ex.ytId}/mqdefault.jpg`} alt={name}
+                    style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",opacity:.55}}
+                    onError={e=>{e.target.style.opacity="0";}}/>
+                  <div style={{position:"relative",zIndex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
+                    <div style={{width:44,height:44,borderRadius:"50%",background:"#ff0000cc",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,paddingLeft:4}}>▶</div>
+                    <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:11,color:"#fff",letterSpacing:2}}>WATCH VIDEO DEMO</div>
+                  </div>
+                </div>
+              ):(
+                <div style={{borderRadius:11,overflow:"hidden",position:"relative",paddingTop:"56.25%",background:"#000"}}>
+                  <iframe style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",border:"none"}}
+                    src={`https://www.youtube-nocookie.com/embed/${ex.ytId}?autoplay=1&rel=0&modestbranding=1`}
+                    allow="autoplay;encrypted-media" allowFullScreen title={name}/>
+                </div>
+              )}
+              {vid&&<button onClick={()=>setVid(false)} style={{width:"100%",marginTop:5,padding:"6px",background:"#1a1a1a",border:"1px solid #2a2a2a",borderRadius:7,color:"#555",fontSize:11,cursor:"pointer"}}>✕ Close Video</button>}
+            </div>
+          ):(
+            <div style={{background:"#0d0d0d",borderRadius:11,height:40,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:11,border:"1px solid #1a1a1a"}}>
+              <span style={{fontSize:11,color:"#333"}}>Bodyweight / walk — no video demo</span>
+            </div>
+          )}
+          {/* WEIGHT + REST */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:9}}>
+            <div style={{background:"#0d0d0d",borderRadius:10,padding:"11px",border:"1px solid #1e1e1e"}}>
+              <div style={{fontSize:9,color:"#444",letterSpacing:2,marginBottom:4}}>⚖️ YOUR WEIGHT</div>
+              <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:19,color:planColor,lineHeight:1}}>{ex.weight}</div>
+              <div style={{fontSize:10,color:"#555",marginTop:3,lineHeight:1.4}}>{ex.wNote}</div>
+            </div>
+            <div style={{background:"#0d0d0d",borderRadius:10,padding:"11px",border:"1px solid #1e1e1e"}}>
+              <div style={{fontSize:9,color:"#444",letterSpacing:2,marginBottom:4}}>⏱ REST TIME</div>
+              <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:19,color:"#38bdf8",lineHeight:1}}>{ex.rest}</div>
+              <div style={{fontSize:10,color:"#555",marginTop:3}}>{ex.sets}</div>
+            </div>
+          </div>
+          {/* TIP */}
+          <div style={{background:"#0d0d0d",borderRadius:10,padding:"10px 12px",marginBottom:9,border:"1px solid #1e1e1e"}}>
+            <div style={{fontSize:9,color:"#444",letterSpacing:2,marginBottom:3}}>💡 FORM TIP</div>
+            <div style={{fontSize:12,color:"#bbb",lineHeight:1.6}}>{ex.tip}</div>
+          </div>
+          {ex.restSec>0&&(
+            <button onClick={()=>onTimer(ex.restSec)} style={{width:"100%",padding:"12px",background:`linear-gradient(135deg,${planColor}22,${planColor}0d)`,border:`1px solid ${planColor}44`,borderRadius:10,color:planColor,fontFamily:"Bebas Neue,sans-serif",fontSize:16,letterSpacing:2,cursor:"pointer"}}>
+              ⏱ START REST TIMER · {ex.rest}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── HOME CARDIO CARD ── */
+function HomeCardioCard({planColor,onTimer}){
+  const [open,setOpen]=useState(false),[vid,setVid]=useState(false);
+  const ytId="ml6cT4AZdqI";
+  return(
+    <div style={{background:"#111",borderRadius:14,border:`1px solid ${open?"#fb923c44":"#1e1e1e"}`,marginBottom:8,overflow:"hidden"}}>
+      <div onClick={()=>setOpen(o=>!o)} style={{display:"flex",gap:10,alignItems:"center",padding:"11px 13px",cursor:"pointer"}}>
+        <div style={{width:48,height:48,borderRadius:9,overflow:"hidden",flexShrink:0,background:"#1a1a1a",border:"1px solid #2a2a2a",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>🏃</div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:14,fontWeight:700,color:"#fff",marginBottom:2}}>Home Cardio Slot</div>
+          <div style={{fontSize:10,color:"#555",marginBottom:4}}>9:30 – 10:00 AM · available most days</div>
+          <div style={{display:"flex",gap:4}}>
+            <span style={{fontSize:10,background:"#fb923c22",color:"#fb923c",borderRadius:4,padding:"2px 7px",fontWeight:600}}>10–20 min</span>
+            <span style={{fontSize:10,background:"#f59e0b18",color:"#f59e0b",borderRadius:4,padding:"2px 7px"}}>moderate</span>
+          </div>
+        </div>
+        <div style={{color:"#333",fontSize:12}}>{open?"▲":"▼"}</div>
+      </div>
+      {open&&(
+        <div style={{borderTop:"1px solid #1a1a1a",padding:"13px"}} onClick={e=>e.stopPropagation()}>
+          {!vid?(
+            <div onClick={()=>setVid(true)} style={{borderRadius:11,overflow:"hidden",position:"relative",height:140,cursor:"pointer",background:"#0d0d0d",border:"1px solid #222",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:11}}>
+              <img src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`} alt="cardio"
+                style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",opacity:.65}}/>
+              <div style={{position:"relative",zIndex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
+                <div style={{width:48,height:48,borderRadius:"50%",background:"#ff0000cc",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,paddingLeft:4}}>▶</div>
+                <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:12,color:"#fff",letterSpacing:2}}>WATCH CARDIO DEMO</div>
+              </div>
+            </div>
+          ):(
+            <div style={{borderRadius:11,overflow:"hidden",position:"relative",paddingTop:"56.25%",background:"#000",marginBottom:11}}>
+              <iframe style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",border:"none"}}
+                src={`https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1`}
+                allow="autoplay;encrypted-media" allowFullScreen title="Home Cardio"/>
+            </div>
+          )}
+          {vid&&<button onClick={()=>setVid(false)} style={{width:"100%",marginTop:-4,marginBottom:11,padding:"6px",background:"#1a1a1a",border:"1px solid #2a2a2a",borderRadius:7,color:"#555",fontSize:11,cursor:"pointer"}}>✕ Close</button>}
+          <div style={{background:"#fb923c0e",borderRadius:10,padding:"11px 13px",marginBottom:9,border:"1px solid #fb923c22"}}>
+            <div style={{fontSize:10,color:"#fb923c",letterSpacing:1,marginBottom:7}}>📅 YOUR 9:30–10:00 AM CIRCUIT</div>
+            {[["High Knees","2 min on · 30s rest × 5"],["Jumping Jacks","3 min continuous × 3"],["Burpees","10 reps × 4 sets"],["Shadow Boxing","2 min rounds × 4"],["Stair Climbs","10 min continuous"]].map(([a,b])=>(
+              <div key={a} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #1a1a1a"}}>
+                <span style={{fontSize:12,color:"#ccc"}}>{a}</span>
+                <span style={{fontSize:11,color:"#555"}}>{b}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+            <button onClick={()=>onTimer(600)} style={{padding:"12px",background:"#fb923c1a",border:"1px solid #fb923c44",borderRadius:10,color:"#fb923c",fontFamily:"Bebas Neue,sans-serif",fontSize:14,letterSpacing:1,cursor:"pointer"}}>⏱ 10 MIN TIMER</button>
+            <button onClick={()=>onTimer(1200)} style={{padding:"12px",background:"#fb923c1a",border:"1px solid #fb923c44",borderRadius:10,color:"#fb923c",fontFamily:"Bebas Neue,sans-serif",fontSize:14,letterSpacing:1,cursor:"pointer"}}>⏱ 20 MIN TIMER</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ═══ MAIN APP ═══ */
+function MoeFitness(){
+  const [tab,setTab]=useState("today");
+  const [now,setNow]=useState(new Date());
+  const [restTimer,setRestTimer]=useState(null);
+  const [sessionTimer,setSessionTimer]=useState(null);
+
+  const [db,setDb]=useState(()=>{
+    const d=load();
+    return{
+      profile:d.profile||{name:"Moe",age:37,weight:93,height:168,target:"Burn fat + Build muscle"},
+      weeks:d.weeks||{},completed:d.completed||{},missed:d.missed||{},
+    };
   });
+  const persist=nd=>{setDb(nd);save(nd);};
 
-  // Check each day has mandatory slots filled
-  for(let di=0;di<7;di++){
-    const slots=TYPE_A.has(di)?SLOTS_A:SLOTS_B;
-    const filled=EMPS.filter((_,ei)=>{
-      const div=document.querySelector(`[data-ei="${ei}"][data-di="${di}"]`);
-      return div&&div.textContent.trim()&&div.textContent.trim().toUpperCase()!=='OFF';
-    }).length;
-    if(filled<slots.length)
-      issues.push(`${DAYS[di]} (Type-${TYPE_A.has(di)?'A':'B'}): ${filled}/${slots.length} slots filled`);
-  }
+  const [week,setWeek]=useState(1);
+  const wk=`w${week}`;
+  const wd=db.weeks[wk]||{shifts:Array(7).fill("off"),times:Array(7).fill({start:"",end:""}),assigned:null,saved:false};
+  const wDates=getWeekDates(week);
+  const todayIdx=(()=>{const d=new Date().getDay();return d===0?6:d-1;})();
+  const todayKey=`${wk}_d${todayIdx}`;
+  const todayPlan=wd.assigned?PLAN[wd.assigned[todayIdx]]:null;
 
-  $('warnings').innerHTML = issues.length
-    ? `<div class="wbox" style="margin-top:9px"><b>⚠ ${issues.length} issue(s):</b><br>${issues.join('<br>')}</div>`
-    : `<div class="okbox" style="margin-top:9px">✅ All checks passed. No issues found.</div>`;
-  toast(issues.length?`⚠ ${issues.length} issue(s)`:'✅ Schedule valid!');
+  const [selDay,setSelDay]=useState(todayIdx);
+  const [editShift,setEditShift]=useState(null);
+  const [section,setSection]=useState("exercises");
+  const [expandEx,setExpandEx]=useState(null);
+  const [missedModal,setMissedModal]=useState(null);
+  const [missedNote,setMissedNote]=useState("");
+  const [toast,setToast]=useState(null);
+  const [editProf,setEditProf]=useState(false);
+  const [profDraft,setProfDraft]=useState({...db.profile});
+
+  useEffect(()=>{const t=setInterval(()=>setNow(new Date()),1000);return()=>clearInterval(t);},[]);
+  const showToast=(msg,color="#b8d44a")=>{setToast({msg,color});setTimeout(()=>setToast(null),2600);};
+
+  const upWk=(f,v)=>persist({...db,weeks:{...db.weeks,[wk]:{...wd,[f]:v}}});
+  const saveWeek=()=>{persist({...db,weeks:{...db.weeks,[wk]:{...wd,assigned:assignWeek(wd.shifts),saved:true}}});showToast("✅ Week saved & plan aligned!");};
+  const markDone=i=>{const k=`${wk}_d${i}`;persist({...db,completed:{...db.completed,[k]:!db.completed[k]}});showToast(db.completed[k]?"Unmarked":"💪 Workout logged!",db.completed[k]?"#555":"#b8d44a");};
+  const logMissed=(i,note)=>{const k=`${wk}_d${i}`;persist({...db,missed:{...db.missed,[k]:{missed:true,note,date:new Date().toISOString()}}});setMissedModal(null);setMissedNote("");showToast("⚠️ Missed logged","#f87171");};
+  const saveProf=()=>{persist({...db,profile:profDraft});setEditProf(false);showToast("Profile saved ✅");};
+
+  const totalDone=Object.keys(db.completed).filter(k=>k.startsWith(wk)&&db.completed[k]).length;
+  const totalMiss=Object.keys(db.missed).filter(k=>k.startsWith(wk)&&db.missed[k]?.missed).length;
+
+  const C={bg:"#0a0a0a",card:"#111",border:"#1e1e1e",accent:"#b8d44a",text:"#f0ede6",muted:"#666",dim:"#444"};
+  const FD="Bebas Neue,sans-serif",FB="Barlow,sans-serif";
+  const cs={background:C.card,borderRadius:14,border:`1px solid ${C.border}`,padding:"12px 14px",marginBottom:8};
+
+  const selPlan=wd.assigned?PLAN[wd.assigned[selDay]]:null;
+  const selKey=`${wk}_d${selDay}`;
+
+  const ExList=({plan,prefix})=>(
+    <>
+      {plan.exercises.map((name,ei)=>(
+        <ExCard key={name} name={name} planColor={plan.color}
+          open={expandEx===`${prefix}${ei}`}
+          onToggle={()=>setExpandEx(expandEx===`${prefix}${ei}`?null:`${prefix}${ei}`)}
+          onTimer={s=>setRestTimer(s)}/>
+      ))}
+      <HomeCardioCard planColor={plan.color} onTimer={s=>setRestTimer(s)}/>
+      {plan.cardio&&<div style={{...cs,border:"1px solid #4ade8033",marginBottom:8}}>
+        <div style={{fontSize:9,color:"#4ade80",letterSpacing:2,marginBottom:3}}>🏃 CARDIO</div>
+        <div style={{fontSize:12,color:"#ccc"}}>{plan.cardio}</div>
+      </div>}
+      <div style={cs}>
+        <div style={{fontSize:9,color:"#e879f9",letterSpacing:2,marginBottom:3}}>🎯 KEGEL</div>
+        <div style={{fontSize:12,color:"#ccc"}}>{plan.kegel}</div>
+      </div>
+    </>
+  );
+
+  const DayHeader=({plan,dKey,dayIdx})=>(
+    <div style={{...cs,border:`1px solid ${plan.color}44`,background:`${plan.color}07`,marginBottom:11}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:plan.note?8:0}}>
+        <div>
+          <div style={{fontFamily:FD,fontSize:22,color:plan.color,letterSpacing:2}}>{plan.label}</div>
+          <div style={{fontSize:12,color:C.muted}}>{plan.desc}</div>
+        </div>
+        <span style={{fontSize:10,color:plan.color,background:`${plan.color}22`,padding:"3px 8px",borderRadius:20,whiteSpace:"nowrap",flexShrink:0,marginLeft:8}}>{plan.duration}</span>
+      </div>
+      {plan.note&&<div style={{fontSize:11,color:"#fb923c",background:"#fb923c0e",borderRadius:8,padding:"7px 10px",marginBottom:8,lineHeight:1.5}}>{plan.note}</div>}
+      <button onClick={()=>setSessionTimer({color:plan.color,label:plan.label})} style={{width:"100%",padding:"10px",background:`${plan.color}14`,border:`1px solid ${plan.color}33`,borderRadius:10,color:plan.color,fontFamily:FD,fontSize:15,letterSpacing:2,cursor:"pointer",marginBottom:8}}>
+        ▶ START SESSION TIMER
+      </button>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+        <button onClick={()=>markDone(dayIdx)} style={{padding:"9px",background:db.completed[dKey]?`${C.accent}22`:"#1a1a1a",border:`1px solid ${db.completed[dKey]?C.accent:"#333"}`,borderRadius:9,color:db.completed[dKey]?C.accent:"#aaa",fontFamily:FD,fontSize:14,cursor:"pointer"}}>
+          {db.completed[dKey]?"✅ DONE":"MARK DONE"}
+        </button>
+        <button onClick={()=>setMissedModal(dayIdx)} style={{padding:"9px",background:db.missed[dKey]?.missed?"#f8717122":"#1a1a1a",border:`1px solid ${db.missed[dKey]?.missed?"#f87171":"#333"}`,borderRadius:9,color:db.missed[dKey]?.missed?"#f87171":"#aaa",fontFamily:FD,fontSize:14,cursor:"pointer"}}>
+          {db.missed[dKey]?.missed?"⚠️ MISSED":"LOG MISSED"}
+        </button>
+      </div>
+    </div>
+  );
+
+  return(
+    <>
+      <FontLink/>
+      {restTimer&&<RestTimer seconds={restTimer} onClose={()=>setRestTimer(null)}/>}
+      {sessionTimer&&<SessionTimer planColor={sessionTimer.color} label={sessionTimer.label} onClose={()=>setSessionTimer(null)}/>}
+
+      <div style={{minHeight:"100vh",background:C.bg,color:C.text,fontFamily:FB,maxWidth:480,margin:"0 auto",paddingBottom:70}}>
+
+        {/* HEADER */}
+        <div style={{background:"#0d0d0d",borderBottom:`1px solid ${C.border}`,padding:"11px 18px"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div>
+              <div style={{fontFamily:FD,fontSize:27,color:C.accent,letterSpacing:3}}>MOE FITNESS</div>
+              <div style={{fontSize:9,color:C.muted,letterSpacing:3}}>COMMAND CENTER</div>
+            </div>
+            <div style={{textAlign:"right"}}>
+              <div style={{fontFamily:FD,fontSize:23,color:"#fff",letterSpacing:2}}>{now.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}</div>
+              <div style={{fontSize:9,color:C.muted}}>{now.toLocaleDateString("en-GB",{weekday:"short",day:"2-digit",month:"short"})}</div>
+            </div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:5,marginTop:9}}>
+            {[["WEIGHT",`${db.profile.weight}kg`],["SESSIONS",totalDone],["MISSED",totalMiss],["WEEK",week]].map(([l,v])=>(
+              <div key={l} style={{textAlign:"center"}}>
+                <div style={{fontFamily:FD,fontSize:20,color:C.accent,lineHeight:1}}>{v}</div>
+                <div style={{fontSize:8,color:C.dim,letterSpacing:2,marginTop:2}}>{l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* TOP NAV */}
+        <div style={{display:"flex",background:"#0d0d0d",borderBottom:`1px solid ${C.border}`}}>
+          {[["today","⚡","TODAY"],["schedule","📅","SCHED"],["plan","💪","PLAN"],["progress","📊","PROG"],["profile","👤","ME"]].map(([k,ic,lb])=>(
+            <button key={k} onClick={()=>setTab(k)} style={{flex:1,padding:"8px 2px 6px",background:"none",border:"none",color:tab===k?C.accent:C.dim,cursor:"pointer",borderBottom:`2px solid ${tab===k?C.accent:"transparent"}`,fontSize:8,letterSpacing:1,fontFamily:FB,fontWeight:600}}>
+              <div style={{fontSize:14}}>{ic}</div><div style={{marginTop:2}}>{lb}</div>
+            </button>
+          ))}
+        </div>
+
+        {/* ══ TODAY ══ */}
+        {tab==="today"&&(
+          <div style={{padding:16}} className="fade-up">
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:13}}>
+              <div>
+                <div style={{fontFamily:FD,fontSize:26,color:"#fff",letterSpacing:2}}>{now.toLocaleDateString("en-GB",{weekday:"long"})}</div>
+                <div style={{fontSize:11,color:C.muted}}>{now.toLocaleDateString("en-GB",{day:"2-digit",month:"long",year:"numeric"})}</div>
+              </div>
+              <div style={{width:8,height:8,borderRadius:"50%",background:"#4ade80"}} className="live-dot"/>
+            </div>
+            {todayPlan?(
+              <>
+                <DayHeader plan={todayPlan} dKey={todayKey} dayIdx={todayIdx}/>
+                <div style={{fontFamily:FD,fontSize:16,color:"#fff",letterSpacing:2,marginBottom:9}}>TODAY'S EXERCISES</div>
+                <ExList plan={todayPlan} prefix="t"/>
+                <div style={{fontFamily:FD,fontSize:16,color:"#fff",letterSpacing:2,marginTop:13,marginBottom:9}}>MEALS</div>
+                {[["🍳 BREAKFAST","breakfast","8:30 AM"],["🍎 SNACK 1","snack1","11:30"],["🍽️ LUNCH","lunch","13:00"],["🥪 SNACK 2","snack2","16:30"],["🌙 DINNER","dinner","19:30"]].map(([k,mk,t])=>(
+                  <div key={k} style={cs}>
+                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                      <div style={{fontSize:11,color:todayPlan.color,fontWeight:600}}>{k}</div>
+                      <div style={{fontSize:10,color:C.dim}}>{t}</div>
+                    </div>
+                    <div style={{fontSize:12,color:"#ccc",lineHeight:1.6}}>{todayPlan.meals[mk]}</div>
+                  </div>
+                ))}
+              </>
+            ):(
+              <div style={{textAlign:"center",padding:"50px 20px"}}>
+                <div style={{fontSize:46,marginBottom:13}}>📅</div>
+                <div style={{fontFamily:FD,fontSize:22,color:"#fff",letterSpacing:2,marginBottom:8}}>NO PLAN SET</div>
+                <div style={{fontSize:12,color:C.muted,marginBottom:20}}>Set your week schedule first</div>
+                <button onClick={()=>setTab("schedule")} style={{border:`2px solid ${C.accent}`,background:"transparent",color:C.accent,padding:"11px 26px",borderRadius:10,fontFamily:FD,fontSize:17,letterSpacing:2,cursor:"pointer"}}>SET SCHEDULE</button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ══ SCHEDULE ══ */}
+        {tab==="schedule"&&(
+          <div style={{padding:16}} className="fade-up">
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+              <button onClick={()=>setWeek(w=>Math.max(1,w-1))} style={{width:36,height:36,borderRadius:"50%",background:"#1a1a1a",border:"1px solid #333",color:"#fff",fontSize:18,cursor:"pointer"}}>‹</button>
+              <div style={{textAlign:"center"}}>
+                <div style={{fontFamily:FD,fontSize:22,color:C.accent,letterSpacing:2}}>WEEK {week}</div>
+                <div style={{fontSize:10,color:C.muted}}>{fmtDate(wDates[0])} – {fmtDate(wDates[6])}</div>
+              </div>
+              <button onClick={()=>setWeek(w=>w+1)} style={{width:36,height:36,borderRadius:"50%",background:"#1a1a1a",border:"1px solid #333",color:"#fff",fontSize:18,cursor:"pointer"}}>›</button>
+            </div>
+            {/* Legend */}
+            <div style={{background:"#0d0d0d",border:"1px solid #1e1e1e",borderRadius:10,padding:"10px 12px",marginBottom:11,fontSize:10,color:"#888",lineHeight:1.8}}>
+              <div style={{color:C.accent,fontWeight:700,marginBottom:4,fontSize:11}}>📋 HOW IT WORKS</div>
+              <div>💪 <b style={{color:"#a78bfa"}}>Off + Gym</b> → Full gym session on your day off</div>
+              <div>🔥 <b style={{color:"#fb923c"}}>Night + Gym</b> → Gym 18:00–20:00 before night shift</div>
+              <div>🏋️ <b style={{color:"#22d3ee"}}>Morning/Afternoon + Gym</b> → Light gym in free window</div>
+              <div>👶 <b style={{color:"#f472b6"}}>Babysitting</b> → Kids home, home workout instead</div>
+              <div>😴 <b style={{color:"#4ade80"}}>Day Off</b> → Active rest or home workout auto-assigned</div>
+            </div>
+            <div style={{fontSize:10,color:C.muted,textAlign:"center",marginBottom:10}}>Sat & Sun fixed as family rest days</div>
+
+            {DAYS_FULL.map((day,i)=>{
+              const fixed=i>=5,sv=wd.shifts[i];
+              const so=SHIFT_OPTS.find(s=>s.value===sv)||SHIFT_OPTS[0];
+              const td=wd.times[i]||{start:"",end:""};
+              const isOpen=editShift===i;
+              return(
+                <div key={day} style={{...cs,border:`1px solid ${fixed?"#e879f922":isOpen?C.accent+"44":C.border}`}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",cursor:fixed?"default":"pointer"}} onClick={()=>!fixed&&setEditShift(isOpen?null:i)}>
+                    <div style={{display:"flex",alignItems:"center",gap:10}}>
+                      <div style={{textAlign:"center",minWidth:40}}>
+                        <div style={{fontFamily:FD,fontSize:18,color:"#fff"}}>{DAYS_SHORT[i]}</div>
+                        <div style={{fontSize:9,color:C.muted}}>{fmtDate(wDates[i])}</div>
+                      </div>
+                      <div>
+                        <div style={{fontSize:13,color:fixed?"#e879f9":so.color,fontWeight:600}}>{fixed?"👨‍👩‍👧 Family Day":`${so.emoji} ${so.label}`}</div>
+                        {!fixed&&td.start&&<div style={{fontSize:10,color:C.muted,marginTop:1}}>⏰ {td.start}–{td.end}</div>}
+                        {!fixed&&so.sub&&!td.start&&<div style={{fontSize:9,color:C.dim,marginTop:1}}>{so.sub}</div>}
+                      </div>
+                    </div>
+                    {!fixed&&<div style={{color:C.dim,fontSize:12}}>{isOpen?"▲":"▼"}</div>}
+                  </div>
+                  {isOpen&&!fixed&&(
+                    <div style={{marginTop:11,paddingTop:11,borderTop:`1px solid ${C.border}`}}>
+                      <div style={{fontSize:9,color:C.muted,letterSpacing:1,marginBottom:7}}>SHIFT TYPE</div>
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:5,marginBottom:11}}>
+                        {SHIFT_OPTS.map(opt=>(
+                          <div key={opt.value} onClick={()=>{const ns=[...wd.shifts];ns[i]=opt.value;upWk("shifts",ns);}}
+                            style={{display:"flex",alignItems:"center",gap:7,padding:"8px 10px",background:sv===opt.value?`${opt.color}22`:"#1a1a1a",border:`1px solid ${sv===opt.value?opt.color:"#2a2a2a"}`,borderRadius:9,cursor:"pointer"}}>
+                            <span style={{fontSize:14}}>{opt.emoji}</span>
+                            <div>
+                              <div style={{fontSize:10,color:sv===opt.value?opt.color:"#aaa",fontWeight:600,lineHeight:1.2}}>{opt.label}</div>
+                              {opt.sub&&<div style={{fontSize:8,color:C.dim,lineHeight:1.2,marginTop:1}}>{opt.sub}</div>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{fontSize:9,color:C.muted,letterSpacing:1,marginBottom:7}}>SHIFT TIMES (optional)</div>
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                        {["start","end"].map(t=>(
+                          <div key={t}>
+                            <div style={{fontSize:9,color:C.dim,marginBottom:3}}>{t==="start"?"Start":"End"}</div>
+                            <input type="time" value={td[t]||""} onChange={e=>{const nt=[...wd.times];nt[i]={...nt[i],[t]:e.target.value};upWk("times",nt);}}
+                              style={{width:"100%",background:"#1a1a1a",border:"1px solid #333",borderRadius:7,color:"#fff",padding:"8px",fontSize:12}}/>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            <button onClick={saveWeek} style={{width:"100%",padding:"14px",background:`linear-gradient(135deg,${C.accent},#8ba832)`,border:"none",borderRadius:12,color:"#000",fontFamily:FD,fontSize:18,letterSpacing:3,cursor:"pointer",marginTop:4,fontWeight:700}}>
+              ⚡ SAVE & ALIGN PLAN
+            </button>
+            {wd.saved&&<div style={{textAlign:"center",marginTop:8,fontSize:11,color:C.accent}}>✅ Plan aligned</div>}
+          </div>
+        )}
+
+        {/* ══ PLAN ══ */}
+        {tab==="plan"&&(
+          <div style={{padding:16}} className="fade-up">
+            {!wd.assigned?(
+              <div style={{textAlign:"center",padding:"60px 20px"}}>
+                <div style={{fontSize:46,marginBottom:13}}>💪</div>
+                <div style={{fontFamily:FD,fontSize:22,color:"#fff",letterSpacing:2,marginBottom:8}}>NO PLAN YET</div>
+                <button onClick={()=>setTab("schedule")} style={{border:`2px solid ${C.accent}`,background:"transparent",color:C.accent,padding:"11px 26px",borderRadius:10,fontFamily:FD,fontSize:17,letterSpacing:2,cursor:"pointer"}}>GO TO SCHEDULE</button>
+              </div>
+            ):(
+              <>
+                {/* Day strip */}
+                <div style={{display:"flex",gap:4,marginBottom:13,overflowX:"auto",paddingBottom:3}}>
+                  {DAYS_FULL.map((day,i)=>{
+                    const p=PLAN[wd.assigned[i]],dk=`${wk}_d${i}`;
+                    const done=db.completed[dk],miss=db.missed[dk]?.missed;
+                    return(
+                      <div key={day} onClick={()=>setSelDay(i)} style={{flex:"0 0 56px",borderRadius:11,padding:"8px 4px",textAlign:"center",cursor:"pointer",
+                        background:selDay===i?`${p.color}1a`:"#0d0d0d",border:`1px solid ${selDay===i?p.color+"66":done?C.accent+"44":miss?"#f8717144":"#1e1e1e"}`}}>
+                        <div style={{fontFamily:FD,fontSize:12,color:selDay===i?p.color:"#666",letterSpacing:1}}>{DAYS_SHORT[i]}</div>
+                        <div style={{fontSize:15,margin:"3px 0"}}>{TYPE_ICON[p.type]}</div>
+                        <div style={{fontSize:7,color:done?C.accent:miss?"#f87171":"#444"}}>{done?"✓":miss?"✗":"·"}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {selPlan&&(
+                  <>
+                    <DayHeader plan={selPlan} dKey={selKey} dayIdx={selDay}/>
+                    {/* Sections */}
+                    <div style={{display:"flex",gap:4,marginBottom:11}}>
+                      {["exercises","schedule","nutrition","supplements"].map(s=>(
+                        <button key={s} onClick={()=>setSection(s)} style={{flex:1,padding:"7px 3px",background:section===s?"#1a1a1a":"transparent",border:`1px solid ${section===s?C.accent:C.border}`,borderRadius:8,color:section===s?C.accent:C.muted,fontSize:8,letterSpacing:1,cursor:"pointer",fontFamily:FB,fontWeight:600}}>
+                          {s==="exercises"?"🏋️":s==="schedule"?"⏱️":s==="nutrition"?"🍽️":"💊"}<br/>{s.slice(0,5).toUpperCase()}
+                        </button>
+                      ))}
+                    </div>
+                    {section==="exercises"&&<ExList plan={selPlan} prefix="p"/>}
+                    {section==="schedule"&&selPlan.schedule.map((s,i)=>(
+                      <div key={i} style={{display:"flex",gap:11,alignItems:"flex-start",marginBottom:6}}>
+                        <div style={{minWidth:62,fontFamily:FD,fontSize:13,color:selPlan.color,paddingTop:9}}>{s.time}</div>
+                        <div style={{flex:1,background:"#0e0e0e",borderRadius:8,padding:"8px 11px",fontSize:12,color:"#ccc"}}>{s.activity}</div>
+                      </div>
+                    ))}
+                    {section==="nutrition"&&(
+                      <>
+                        {[["🍳 BREAKFAST","breakfast","8:30"],["🍎 SNACK 1","snack1","11:30"],["🍽️ LUNCH","lunch","13:00"],["🥪 SNACK 2","snack2","16:30"],["🌙 DINNER","dinner","19:30"]].map(([k,mk,t])=>(
+                          <div key={k} style={cs}>
+                            <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+                              <div style={{fontSize:11,color:selPlan.color,fontWeight:600}}>{k}</div>
+                              <div style={{fontSize:9,color:C.dim}}>{t}</div>
+                            </div>
+                            <div style={{fontSize:12,color:"#ccc",lineHeight:1.6}}>{selPlan.meals[mk]}</div>
+                          </div>
+                        ))}
+                        <div style={{...cs,border:"1px solid #1e3a5f"}}>
+                          <div style={{fontSize:11,color:"#38bdf8",fontWeight:600,marginBottom:3}}>💧 WATER</div>
+                          <div style={{fontSize:12,color:"#ccc"}}>2–3 litres throughout the day</div>
+                        </div>
+                      </>
+                    )}
+                    {section==="supplements"&&(
+                      <>
+                        {[{name:"Whey Protein",dose:"25–30g",when:"After workout",emoji:"🥛",color:"#b8d44a",note:"Mix with water. Within 30min post-workout."},{name:"Creatine",dose:"5g daily",when:"Post workout",emoji:"⚗️",color:"#38bdf8",note:"No loading phase. Take consistently."},{name:"Omega-3",dose:"2 capsules",when:"With meal",emoji:"🐟",color:"#f59e0b",note:"Reduces inflammation. Supports joints."}].map(s=>(
+                          <div key={s.name} style={{...cs,border:`1px solid ${s.color}33`}}>
+                            <div style={{display:"flex",gap:9,alignItems:"center",marginBottom:6}}>
+                              <div style={{fontSize:24}}>{s.emoji}</div>
+                              <div>
+                                <div style={{fontSize:13,color:s.color,fontWeight:700}}>{s.name}</div>
+                                <div style={{fontSize:10,color:C.muted}}>{s.dose} · {s.when}</div>
+                              </div>
+                            </div>
+                            <div style={{fontSize:11,color:C.dim}}>{s.note}</div>
+                          </div>
+                        ))}
+                        <div style={cs}>
+                          <div style={{fontSize:10,color:C.accent,fontWeight:700,marginBottom:6}}>📈 PROGRESSION</div>
+                          <div style={{fontSize:12,color:"#aaa",lineHeight:1.8}}>Add 2–5% weight when all reps feel easy.<br/>Last 2–3 reps should be challenging.<br/>Rest 60–90s between sets.</div>
+                        </div>
+                      </>
+                    )}
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ══ PROGRESS ══ */}
+        {tab==="progress"&&(
+          <div style={{padding:16}} className="fade-up">
+            <div style={{fontFamily:FD,fontSize:24,color:"#fff",letterSpacing:2,marginBottom:3}}>WEEK {week}</div>
+            <div style={{fontSize:11,color:C.muted,marginBottom:16}}>{fmtDate(wDates[0])} – {fmtDate(wDates[6])}</div>
+            <div style={{display:"flex",justifyContent:"center",marginBottom:18}}>
+              <div style={{position:"relative",width:130,height:130}}>
+                <svg width="130" height="130" style={{transform:"rotate(-90deg)"}}>
+                  <circle cx="65" cy="65" r="52" fill="none" stroke="#1a1a1a" strokeWidth="9"/>
+                  <circle cx="65" cy="65" r="52" fill="none" stroke={C.accent} strokeWidth="9"
+                    strokeDasharray={`${2*Math.PI*52}`} strokeDashoffset={`${2*Math.PI*52*(1-totalDone/7)}`}
+                    strokeLinecap="round" style={{transition:"stroke-dashoffset 0.9s ease"}}/>
+                </svg>
+                <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+                  <div style={{fontFamily:FD,fontSize:36,color:C.accent,lineHeight:1}}>{totalDone}</div>
+                  <div style={{fontSize:8,color:C.dim,letterSpacing:2}}>/ 7 DAYS</div>
+                </div>
+              </div>
+            </div>
+            {wd.assigned?DAYS_FULL.map((day,i)=>{
+              const p=PLAN[wd.assigned[i]],dk=`${wk}_d${i}`;
+              const done=db.completed[dk],miss=db.missed[dk];
+              return(
+                <div key={day} style={{display:"flex",alignItems:"center",gap:9,padding:"10px 12px",background:C.card,borderRadius:11,border:`1px solid ${C.border}`,marginBottom:6}}>
+                  <div style={{width:30,height:30,borderRadius:"50%",background:done?C.accent:miss?.missed?"#f87171":"#1a1a1a",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:done?"#000":miss?.missed?"#fff":"#555",flexShrink:0}}>
+                    {done?"✓":miss?.missed?"✗":(i+1)}
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:13,fontWeight:600,color:done?C.accent:miss?.missed?"#f87171":"#fff"}}>{day}</div>
+                    <div style={{fontSize:10,color:C.muted}}>{fmtDate(wDates[i])} · {p.label}</div>
+                    {miss?.note&&<div style={{fontSize:10,color:"#f87171",marginTop:1}}>Note: {miss.note}</div>}
+                  </div>
+                  <div style={{fontSize:9,color:p.color,background:`${p.color}18`,padding:"3px 7px",borderRadius:20}}>{TYPE_ICON[p.type]}</div>
+                </div>
+              );
+            }):<div style={{textAlign:"center",padding:"40px 20px",color:C.dim}}>Save your schedule first</div>}
+            <div style={{marginTop:12,display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
+              {[["WEIGHT",`${db.profile.weight} kg`,"Current"],["TARGET",db.profile.target||"Fat Loss","Goal"],["AGE",`${db.profile.age} yrs`,"Profile"],["HEIGHT",`${db.profile.height} cm`,"Profile"]].map(([l,v,s])=>(
+                <div key={l} style={{padding:12,background:"#0d0d0d",borderRadius:10,border:`1px solid ${C.border}`}}>
+                  <div style={{fontSize:8,color:C.dim,letterSpacing:2,marginBottom:3}}>{l}</div>
+                  <div style={{fontFamily:FD,fontSize:18,color:C.accent,marginBottom:2}}>{v}</div>
+                  <div style={{fontSize:9,color:C.muted}}>{s}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ══ PROFILE ══ */}
+        {tab==="profile"&&(
+          <div style={{padding:16}} className="fade-up">
+            <div style={{textAlign:"center",marginBottom:20}}>
+              <div style={{width:74,height:74,borderRadius:"50%",background:`linear-gradient(135deg,${C.accent},#8ba832)`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 10px",fontFamily:FD,fontSize:34,color:"#000"}}>
+                {db.profile.name?.[0]?.toUpperCase()||"M"}
+              </div>
+              <div style={{fontFamily:FD,fontSize:24,color:"#fff",letterSpacing:2}}>{db.profile.name}</div>
+              <div style={{fontSize:10,color:C.muted,marginTop:3}}>FITNESS ATHLETE</div>
+            </div>
+            {!editProf?(
+              <>
+                {[["👤 Full Name",db.profile.name],["🎂 Age",`${db.profile.age} years`],["⚖️ Weight",`${db.profile.weight} kg`],["📏 Height",`${db.profile.height} cm`],["🎯 Target",db.profile.target],["🏃 Activity","KFC Worker · Gym 2×/week"],["💊 Supplements","Whey + Creatine + Omega-3"]].map(([l,v])=>(
+                  <div key={l} style={{...cs,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <div style={{fontSize:11,color:C.muted}}>{l}</div>
+                    <div style={{fontSize:12,color:"#fff",fontWeight:600}}>{v}</div>
+                  </div>
+                ))}
+                <button onClick={()=>{setProfDraft({...db.profile});setEditProf(true);}} style={{width:"100%",padding:"12px",background:`${C.accent}1a`,border:`1px solid ${C.accent}44`,borderRadius:11,color:C.accent,fontFamily:FD,fontSize:16,letterSpacing:2,cursor:"pointer",marginTop:4}}>
+                  ✏️ EDIT PROFILE
+                </button>
+              </>
+            ):(
+              <>
+                {[["Full Name","name","text"],["Age","age","number"],["Weight (kg)","weight","number"],["Height (cm)","height","number"],["Target","target","text"]].map(([lb,k,t])=>(
+                  <div key={k} style={{marginBottom:10}}>
+                    <div style={{fontSize:9,color:C.muted,letterSpacing:1,marginBottom:4}}>{lb.toUpperCase()}</div>
+                    <input type={t} value={profDraft[k]||""} onChange={e=>setProfDraft(p=>({...p,[k]:e.target.value}))}
+                      style={{width:"100%",background:"#1a1a1a",border:"1px solid #333",borderRadius:8,color:"#fff",padding:"10px 12px",fontSize:12}}/>
+                  </div>
+                ))}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7,marginTop:6}}>
+                  <button onClick={()=>setEditProf(false)} style={{padding:"11px",background:"#1a1a1a",border:"1px solid #333",borderRadius:10,color:"#aaa",fontFamily:FD,fontSize:15,cursor:"pointer"}}>CANCEL</button>
+                  <button onClick={saveProf} style={{padding:"11px",background:`linear-gradient(135deg,${C.accent},#8ba832)`,border:"none",borderRadius:10,color:"#000",fontFamily:FD,fontSize:15,cursor:"pointer",fontWeight:700}}>SAVE</button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* BOTTOM NAV */}
+        <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:"#0d0d0d",borderTop:`1px solid ${C.border}`,display:"flex"}}>
+          {[["today","⚡","TODAY"],["schedule","📅","SCHED"],["plan","💪","PLAN"],["progress","📊","PROG"],["profile","👤","ME"]].map(([k,ic,lb])=>(
+            <button key={k} onClick={()=>setTab(k)} style={{flex:1,padding:"8px 4px",background:"none",border:"none",color:tab===k?C.accent:C.dim,cursor:"pointer",borderTop:`2px solid ${tab===k?C.accent:"transparent"}`}}>
+              <div style={{fontSize:15}}>{ic}</div>
+              <div style={{fontSize:8,letterSpacing:1,marginTop:1}}>{lb}</div>
+            </button>
+          ))}
+        </div>
+
+        {/* MISSED MODAL */}
+        {missedModal!==null&&(
+          <div style={{position:"fixed",inset:0,background:"#000b",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:100}}>
+            <div style={{width:"100%",maxWidth:480,background:"#141414",borderRadius:"18px 18px 0 0",padding:20,border:"1px solid #2a2a2a"}}>
+              <div style={{fontFamily:FD,fontSize:19,color:"#f87171",letterSpacing:2,marginBottom:3}}>LOG MISSED</div>
+              <div style={{fontSize:11,color:C.muted,marginBottom:11}}>{DAYS_FULL[missedModal]}</div>
+              <textarea value={missedNote} onChange={e=>setMissedNote(e.target.value)} placeholder="Why? (optional)"
+                style={{width:"100%",background:"#1a1a1a",border:"1px solid #333",borderRadius:9,color:"#fff",padding:10,fontSize:12,minHeight:64,resize:"none"}}/>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7,marginTop:9}}>
+                <button onClick={()=>setMissedModal(null)} style={{padding:"11px",background:"#1a1a1a",border:"1px solid #333",borderRadius:9,color:"#aaa",fontFamily:FD,fontSize:14,cursor:"pointer"}}>CANCEL</button>
+                <button onClick={()=>logMissed(missedModal,missedNote)} style={{padding:"11px",background:"#f8717122",border:"1px solid #f87171",borderRadius:9,color:"#f87171",fontFamily:FD,fontSize:14,cursor:"pointer"}}>LOG IT</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TOAST */}
+        {toast&&(
+          <div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",background:toast.color,color:"#000",padding:"8px 18px",borderRadius:26,fontFamily:FD,fontSize:14,letterSpacing:1,zIndex:9999,fontWeight:700,whiteSpace:"nowrap"}}>
+            {toast.msg}
+          </div>
+        )}
+      </div>
+    </>
+  );
 }
 
-/* ═══════════════════════════════════════════════════════════
-   RENDER TABLE
-═══════════════════════════════════════════════════════════ */
-function buildHeader(){
-  const ws = new Date($('weekStart').value+'T00:00:00');
-  const tr = $('tHead'); tr.innerHTML='';
-
-  // Employee column
-  const th0=document.createElement('th'); th0.className='nh'; th0.textContent='Employee'; tr.appendChild(th0);
-
-  for(let i=0;i<7;i++){
-    const d=new Date(ws); d.setDate(d.getDate()+i);
-    const jsDay=d.getDay(); // 0=Sun,1=Mon,...
-    const di=jsDay===0?6:jsDay-1; // our index: 0=Mon...6=Sun
-    const isA=TYPE_A.has(di);
-    const th=document.createElement('th');
-    th.className=`dh ${isA?'ta':'tb'}`;
-    th.innerHTML=`${DAYS[di]} ${d.getMonth()+1}/${d.getDate()}<span class="dtype">${isA?'Type-A (6 slots)':'Type-B (7 slots)'}</span>`;
-    tr.appendChild(th);
-  }
-
-  tr.appendChild(Object.assign(document.createElement('th'),{textContent:'Week h',className:'wt'}));
-
-  // Footer
-  const fr=$('tFoot'); fr.innerHTML='';
-  fr.appendChild(Object.assign(document.createElement('td'),{textContent:'Day Total',className:'nh'}));
-  for(let i=0;i<7;i++)
-    fr.appendChild(Object.assign(document.createElement('td'),{className:'dtot',id:`dt${i}`,textContent:'—'}));
-  fr.appendChild(Object.assign(document.createElement('td'),{id:'dtTot',textContent:'—',style:'font-weight:800;color:var(--red)'}));
-
-  // Week label
-  const we=new Date(ws); we.setDate(we.getDate()+6);
-  $('wkLabel').textContent=`Weekly Schedule · ${ws.toLocaleDateString('en-US',{month:'short',day:'numeric'})} – ${we.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
-}
-
-function renderTable(){
-  buildHeader();
-  const tbody=$('tBody'); tbody.innerHTML='';
-  let grand=0, offC=0, overC=0;
-  const dtot=Array(7).fill(0);
-  const empSet=new Set();
-
-  EMPS.forEach((emp,ei)=>{
-    const tr=document.createElement('tr');
-    const dr=dispRole(ei);
-    const nc=document.createElement('td');
-    nc.className='nc'+(emp.isMgr?' mgrow':'');
-    nc.innerHTML=`${emp.short} <span class="rb rb-${dr}">${dr}</span><small>${emp.name}</small>`;
-    tr.appendChild(nc);
-
-    let et=0;
-    for(let di=0;di<7;di++){
-      const td=document.createElement('td');
-      const div=document.createElement('div');
-      div.contentEditable='true';
-      div.dataset.ei=String(ei);
-      div.dataset.di=String(di);
-      div.dataset.ph='—';
-      const cell=sched[ei][di];
-      if(cell){
-        div.textContent=cell.disp;
-        div.className=cell.cls;
-        if(cell.hrs>0){ et+=cell.hrs; dtot[di]+=cell.hrs; empSet.add(ei); }
-        if(cell.label==='OFF') offC++;
-      }
-      div.addEventListener('input', onEdit);
-      td.appendChild(div); tr.appendChild(td);
-    }
-
-    grand+=et;
-    if(et>MAX_H) overC++;
-    const wt=document.createElement('td');
-    wt.className='wt'+(et>0?' ok':'')+(et>MAX_H?' over':'');
-    wt.id=`wt${ei}`;
-    wt.textContent=et>0?et.toFixed(2):'0';
-    tr.appendChild(wt);
-    tbody.appendChild(tr);
-    updateHoursPill(ei,et);
-  });
-
-  dtot.forEach((v,i)=>{ const el=$(`dt${i}`); if(el) el.textContent=v.toFixed(1); });
-  if($('dtTot')) $('dtTot').textContent=grand.toFixed(1);
-
-  $('sHrs').textContent=grand.toFixed(1);
-  $('sEmp').textContent=empSet.size;
-  $('sOff').textContent=offC;
-  $('sAvg').textContent=empSet.size?(grand/empSet.size).toFixed(1):'—';
-  $('sOver').textContent=overC||'0';
-
-  // Coverage stat
-  let covered=0;
-  for(let di=0;di<7;di++){
-    const need=(TYPE_A.has(di)?SLOTS_A:SLOTS_B).length;
-    const have=EMPS.filter((_,ei)=>sched[ei][di]&&sched[ei][di].hrs>0).length;
-    if(have>=need) covered++;
-  }
-  $('sCov').textContent=`${covered}/7`;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   CELL EDITING (manual override)
-═══════════════════════════════════════════════════════════ */
-function onEdit(e){
-  const div=e.target;
-  const ei=+div.dataset.ei, di=+div.dataset.di;
-  const txt=div.textContent.trim();
-  if(txt.toUpperCase()==='OFF'){ div.className='cOFF'; }
-  const hrs=parseHrs(txt);
-  sched[ei][di]={cls:div.className,disp:txt,hrs,label:'MANUAL',slot:'MANUAL'};
-  recalcStats();
-}
-
-function parseHrs(txt){
-  let t=0; const re=/\((\d+(?:\.\d+)?)h?\)/g; let m;
-  while((m=re.exec(txt))!==null) t+=parseFloat(m[1]);
-  return t;
-}
-
-function recalcStats(){
-  let grand=0, offC=0, overC=0;
-  const dtot=Array(7).fill(0);
-  const empSet=new Set();
-
-  EMPS.forEach((_,ei)=>{
-    let et=0;
-    for(let di=0;di<7;di++){
-      const div=document.querySelector(`[data-ei="${ei}"][data-di="${di}"]`);
-      if(!div) continue;
-      const txt=div.textContent.trim();
-      if(txt.toUpperCase()==='OFF'||!txt){ offC++; continue; }
-      const h=parseHrs(txt); et+=h; dtot[di]+=h; if(h>0) empSet.add(ei);
-    }
-    grand+=et; if(et>MAX_H) overC++;
-    const wt=$(`wt${ei}`);
-    if(wt){ wt.textContent=et.toFixed(2); wt.className='wt'+(et>0?' ok':'')+(et>MAX_H?' over':''); }
-    updateHoursPill(ei,et);
-  });
-
-  dtot.forEach((v,i)=>{ const el=$(`dt${i}`); if(el) el.textContent=v.toFixed(1); });
-  if($('dtTot')) $('dtTot').textContent=grand.toFixed(1);
-  $('sHrs').textContent=grand.toFixed(1);
-  $('sEmp').textContent=empSet.size;
-  $('sOff').textContent=offC;
-  $('sAvg').textContent=empSet.size?(grand/empSet.size).toFixed(1):'—';
-  $('sOver').textContent=overC||'0';
-}
-
-function showWarnings(w){
-  const coverageLines = [];
-  for(let di=0;di<7;di++){
-    const slots = TYPE_A.has(di) ? SLOTS_A : SLOTS_B;
-    const filledSlots = slots.filter(sk=>EMPS.some((_,ei)=> sched[ei]&&sched[ei][di]&&sched[ei][di].slot===sk));
-    const icon = filledSlots.length===slots.length ? '✅' : filledSlots.length>=Math.ceil(slots.length*0.8) ? '🟡' : '🔴';
-    coverageLines.push(`${icon} <b>${DAYS[di]}</b>: ${filledSlots.length}/${slots.length} slots`);
-  }
-  const coverageHtml = `<div style="margin-top:9px;padding:8px 12px;background:#f9fafb;border:1px solid var(--border);border-radius:var(--r);font-size:11px;line-height:2">
-    <b style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Coverage by Day</b><br>
-    ${coverageLines.join('&nbsp;&nbsp;')}
-  </div>`;
-  if(w.length){
-    $('warnings').innerHTML = `<div class="wbox" style="margin-top:9px"><b>⚠ ${w.length} issue(s):</b><br>${w.join('<br>')}</div>${coverageHtml}`;
-  } else {
-    $('warnings').innerHTML = `<div class="okbox" style="margin-top:9px">✅ All slots filled. Availability &amp; role rules fully respected.</div>${coverageHtml}`;
-  }
-}
-
-function clearSched(){
-  sched=EMPS.map(()=>Array(7).fill(null));
-  renderTable(); $('warnings').innerHTML=''; toast('Schedule cleared.');
-}
-
-/* ═══════════════════════════════════════════════════════════
-   PDF EXPORT
-═══════════════════════════════════════════════════════════ */
-function exportPDF(){
-  const el=$('schedule-content');
-  const w=$('weekStart').value.replace(/-/g,'');
-  html2pdf().set({
-    margin:.28,
-    filename:`KFC_1416_${w}.pdf`,
-    image:{type:'jpeg',quality:.98},
-    html2canvas:{scale:2,useCORS:true,letterRendering:true},
-    jsPDF:{unit:'in',format:'letter',orientation:'landscape'}
-  }).from(el).save();
-  toast('Generating PDF…');
-}
-
-/* ═══════════════════════════════════════════════════════════
-   EMPTY ROW HELPER (for newly added employee)
-═══════════════════════════════════════════════════════════ */
-function initEmptyRow(ei){
-  const tbody=$('tBody');
-  if(!tbody) return;
-  const emp=EMPS[ei];
-  const dr=dispRole(ei);
-  const tr=document.createElement('tr');
-  const nc=document.createElement('td');
-  nc.className='nc';
-  nc.innerHTML=`${emp.short} <span class="rb rb-${dr}">${dr}</span><small>${emp.name}</small>`;
-  tr.appendChild(nc);
-  for(let di=0;di<7;di++){
-    const td=document.createElement('td');
-    const div=document.createElement('div');
-    div.contentEditable='true';
-    div.dataset.ei=String(ei); div.dataset.di=String(di); div.dataset.ph='—';
-    div.addEventListener('input',onEdit);
-    td.appendChild(div); tr.appendChild(td);
-  }
-  const wt=document.createElement('td');
-  wt.className='wt'; wt.id=`wt${ei}`; wt.textContent='0';
-  tr.appendChild(wt); tbody.appendChild(tr);
-}
-
-/* ═══════════════════════════════════════════════════════════
-   INIT
-═══════════════════════════════════════════════════════════ */
-$('weekStart').addEventListener('change', ()=>{ buildHeader(); });
-window.addEventListener('click', e=>{ if(e.target===$('delModal')) closeModal(); });
-
-window.addEventListener('DOMContentLoaded',()=>{
-  buildRoleGrid();
-  buildAvailGrid();
-  buildHeader();
-
-  // Render empty schedule table
-  const tbody=$('tBody'); tbody.innerHTML='';
-  EMPS.forEach((emp,ei)=>{
-    const dr=dispRole(ei);
-    const tr=document.createElement('tr');
-    const nc=document.createElement('td');
-    nc.className='nc'+(emp.isMgr?' mgrow':'');
-    nc.innerHTML=`${emp.short} <span class="rb rb-${dr}">${dr}</span><small>${emp.name}</small>`;
-    tr.appendChild(nc);
-    for(let di=0;di<7;di++){
-      const td=document.createElement('td');
-      const div=document.createElement('div');
-      div.contentEditable='true';
-      div.dataset.ei=String(ei); div.dataset.di=String(di); div.dataset.ph='—';
-      div.addEventListener('input',onEdit);
-      td.appendChild(div); tr.appendChild(td);
-    }
-    const wt=document.createElement('td');
-    wt.className='wt'; wt.id=`wt${ei}`; wt.textContent='0';
-    tr.appendChild(wt); tbody.appendChild(tr);
-  });
-});
-</script>
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<MoeFitness />);
+  </script>
 </body>
 </html>
