@@ -2,227 +2,264 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="theme-color" content="#0a0a0a"/>
   <title>Moe Fitness</title>
-  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { background: #0a0a0a; height: 100%; }
-  </style>
-</head>
-<body>
-  <div id="root"></div>
-  <script type="text/babel">
-const { useState, useEffect, useRef } = React;
 
-const FontLink = () => (
-  <style>{`
+  <!-- React + Babel via jsDelivr CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.23.5/babel.min.js"></script>
+
+  <!-- Firebase v9 modular via ES module (gstatic → esm.sh fallback) -->
+  <script type="module">
+    async function loadFirebase() {
+      const VERS = "10.7.1";
+      const bases = [
+        `https://www.gstatic.com/firebasejs/${VERS}/`,
+        `https://esm.sh/firebase@${VERS}/`,
+      ];
+      let FA, FF, initializeApp;
+      for (const base of bases) {
+        try {
+          const suffix = base.includes("esm.sh") ? "" : "";
+          const appMod  = await import(base + (base.includes("esm.sh") ? "app" : "firebase-app.js"));
+          const authMod = await import(base + (base.includes("esm.sh") ? "auth" : "firebase-auth.js"));
+          const fsMod   = await import(base + (base.includes("esm.sh") ? "firestore" : "firebase-firestore.js"));
+          initializeApp = appMod.initializeApp;
+          FA = authMod; FF = fsMod;
+          break;
+        } catch(e) { console.warn("Firebase CDN failed:", base, e.message); }
+      }
+      if (!initializeApp) {
+        document.dispatchEvent(new CustomEvent("firebase-error", {detail:"Could not load Firebase from any CDN."}));
+        return;
+      }
+      const cfg = {
+        apiKey:"AIzaSyBdujq0sn6pQGZktiAyaeTntGlfQ8MYVP4",
+        authDomain:"ottawa-deals.firebaseapp.com",
+        projectId:"ottawa-deals",
+        storageBucket:"ottawa-deals.firebasestorage.app",
+        messagingSenderId:"468903353105",
+        appId:"1:468903353105:web:864ea92efea5c5c6bc0ab0",
+        measurementId:"G-L06FJJ1D5E"
+      };
+      const app = initializeApp(cfg);
+      window._auth = FA.getAuth(app);
+      window._db   = FF.getFirestore(app);
+      window._FA   = FA;
+      window._FF   = FF;
+      window._fbReady = true;
+      document.dispatchEvent(new Event("firebase-ready"));
+    }
+    loadFirebase();
+  </script>
+
+  <style>
+    /* Fonts: if Google Fonts loads, great. If not, system fonts are used as fallback. */
     @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;600;700&display=swap');
+    /* System font fallbacks — app still looks great without Google Fonts */
     *{box-sizing:border-box;margin:0;padding:0;}
-    body{background:#0a0a0a;}
+    html,body{background:#0a0a0a;height:100%;overflow-x:hidden;}
     ::-webkit-scrollbar{width:3px;}
     ::-webkit-scrollbar-track{background:#111;}
     ::-webkit-scrollbar-thumb{background:#b8d44a;border-radius:3px;}
-    @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
-    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.5;}}
-    .fade-up{animation:fadeUp 0.35s ease forwards;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+    @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    @keyframes timerPop{0%{transform:scale(1);}50%{transform:scale(1.06);}100%{transform:scale(1);}}
+    @keyframes shimmer{0%{background-position:-200% 0;}100%{background-position:200% 0;}}
+    .fade-up{animation:fadeUp .35s ease forwards;}
+    .fade-in{animation:fadeIn .25s ease forwards;}
     .live-dot{animation:pulse 1.5s infinite;}
-    input[type=time]::-webkit-calendar-picker-indicator{filter:invert(0.4);}
-  `}</style>
-);
+    .spin{animation:spin 1s linear infinite;}
+    .timer-pop{animation:timerPop .3s ease;}
+    input,textarea,select{outline:none;-webkit-appearance:none;}
+    input[type=time]::-webkit-calendar-picker-indicator{filter:invert(.4);}
+    button{-webkit-tap-highlight-color:transparent;}
+  </style>
+</head>
+<body>
+<div id="root"></div>
 
-const SK = "moefitness_v6";
-const load = () => { try { return JSON.parse(localStorage.getItem(SK)) || {}; } catch { return {}; } };
-const save = (d) => { try { localStorage.setItem(SK, JSON.stringify(d)); } catch {} };
+<script type="text/babel">
+// ── App bootstrap: waits for Firebase module to signal ready ──
+function startApp() {
+  if (!window._auth || !window._FA || !window._FF) {
+    // Show Firebase load error
+    const root = document.getElementById("root");
+    root.innerHTML = [
+      '<div style="min-height:100vh;background:#0a0a0a;display:flex;flex-direction:column;',
+      'align-items:center;justify-content:center;padding:24px;font-family:sans-serif;text-align:center">',
+      '<div style="font-size:42px;margin-bottom:16px">🔥</div>',
+      '<div style="font-size:22px;color:#f87171;letter-spacing:2px;margin-bottom:10px">FIREBASE UNAVAILABLE</div>',
+      '<div style="font-size:13px;color:#888;max-width:340px;line-height:1.7;margin-bottom:20px">',
+      'Cannot connect to Firebase. Check your internet connection and try reloading.</div>',
+      '<button onclick="location.reload()" style="padding:12px 28px;background:#b8d44a;border:none;',
+      'border-radius:10px;color:#000;font-size:15px;cursor:pointer;font-weight:700">RELOAD</button>',
+      '</div>'
+    ].join("");
+    return;
+  }
 
-/* ─────────────────────────────────────────────────────────────
-   EXERCISE LIBRARY
-   photo field = exact filename to place in /images/ folder
-───────────────────────────────────────────────────────────── */
+  const auth = window._auth;
+  const db   = window._db;
+  const FA   = window._FA;
+  const FF   = window._FF;
+  const ADMIN_EMAIL = "bouhoula_mohamedhedi@yahoo.fr";
+
+  // ── Firebase v9 helper wrappers ──
+  const fbSignIn = (email, pass) => FA.signInWithEmailAndPassword(auth, email, pass);
+  const fbSignUp = (email, pass) => FA.createUserWithEmailAndPassword(auth, email, pass);
+  const fbSignOut = () => FA.signOut(auth);
+  const fbOnAuth = (cb) => FA.onAuthStateChanged(auth, cb);
+  const fbGetDoc = (col, id) => FF.getDoc(FF.doc(db, col, id));
+  const fbSetDoc = (col, id, data) => FF.setDoc(FF.doc(db, col, id), data);
+  const fbUpdateDoc = (col, id, data) => FF.updateDoc(FF.doc(db, col, id), data);
+  const fbGetAll = (col) => FF.getDocs(FF.collection(db, col));
+  const serverTimestamp = () => FF.serverTimestamp();
+  const { useState, useEffect, useRef, useCallback } = React;
+
+  class ErrorBoundary extends React.Component {
+    constructor(props){ super(props); this.state={hasError:false,error:null}; }
+    static getDerivedStateFromError(e){ return {hasError:true,error:e}; }
+    componentDidCatch(e,i){ console.error("App error:",e,i); }
+    render(){
+      if(this.state.hasError) return(
+        <div style={{minHeight:"100vh",background:"#0a0a0a",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"sans-serif",textAlign:"center"}}>
+          <div style={{fontSize:40,marginBottom:12}}>⚠️</div>
+          <div style={{fontSize:24,color:"#b8d44a",letterSpacing:3,marginBottom:8}}>SOMETHING WENT WRONG</div>
+          <div style={{fontSize:12,color:"#666",marginBottom:24,maxWidth:340,lineHeight:1.6}}>{this.state.error?.message||"An unexpected error occurred."}</div>
+          <button onClick={()=>window.location.reload()} style={{padding:"12px 28px",background:"#b8d44a",border:"none",borderRadius:10,color:"#000",fontSize:16,cursor:"pointer",fontWeight:700}}>RELOAD APP</button>
+        </div>
+      );
+      return this.props.children;
+    }
+  }
+
+/* ═══════════════════════════════════════════════
+   CONSTANTS & DATA
+═══════════════════════════════════════════════ */
+const C = {
+  bg:"#0a0a0a", card:"#111", card2:"#141414",
+  border:"#1e1e1e", border2:"#2a2a2a",
+  accent:"#b8d44a", accent2:"#8ba832",
+  text:"#f0ede6", muted:"#666", dim:"#3a3a3a",
+  red:"#f87171", blue:"#38bdf8", orange:"#fb923c",
+  purple:"#a78bfa", pink:"#f472b6", green:"#34d399"
+};
+const FD = "Bebas Neue,sans-serif";
+const FB = "Barlow,sans-serif";
+
 const EX = {
-  "Bench Press":             { photo:"bench_press.jpg",           ytId:"SCVCLChPQEs", muscles:"Chest · Triceps · Front Delts",  weight:"60–70 kg",      wNote:"Barbell. Add 2.5kg/week when all reps easy.", sets:"4 × 8–10",    rest:"90s", restSec:90,  level:"moderate", tip:"Elbows 45°. Touch chest lightly. Full lockout at top." },
-  "Shoulder Press":          { photo:"shoulder_press.jpg",        ytId:"qEwKCR5JCog", muscles:"Shoulders · Triceps",             weight:"40–50 kg",      wNote:"Barbell or dumbbells 20–25kg each.",           sets:"3 × 10",      rest:"90s", restSec:90,  level:"moderate", tip:"Drive bar straight up. Brace core. Don't arch lower back." },
-  "Triceps Dips":            { photo:"triceps_dips.jpg",          ytId:"6kALZikXxLc", muscles:"Triceps · Chest",                 weight:"Bodyweight",    wNote:"Add 5–10kg plate when 12 reps easy.",          sets:"3 × 10–12",   rest:"60s", restSec:60,  level:"light",    tip:"Lean slightly forward. Lower to 90° elbow bend." },
-  "Lat Pulldown":            { photo:"lat_pulldown.jpg",          ytId:"CAwf7n6Luuc", muscles:"Lats · Biceps · Rear Delts",      weight:"55–65 kg",      wNote:"Pull to upper chest. Don't swing.",            sets:"4 × 10",      rest:"90s", restSec:90,  level:"moderate", tip:"Pull elbows down and back. Squeeze lats at bottom." },
-  "Barbell Row":             { photo:"barbell_row.jpg",           ytId:"G8l_8chR5BE", muscles:"Back · Biceps · Rear Delts",      weight:"60–70 kg",      wNote:"Hinge at hips. Bar to lower chest.",           sets:"3 × 8–10",    rest:"90s", restSec:90,  level:"moderate", tip:"Keep back flat. Drive elbows back past body." },
-  "Bicep Curl":              { photo:"bicep_curl.jpg",            ytId:"ykJmrZ5v0Oo", muscles:"Biceps · Forearms",               weight:"12–15 kg/side", wNote:"Barbell 30–35kg or dumbbells 12–15kg each.",   sets:"3 × 10–12",   rest:"60s", restSec:60,  level:"light",    tip:"No swinging. 3-second lowering phase." },
-  "Squat":                   { photo:"barbell_squat.jpg",         ytId:"ultWZbUMPL8", muscles:"Quads · Glutes · Hamstrings",     weight:"70–80 kg",      wNote:"Go below parallel. Back straight.",            sets:"4 × 8–10",    rest:"90s", restSec:90,  level:"hard",     tip:"Knees track over toes. Brace core before descent." },
-  "Leg Raise":               { photo:"leg_raise.jpg",             ytId:"JB2oyawG9KI", muscles:"Lower Abs · Hip Flexors",         weight:"Bodyweight",    wNote:"Add ankle weights when 15 reps easy.",         sets:"3 × 12–15",   rest:"30s", restSec:30,  level:"light",    tip:"Control the lowering. Don't swing legs." },
-  "Plank":                   { photo:"plank.jpg",                 ytId:"pSHjTRCQxIw", muscles:"Core · Shoulders · Glutes",       weight:"Bodyweight",    wNote:"Add plate on back when 60s easy.",             sets:"3 × 45s",     rest:"30s", restSec:30,  level:"light",    tip:"Straight line head to heel. Don't let hips sag." },
-  "Incline Dumbbell Press":  { photo:"incline_dumbbell_press.jpg",ytId:"8iPEnn-ltC8", muscles:"Upper Chest · Front Delts",       weight:"22–26 kg/side", wNote:"30–45° incline. Full stretch at bottom.",      sets:"3 × 10",      rest:"90s", restSec:90,  level:"moderate", tip:"Wide arc on the way down. Touch dumbbells at top." },
-  "Dumbbell Shoulder Press": { photo:"dumbbell_shoulder_press.jpg",ytId:"qEwKCR5JCog",muscles:"Shoulders · Triceps",             weight:"18–22 kg/side", wNote:"Seated or standing. Keep core tight.",         sets:"3 × 10",      rest:"60s", restSec:60,  level:"moderate", tip:"Push straight up. Don't arch lower back excessively." },
-  "Cable Triceps Pushdown":  { photo:"cable_triceps_pushdown.jpg",ytId:"2-LAMcpzODU", muscles:"Triceps",                         weight:"20–30 kg",      wNote:"Full lockout at bottom. Elbows fixed.",        sets:"3 × 12",      rest:"60s", restSec:60,  level:"light",    tip:"Keep elbows pinned to sides. Full extension each rep." },
-  "Seated Row":              { photo:"seated_row.jpg",            ytId:"GZbfZ033f74", muscles:"Mid Back · Biceps",               weight:"50–60 kg",      wNote:"Pull handles to lower chest.",                 sets:"3 × 10",      rest:"90s", restSec:90,  level:"moderate", tip:"Sit upright. Don't lean back. Squeeze shoulder blades." },
-  "Dumbbell Bicep Curl":     { photo:"dumbbell_bicep_curl.jpg",   ytId:"ykJmrZ5v0Oo", muscles:"Biceps · Forearms",               weight:"14–18 kg/side", wNote:"Alternate arms or both together.",             sets:"3 × 12",      rest:"60s", restSec:60,  level:"light",    tip:"Supinate wrist at top for peak contraction." },
-  "Leg Press (light)":       { photo:"leg_press.jpg",             ytId:"IZxyjW7MPJQ", muscles:"Quads · Glutes · Hamstrings",     weight:"80–100 kg",     wNote:"Light session. Don't lock knees fully.",       sets:"3 × 12",      rest:"90s", restSec:90,  level:"moderate", tip:"Feet shoulder width. 90° knee bend at bottom." },
-  "Push-ups":                { photo:"push_ups.jpg",              ytId:"IODxDxX7oi4", muscles:"Chest · Triceps · Core",          weight:"Bodyweight",    wNote:"Add vest or plate for resistance.",            sets:"3 × 15–20",   rest:"60s", restSec:60,  level:"light",    tip:"Body straight. Lower chest to 1cm above floor." },
-  "Bodyweight Squat":        { photo:"bodyweight_squat.jpg",      ytId:"aclHkVaku9U", muscles:"Quads · Glutes · Hamstrings",     weight:"Bodyweight",    wNote:"Hold dumbbells for extra challenge.",          sets:"3 × 20",      rest:"60s", restSec:60,  level:"light",    tip:"Go deep. Heels flat on floor." },
-  "Side Plank":              { photo:"side_plank.jpg",            ytId:"K_kMgvHK1fA", muscles:"Obliques · Core",                 weight:"Bodyweight",    wNote:"Hold dumbbell on hip when easy.",              sets:"3 × 45s each",rest:"30s", restSec:30,  level:"light",    tip:"Stack feet. Hips up. Hold steady." },
-  "Russian Twist":           { photo:"russian_twist.jpg",         ytId:"wkD8rjkodUI", muscles:"Obliques · Core",                 weight:"5–8 kg plate",  wNote:"Hold plate or dumbbell.",                     sets:"3 × 15–20",   rest:"30s", restSec:30,  level:"light",    tip:"Lean back 45°. Feet slightly off floor." },
-  "Joint Mobility":          { photo:"joint_mobility.jpg",        ytId:"FSSDLDhbacc", muscles:"Shoulder · Knee · Wrist · Hip",   weight:"No weight",     wNote:"Focus on range of motion.",                   sets:"10 min",      rest:"—",   restSec:0,   level:"light",    tip:"Circles, arm swings, leg swings." },
-  "Brisk Walk":              { photo:"brisk_walk.jpg",            ytId:"",            muscles:"Cardio · Legs",                   weight:"No weight",     wNote:"Target 100–120 BPM heart rate.",              sets:"15–30 min",   rest:"—",   restSec:0,   level:"light",    tip:"Swing arms. Keep pace where you can still talk." },
-  "Kegel":                   { photo:"kegel_exercise.jpg",        ytId:"",            muscles:"Pelvic Floor",                    weight:"No weight",     wNote:"Squeeze and hold 3–5 sec each rep.",          sets:"3 × 15–20",   rest:"30s", restSec:30,  level:"light",    tip:"Contract pelvic floor. Hold 3–5s. Release fully." },
-  "Home Cardio":             { photo:"home_cardio.jpg",           ytId:"ml6cT4AZdqI", muscles:"Full Body · Cardio",              weight:"No weight",     wNote:"High knees, jumping jacks, burpees.",          sets:"10–20 min",   rest:"—",   restSec:0,   level:"moderate", tip:"Keep intensity moderate. 9:30–10:00 AM slot." },
+  "Bench Press":            {ytId:"SCVCLChPQEs",muscles:"Chest · Triceps · Front Delts",weight:"60–70 kg",wNote:"Barbell. Add 2.5kg/week when all reps easy.",sets:"4 × 8–10",rest:"90s",restSec:90,level:"moderate",tip:"Elbows 45°. Touch chest lightly. Full lockout at top."},
+  "Shoulder Press":         {ytId:"qEwKCR5JCog",muscles:"Shoulders · Triceps",weight:"40–50 kg",wNote:"Barbell or dumbbells 20–25kg each.",sets:"3 × 10",rest:"90s",restSec:90,level:"moderate",tip:"Drive bar straight up. Brace core. Don't arch lower back."},
+  "Triceps Dips":           {ytId:"6kALZikXxLc",muscles:"Triceps · Chest",weight:"Bodyweight",wNote:"Add 5–10kg plate when 12 reps easy.",sets:"3 × 10–12",rest:"60s",restSec:60,level:"light",tip:"Lean slightly forward. Lower to 90° elbow bend."},
+  "Lat Pulldown":           {ytId:"CAwf7n6Luuc",muscles:"Lats · Biceps · Rear Delts",weight:"55–65 kg",wNote:"Pull to upper chest. Don't swing.",sets:"4 × 10",rest:"90s",restSec:90,level:"moderate",tip:"Pull elbows down and back. Squeeze lats at bottom."},
+  "Barbell Row":            {ytId:"G8l_8chR5BE",muscles:"Back · Biceps · Rear Delts",weight:"60–70 kg",wNote:"Hinge at hips. Bar to lower chest.",sets:"3 × 8–10",rest:"90s",restSec:90,level:"moderate",tip:"Keep back flat. Drive elbows back past body."},
+  "Bicep Curl":             {ytId:"ykJmrZ5v0Oo",muscles:"Biceps · Forearms",weight:"12–15 kg/side",wNote:"Barbell 30–35kg or dumbbells 12–15kg each.",sets:"3 × 10–12",rest:"60s",restSec:60,level:"light",tip:"No swinging. 3-second lowering phase."},
+  "Squat":                  {ytId:"ultWZbUMPL8",muscles:"Quads · Glutes · Hamstrings",weight:"70–80 kg",wNote:"Go below parallel. Back straight.",sets:"4 × 8–10",rest:"90s",restSec:90,level:"hard",tip:"Knees track over toes. Brace core before descent."},
+  "Leg Raise":              {ytId:"JB2oyawG9KI",muscles:"Lower Abs · Hip Flexors",weight:"Bodyweight",wNote:"Add ankle weights when 15 reps easy.",sets:"3 × 12–15",rest:"30s",restSec:30,level:"light",tip:"Control the lowering. Don't swing legs."},
+  "Plank":                  {ytId:"pSHjTRCQxIw",muscles:"Core · Shoulders · Glutes",weight:"Bodyweight",wNote:"Add plate on back when 60s easy.",sets:"3 × 45s",rest:"30s",restSec:30,level:"light",tip:"Straight line head to heel. Don't let hips sag."},
+  "Incline Dumbbell Press": {ytId:"8iPEnn-ltC8",muscles:"Upper Chest · Front Delts",weight:"22–26 kg/side",wNote:"30–45° incline. Full stretch at bottom.",sets:"3 × 10",rest:"90s",restSec:90,level:"moderate",tip:"Wide arc on the way down. Touch dumbbells at top."},
+  "Dumbbell Shoulder Press":{ytId:"qEwKCR5JCog",muscles:"Shoulders · Triceps",weight:"18–22 kg/side",wNote:"Seated or standing. Keep core tight.",sets:"3 × 10",rest:"60s",restSec:60,level:"moderate",tip:"Push straight up. Don't arch lower back excessively."},
+  "Cable Triceps Pushdown": {ytId:"2-LAMcpzODU",muscles:"Triceps",weight:"20–30 kg",wNote:"Full lockout at bottom. Elbows fixed.",sets:"3 × 12",rest:"60s",restSec:60,level:"light",tip:"Keep elbows pinned to sides. Full extension each rep."},
+  "Seated Row":             {ytId:"GZbfZ033f74",muscles:"Mid Back · Biceps",weight:"50–60 kg",wNote:"Pull handles to lower chest.",sets:"3 × 10",rest:"90s",restSec:90,level:"moderate",tip:"Sit upright. Don't lean back. Squeeze shoulder blades."},
+  "Dumbbell Bicep Curl":    {ytId:"ykJmrZ5v0Oo",muscles:"Biceps · Forearms",weight:"14–18 kg/side",wNote:"Alternate arms or both together.",sets:"3 × 12",rest:"60s",restSec:60,level:"light",tip:"Supinate wrist at top for peak contraction."},
+  "Leg Press (light)":      {ytId:"IZxyjW7MPJQ",muscles:"Quads · Glutes · Hamstrings",weight:"80–100 kg",wNote:"Light session. Don't lock knees fully.",sets:"3 × 12",rest:"90s",restSec:90,level:"moderate",tip:"Feet shoulder width. 90° knee bend at bottom."},
+  "Push-ups":               {ytId:"IODxDxX7oi4",muscles:"Chest · Triceps · Core",weight:"Bodyweight",wNote:"Add vest or plate for resistance.",sets:"3 × 15–20",rest:"60s",restSec:60,level:"light",tip:"Body straight. Lower chest to 1cm above floor."},
+  "Bodyweight Squat":       {ytId:"aclHkVaku9U",muscles:"Quads · Glutes · Hamstrings",weight:"Bodyweight",wNote:"Hold dumbbells for extra challenge.",sets:"3 × 20",rest:"60s",restSec:60,level:"light",tip:"Go deep. Heels flat on floor."},
+  "Side Plank":             {ytId:"K_kMgvHK1fA",muscles:"Obliques · Core",weight:"Bodyweight",wNote:"Hold dumbbell on hip when easy.",sets:"3 × 45s each",rest:"30s",restSec:30,level:"light",tip:"Stack feet. Hips up. Hold steady."},
+  "Russian Twist":          {ytId:"wkD8rjkodUI",muscles:"Obliques · Core",weight:"5–8 kg plate",wNote:"Hold plate or dumbbell.",sets:"3 × 15–20",rest:"30s",restSec:30,level:"light",tip:"Lean back 45°. Feet slightly off floor."},
+  "Joint Mobility":         {ytId:"FSSDLDhbacc",muscles:"Shoulder · Knee · Wrist · Hip",weight:"No weight",wNote:"Focus on range of motion.",sets:"10 min",rest:"—",restSec:0,level:"light",tip:"Circles, arm swings, leg swings."},
+  "Brisk Walk":             {ytId:"",muscles:"Cardio · Legs",weight:"No weight",wNote:"Target 100–120 BPM heart rate.",sets:"15–30 min",rest:"—",restSec:0,level:"light",tip:"Swing arms. Keep pace where you can still talk."},
+  "Kegel":                  {ytId:"",muscles:"Pelvic Floor",weight:"No weight",wNote:"Squeeze and hold 3–5 sec each rep.",sets:"3 × 15–20",rest:"30s",restSec:30,level:"light",tip:"Contract pelvic floor. Hold 3–5s. Release fully."},
+  "Home Cardio":            {ytId:"ml6cT4AZdqI",muscles:"Full Body · Cardio",weight:"No weight",wNote:"High knees, jumping jacks, burpees.",sets:"10–20 min",rest:"—",restSec:0,level:"moderate",tip:"Keep intensity moderate. 9:30–10:00 AM slot."},
 };
 
-/* ─────────────────────────────────────────────────────────────
-   WORKOUT PLANS
-───────────────────────────────────────────────────────────── */
 const PLAN = {
-  gym1: { label:"GYM DAY 1", type:"gym", color:"#b8d44a", duration:"75–90 min", desc:"Full Body · Push + Pull + Legs",
-    exercises:["Bench Press","Shoulder Press","Triceps Dips","Lat Pulldown","Barbell Row","Bicep Curl","Squat","Leg Raise","Plank"],
-    cardio:"Fast walk 15–20 min after workout", kegel:"3 × 15–20 reps",
-    schedule:[{time:"00:00",activity:"Warm-up"},{time:"00:10",activity:"Bench Press 4×8–10"},{time:"00:22",activity:"Shoulder Press 3×10"},{time:"00:31",activity:"Triceps Dips 3×10–12"},{time:"00:40",activity:"Lat Pulldown 4×10"},{time:"00:52",activity:"Barbell Row 3×8–10"},{time:"01:01",activity:"Bicep Curl 3×10–12"},{time:"01:09",activity:"Squat 4×8–10"},{time:"01:22",activity:"Leg Raise 3×12–15"},{time:"01:28",activity:"Plank 3×45s"},{time:"01:33",activity:"Cardio: Fast walk 15–20 min"}],
-    meals:{breakfast:"3 boiled eggs + 50g oats + nuts + coffee",snack1:"150g yogurt + banana + chia",lunch:"150g chicken + 150g rice + salad",snack2:"Apple + 20g almonds",dinner:"200g fish/beef + vegetables + olive oil"} },
-  gym2: { label:"GYM DAY 2", type:"gym", color:"#f59e0b", duration:"60–75 min", desc:"Light Session · Push or Pull",
-    exercises:["Incline Dumbbell Press","Dumbbell Shoulder Press","Cable Triceps Pushdown","Seated Row","Dumbbell Bicep Curl","Leg Press (light)"],
-    cardio:"Fast walk 15 min after workout", kegel:"3 × 15–20 reps",
-    schedule:[{time:"00:00",activity:"Warm-up"},{time:"00:08",activity:"Incline DB Press 3×10"},{time:"00:18",activity:"DB Shoulder Press 3×10"},{time:"00:27",activity:"Cable Triceps 3×12"},{time:"00:35",activity:"Seated Row 3×10"},{time:"00:44",activity:"DB Bicep Curl 3×12"},{time:"00:53",activity:"Leg Press 3×12"},{time:"01:03",activity:"Cardio: Fast walk 15 min"}],
-    meals:{breakfast:"3 eggs + 50g oats + nuts + coffee",snack1:"Yogurt + fruit + chia",lunch:"Chicken + rice + salad",snack2:"Apple + almonds",dinner:"Fish or beef + veggies"} },
-  active: { label:"ACTIVE REST", type:"active", color:"#38bdf8", duration:"40–50 min", desc:"Joint Work · Home Cardio · Kegel",
-    exercises:["Joint Mobility","Brisk Walk","Plank","Russian Twist","Kegel","Home Cardio"],
-    cardio:"Walk 20–30 min OR Home Cardio 9:30–10:00 AM", kegel:"3 × 15–20 reps",
-    schedule:[{time:"09:30",activity:"Home Cardio 10 min (optional)"},{time:"00:00",activity:"Joint Mobility 10 min"},{time:"00:10",activity:"Brisk Walk 20–30 min"},{time:"00:40",activity:"Plank 3×45s"},{time:"00:46",activity:"Russian Twist 3×15–20"},{time:"00:52",activity:"Kegel 3×15–20"}],
-    meals:{breakfast:"3 eggs + 50g oats + nuts + coffee",snack1:"150g yogurt + fruit",lunch:"Chicken + veggies",snack2:"Apple + nuts",dinner:"Lean protein + salad"} },
-  home: { label:"HOME WORKOUT", type:"home", color:"#34d399", duration:"40–50 min", desc:"Bodyweight · Home Cardio · Kegel",
-    exercises:["Push-ups","Bodyweight Squat","Plank","Side Plank","Home Cardio","Kegel"],
-    cardio:"Home Cardio 9:30–10:00 AM + Walk 20 min", kegel:"3 × 15–20 reps",
-    schedule:[{time:"09:30",activity:"Home Cardio 10 min"},{time:"00:00",activity:"Warm-up 5 min"},{time:"00:05",activity:"Push-ups 3×15–20"},{time:"00:15",activity:"Bodyweight Squat 3×20"},{time:"00:24",activity:"Plank 3×45s"},{time:"00:30",activity:"Side Plank 3×45s each"},{time:"00:38",activity:"Walk 20 min"},{time:"00:58",activity:"Kegel 3×15–20"}],
-    meals:{breakfast:"3 eggs + oats + nuts + coffee",snack1:"Yogurt + fruit + chia",lunch:"Chicken + rice + salad",snack2:"Apple + nuts",dinner:"Beef or fish + veggies"} },
-  rest: { label:"REST DAY", type:"rest", color:"#818cf8", duration:"20–30 min", desc:"Light Walk · Kegel · Recovery",
-    exercises:["Brisk Walk","Joint Mobility","Kegel"],
-    cardio:"Walk 15–20 min", kegel:"3 × 15–20 reps",
-    schedule:[{time:"00:00",activity:"Joint Mobility 10 min"},{time:"00:10",activity:"Walk 15–20 min"},{time:"00:30",activity:"Kegel 3×15–20"}],
-    meals:{breakfast:"3 eggs + oats + nuts + coffee",snack1:"Yogurt + fruit",lunch:"Chicken + veggies + rice",snack2:"Apple + almonds",dinner:"Lean protein + salad"} },
-  kfc: { label:"KFC SHIFT", type:"work", color:"#f87171", duration:"On shift", desc:"Break Exercises · Kegel · Stay Active",
-    exercises:["Joint Mobility","Kegel","Brisk Walk"],
-    cardio:"Walk during shift whenever possible", kegel:"3 × 15–20 on breaks",
-    schedule:[{time:"Break 1",activity:"Joint Mobility 5 min"},{time:"Break 2",activity:"Kegel 3×15–20"},{time:"Break 3",activity:"Walk 10 min"},{time:"Post-shift",activity:"Light stretch 10 min"}],
-    meals:{breakfast:"3 eggs + oats + nuts — eat before shift",snack1:"Yogurt + fruit on break",lunch:"Chicken + rice (avoid KFC)",snack2:"Apple + almonds",dinner:"Lean protein + veggies at home"} },
-  kfc_gym: { label:"NIGHT SHIFT + GYM 🔥", type:"work_gym", color:"#fb923c", duration:"Shift + 75 min gym", desc:"Go gym BEFORE your night shift · You can do both!",
-    exercises:["Bench Press","Shoulder Press","Triceps Dips","Lat Pulldown","Barbell Row","Bicep Curl","Squat","Leg Raise","Plank"],
-    cardio:"Fast walk 15 min post-gym", kegel:"3 × 15–20 on shift breaks",
-    note:"🌙 Night shift starts 22:00 → Hit the gym 18:00–20:00. You have 2h free before shift. Sleep after shift is your recovery window.",
-    schedule:[{time:"18:00",activity:"Gym session starts"},{time:"18:10",activity:"Bench Press 4×8–10"},{time:"18:22",activity:"Shoulder Press 3×10"},{time:"18:40",activity:"Lat Pulldown 4×10"},{time:"18:52",activity:"Squat 4×8–10"},{time:"19:10",activity:"Fast walk 15 min"},{time:"19:30",activity:"Shower + meal before shift"},{time:"22:00",activity:"KFC shift starts"},{time:"Break",activity:"Kegel + Joint Mobility"},{time:"Post-shift",activity:"Sleep = recovery!"}],
-    meals:{breakfast:"High protein: 4 eggs + oats + nuts before gym",snack1:"Protein shake after gym",lunch:"Chicken + rice before shift (21:00)",snack2:"Yogurt + fruit on break",dinner:"Light meal post-shift. Avoid heavy food after midnight."} },
-  /* ── NEW: GYM on a day off (no shift) ── */
-  gym_off: { label:"GYM · DAY OFF 💪", type:"gym_off", color:"#a78bfa", duration:"75–90 min", desc:"Full Gym Session · Day Off · No rush!",
-    exercises:["Bench Press","Shoulder Press","Triceps Dips","Lat Pulldown","Barbell Row","Bicep Curl","Squat","Leg Raise","Plank"],
-    cardio:"Walk 20–30 min after gym", kegel:"3 × 15–20 reps",
-    note:"🟣 Day off = best gym day. No time pressure. Hit it hard, recover well.",
-    schedule:[{time:"09:00",activity:"Breakfast + coffee"},{time:"10:00",activity:"Gym session starts"},{time:"10:10",activity:"Bench Press 4×8–10"},{time:"10:25",activity:"Shoulder Press 3×10"},{time:"10:35",activity:"Triceps Dips 3×10–12"},{time:"10:45",activity:"Lat Pulldown 4×10"},{time:"10:58",activity:"Barbell Row 3×8–10"},{time:"11:08",activity:"Bicep Curl 3×10–12"},{time:"11:17",activity:"Squat 4×8–10"},{time:"11:32",activity:"Leg Raise + Plank"},{time:"11:45",activity:"Walk 20–30 min"},{time:"12:15",activity:"Protein shake + lunch"}],
-    meals:{breakfast:"4 eggs + 60g oats + nuts + coffee (9:00 AM)",snack1:"Banana + protein bar pre-gym",lunch:"150g chicken + 150g rice + salad (12:30)",snack2:"Greek yogurt + berries + chia",dinner:"200g salmon or beef + veggies + olive oil"} },
-  /* ── NEW: Gym before NON-night shift (morning or afternoon off before shift) ── */
-  gym_before_shift: { label:"GYM BEFORE SHIFT 🏋️", type:"gym_shift", color:"#22d3ee", duration:"60–75 min gym + shift", desc:"Hit gym in your free window · Then go to work",
-    exercises:["Incline Dumbbell Press","Dumbbell Shoulder Press","Cable Triceps Pushdown","Seated Row","Dumbbell Bicep Curl","Leg Press (light)"],
-    cardio:"Fast walk 15 min post-gym", kegel:"3 × 15–20 on shift breaks",
-    note:"💡 Use your free time before shift to hit GYM DAY 2. Light session — saves energy for the shift.",
-    schedule:[{time:"Free window",activity:"Gym session (60–75 min)"},{time:"Post-gym",activity:"Protein shake + light meal"},{time:"Pre-shift",activity:"Rest 30–45 min"},{time:"Shift",activity:"Stay active — walk + kegel on breaks"}],
-    meals:{breakfast:"3 eggs + oats + nuts + coffee",snack1:"Protein shake after gym",lunch:"Chicken + rice before shift",snack2:"Yogurt + fruit on break",dinner:"Lean protein + veggies post-shift"} },
-  /* ── NEW: Babysitting day — kids home, gym impossible ── */
-  babysitting: { label:"BABYSITTING DAY 👶", type:"babysitting", color:"#f472b6", duration:"30–40 min", desc:"Kids are home · Home workout + active play",
-    exercises:["Push-ups","Bodyweight Squat","Plank","Side Plank","Russian Twist","Kegel"],
-    cardio:"Walk with kids 20–30 min", kegel:"3 × 15–20 reps (anytime)",
-    note:"👨‍👧 Kids are home today — no gym possible. Do bodyweight workout during nap or quiet time. Walk with them counts as cardio!",
-    schedule:[{time:"Morning",activity:"Breakfast + kids routine"},{time:"Nap/quiet time",activity:"Push-ups 3×15–20"},{time:"Nap/quiet time",activity:"Bodyweight Squat 3×20"},{time:"Nap/quiet time",activity:"Plank + Side Plank 3×45s"},{time:"Anytime",activity:"Kegel 3×15–20"},{time:"Afternoon",activity:"Walk with kids 20–30 min"}],
-    meals:{breakfast:"3 eggs + oats + nuts + coffee",snack1:"Yogurt + fruit + chia",lunch:"Chicken + rice + salad (meal prep)",snack2:"Apple + almonds + kids snack",dinner:"Easy family meal — lean protein + veggies"} },
-  family: { label:"FAMILY DAY", type:"family", color:"#e879f9", duration:"Free", desc:"Rest · Family · Light Activity",
-    exercises:["Kegel","Brisk Walk"],
-    cardio:"Optional family walk", kegel:"3 × 15–20 reps",
-    schedule:[{time:"Morning",activity:"Family time"},{time:"Anytime",activity:"Light walk if possible"},{time:"Evening",activity:"Kegel 3×15–20"}],
-    meals:{breakfast:"3 eggs + oats + nuts + coffee",snack1:"Fruit + nuts",lunch:"Balanced family meal",snack2:"Light snack",dinner:"Normal family dinner, portion control"} },
+  gym1:{label:"GYM DAY 1",type:"gym",color:"#b8d44a",duration:"75–90 min",desc:"Full Body · Push + Pull + Legs",exercises:["Bench Press","Shoulder Press","Triceps Dips","Lat Pulldown","Barbell Row","Bicep Curl","Squat","Leg Raise","Plank"],cardio:"Fast walk 15–20 min after workout",kegel:"3 × 15–20 reps",schedule:[{time:"00:00",activity:"Warm-up"},{time:"00:10",activity:"Bench Press 4×8–10"},{time:"00:22",activity:"Shoulder Press 3×10"},{time:"00:31",activity:"Triceps Dips 3×10–12"},{time:"00:40",activity:"Lat Pulldown 4×10"},{time:"00:52",activity:"Barbell Row 3×8–10"},{time:"01:01",activity:"Bicep Curl 3×10–12"},{time:"01:09",activity:"Squat 4×8–10"},{time:"01:22",activity:"Leg Raise 3×12–15"},{time:"01:28",activity:"Plank 3×45s"},{time:"01:33",activity:"Cardio: Fast walk 15–20 min"}],meals:{breakfast:"3 boiled eggs + 50g oats + nuts + coffee",snack1:"150g yogurt + banana + chia",lunch:"150g chicken + 150g rice + salad",snack2:"Apple + 20g almonds",dinner:"200g fish/beef + vegetables + olive oil"}},
+  gym2:{label:"GYM DAY 2",type:"gym",color:"#f59e0b",duration:"60–75 min",desc:"Light Session · Push or Pull",exercises:["Incline Dumbbell Press","Dumbbell Shoulder Press","Cable Triceps Pushdown","Seated Row","Dumbbell Bicep Curl","Leg Press (light)"],cardio:"Fast walk 15 min after workout",kegel:"3 × 15–20 reps",schedule:[{time:"00:00",activity:"Warm-up"},{time:"00:08",activity:"Incline DB Press 3×10"},{time:"00:18",activity:"DB Shoulder Press 3×10"},{time:"00:27",activity:"Cable Triceps 3×12"},{time:"00:35",activity:"Seated Row 3×10"},{time:"00:44",activity:"DB Bicep Curl 3×12"},{time:"00:53",activity:"Leg Press 3×12"},{time:"01:03",activity:"Cardio: Fast walk 15 min"}],meals:{breakfast:"3 eggs + 50g oats + nuts + coffee",snack1:"Yogurt + fruit + chia",lunch:"Chicken + rice + salad",snack2:"Apple + almonds",dinner:"Fish or beef + veggies"}},
+  active:{label:"ACTIVE REST",type:"active",color:"#38bdf8",duration:"40–50 min",desc:"Joint Work · Home Cardio · Kegel",exercises:["Joint Mobility","Brisk Walk","Plank","Russian Twist","Kegel","Home Cardio"],cardio:"Walk 20–30 min OR Home Cardio",kegel:"3 × 15–20 reps",schedule:[{time:"09:30",activity:"Home Cardio 10 min"},{time:"00:00",activity:"Joint Mobility 10 min"},{time:"00:10",activity:"Brisk Walk 20–30 min"},{time:"00:40",activity:"Plank 3×45s"},{time:"00:46",activity:"Russian Twist 3×15–20"},{time:"00:52",activity:"Kegel 3×15–20"}],meals:{breakfast:"3 eggs + oats + nuts + coffee",snack1:"150g yogurt + fruit",lunch:"Chicken + veggies",snack2:"Apple + nuts",dinner:"Lean protein + salad"}},
+  home:{label:"HOME WORKOUT",type:"home",color:"#34d399",duration:"40–50 min",desc:"Bodyweight · Home Cardio · Kegel",exercises:["Push-ups","Bodyweight Squat","Plank","Side Plank","Home Cardio","Kegel"],cardio:"Home Cardio 9:30–10:00 AM + Walk 20 min",kegel:"3 × 15–20 reps",schedule:[{time:"09:30",activity:"Home Cardio 10 min"},{time:"00:00",activity:"Warm-up 5 min"},{time:"00:05",activity:"Push-ups 3×15–20"},{time:"00:15",activity:"Bodyweight Squat 3×20"},{time:"00:24",activity:"Plank 3×45s"},{time:"00:30",activity:"Side Plank 3×45s each"},{time:"00:38",activity:"Walk 20 min"},{time:"00:58",activity:"Kegel 3×15–20"}],meals:{breakfast:"3 eggs + oats + nuts + coffee",snack1:"Yogurt + fruit + chia",lunch:"Chicken + rice + salad",snack2:"Apple + nuts",dinner:"Beef or fish + veggies"}},
+  rest:{label:"REST DAY",type:"rest",color:"#818cf8",duration:"20–30 min",desc:"Light Walk · Kegel · Recovery",exercises:["Brisk Walk","Joint Mobility","Kegel"],cardio:"Walk 15–20 min",kegel:"3 × 15–20 reps",schedule:[{time:"00:00",activity:"Joint Mobility 10 min"},{time:"00:10",activity:"Walk 15–20 min"},{time:"00:30",activity:"Kegel 3×15–20"}],meals:{breakfast:"3 eggs + oats + nuts + coffee",snack1:"Yogurt + fruit",lunch:"Chicken + veggies + rice",snack2:"Apple + almonds",dinner:"Lean protein + salad"}},
+  kfc:{label:"KFC SHIFT",type:"work",color:"#f87171",duration:"On shift",desc:"Break Exercises · Kegel · Stay Active",exercises:["Joint Mobility","Kegel","Brisk Walk"],cardio:"Walk during shift whenever possible",kegel:"3 × 15–20 on breaks",schedule:[{time:"Break 1",activity:"Joint Mobility 5 min"},{time:"Break 2",activity:"Kegel 3×15–20"},{time:"Break 3",activity:"Walk 10 min"},{time:"Post-shift",activity:"Light stretch 10 min"}],meals:{breakfast:"3 eggs + oats + nuts — eat before shift",snack1:"Yogurt + fruit on break",lunch:"Chicken + rice (avoid KFC)",snack2:"Apple + almonds",dinner:"Lean protein + veggies at home"}},
+  kfc_gym:{label:"NIGHT SHIFT + GYM 🔥",type:"work_gym",color:"#fb923c",duration:"Shift + 75 min gym",desc:"Go gym BEFORE your night shift",exercises:["Bench Press","Shoulder Press","Triceps Dips","Lat Pulldown","Barbell Row","Bicep Curl","Squat","Leg Raise","Plank"],cardio:"Fast walk 15 min post-gym",kegel:"3 × 15–20 on shift breaks",note:"🌙 Night shift starts 22:00 → Hit the gym 18:00–20:00.",schedule:[{time:"18:00",activity:"Gym session starts"},{time:"18:10",activity:"Bench Press 4×8–10"},{time:"18:22",activity:"Shoulder Press 3×10"},{time:"18:40",activity:"Lat Pulldown 4×10"},{time:"18:52",activity:"Squat 4×8–10"},{time:"19:10",activity:"Fast walk 15 min"},{time:"22:00",activity:"KFC shift starts"}],meals:{breakfast:"High protein: 4 eggs + oats + nuts before gym",snack1:"Protein shake after gym",lunch:"Chicken + rice before shift (21:00)",snack2:"Yogurt + fruit on break",dinner:"Light meal post-shift."}},
+  gym_off:{label:"GYM · DAY OFF 💪",type:"gym_off",color:"#a78bfa",duration:"75–90 min",desc:"Full Gym Session · Day Off · No rush!",exercises:["Bench Press","Shoulder Press","Triceps Dips","Lat Pulldown","Barbell Row","Bicep Curl","Squat","Leg Raise","Plank"],cardio:"Walk 20–30 min after gym",kegel:"3 × 15–20 reps",note:"🟣 Day off = best gym day. No time pressure. Hit it hard, recover well.",schedule:[{time:"10:00",activity:"Gym session starts"},{time:"10:10",activity:"Bench Press 4×8–10"},{time:"10:25",activity:"Shoulder Press 3×10"},{time:"10:35",activity:"Triceps Dips 3×10–12"},{time:"11:45",activity:"Walk 20–30 min"}],meals:{breakfast:"4 eggs + 60g oats + nuts + coffee",snack1:"Banana + protein bar pre-gym",lunch:"150g chicken + 150g rice + salad",snack2:"Greek yogurt + berries + chia",dinner:"200g salmon or beef + veggies + olive oil"}},
+  gym_before_shift:{label:"GYM BEFORE SHIFT 🏋️",type:"gym_shift",color:"#22d3ee",duration:"60–75 min gym + shift",desc:"Hit gym in your free window · Then go to work",exercises:["Incline Dumbbell Press","Dumbbell Shoulder Press","Cable Triceps Pushdown","Seated Row","Dumbbell Bicep Curl","Leg Press (light)"],cardio:"Fast walk 15 min post-gym",kegel:"3 × 15–20 on shift breaks",note:"💡 Use your free time before shift to hit GYM DAY 2.",schedule:[{time:"Free window",activity:"Gym session (60–75 min)"},{time:"Post-gym",activity:"Protein shake + light meal"},{time:"Shift",activity:"Stay active — walk + kegel on breaks"}],meals:{breakfast:"3 eggs + oats + nuts + coffee",snack1:"Protein shake after gym",lunch:"Chicken + rice before shift",snack2:"Yogurt + fruit on break",dinner:"Lean protein + veggies post-shift"}},
+  babysitting:{label:"BABYSITTING DAY 👶",type:"babysitting",color:"#f472b6",duration:"30–40 min",desc:"Kids are home · Home workout + active play",exercises:["Push-ups","Bodyweight Squat","Plank","Side Plank","Russian Twist","Kegel"],cardio:"Walk with kids 20–30 min",kegel:"3 × 15–20 reps (anytime)",note:"👨‍👧 Kids are home today — no gym possible.",schedule:[{time:"Nap/quiet time",activity:"Push-ups 3×15–20"},{time:"Nap/quiet time",activity:"Bodyweight Squat 3×20"},{time:"Anytime",activity:"Kegel 3×15–20"},{time:"Afternoon",activity:"Walk with kids 20–30 min"}],meals:{breakfast:"3 eggs + oats + nuts + coffee",snack1:"Yogurt + fruit + chia",lunch:"Chicken + rice + salad (meal prep)",snack2:"Apple + almonds + kids snack",dinner:"Easy family meal — lean protein + veggies"}},
+  family:{label:"FAMILY DAY",type:"family",color:"#e879f9",duration:"Free",desc:"Rest · Family · Light Activity",exercises:["Kegel","Brisk Walk"],cardio:"Optional family walk",kegel:"3 × 15–20 reps",schedule:[{time:"Morning",activity:"Family time"},{time:"Anytime",activity:"Light walk if possible"},{time:"Evening",activity:"Kegel 3×15–20"}],meals:{breakfast:"3 eggs + oats + nuts + coffee",snack1:"Fruit + nuts",lunch:"Balanced family meal",snack2:"Light snack",dinner:"Normal family dinner, portion control"}},
 };
 
-const TYPE_ICON = { gym:"🏋️", active:"🚶", rest:"😴", work:"👨‍🍳", work_gym:"🔥", home:"🏠", family:"👨‍👩‍👧", gym_off:"💪", gym_shift:"🏋️", babysitting:"👶" };
+const TYPE_ICON = {gym:"🏋️",active:"🚶",rest:"😴",work:"👨‍🍳",work_gym:"🔥",home:"🏠",family:"👨‍👩‍👧",gym_off:"💪",gym_shift:"🏋️",babysitting:"👶"};
 const DAYS_FULL = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 const DAYS_SHORT = ["MON","TUE","WED","THU","FRI","SAT","SUN"];
+const LVL = {light:"#34d399",moderate:"#f59e0b",hard:"#f87171"};
+
 const SHIFT_OPTS = [
-  { value:"off",          label:"Day Off",          emoji:"😴",  color:"#4ade80" },
-  { value:"off_gym",      label:"Off + Gym",         emoji:"💪",  sub:"Day off → gym today!", color:"#a78bfa" },
-  { value:"morning",      label:"Morning",           emoji:"🌅",  sub:"6:00–14:00",   color:"#facc15" },
-  { value:"morning_gym",  label:"Morning + Gym",     emoji:"🏋️", sub:"Free time → gym before/after", color:"#22d3ee" },
-  { value:"afternoon",    label:"Afternoon",         emoji:"🌤️", sub:"14:00–22:00",  color:"#fb923c" },
-  { value:"afternoon_gym",label:"Afternoon + Gym",   emoji:"🏋️", sub:"Gym in the morning first", color:"#22d3ee" },
-  { value:"night",        label:"Night Shift",       emoji:"🌙",  sub:"22:00–06:00",  color:"#818cf8" },
-  { value:"night_gym",    label:"Night + Gym 🔥",    emoji:"🔥",  sub:"22:00 shift → gym 18:00–20:00", color:"#fb923c" },
-  { value:"double",       label:"Double",            emoji:"💪",  sub:"Full day",     color:"#f87171" },
-  { value:"babysitting",  label:"Babysitting 👶",    emoji:"👶",  sub:"Kids home — no school", color:"#f472b6" },
-  { value:"custom",       label:"Custom",            emoji:"⚙️",  sub:"Set own time", color:"#a78bfa" },
+  {value:"off",label:"Day Off",emoji:"😴",color:"#4ade80"},
+  {value:"off_gym",label:"Off + Gym",emoji:"💪",sub:"Day off → gym today!",color:"#a78bfa"},
+  {value:"morning",label:"Morning",emoji:"🌅",sub:"6:00–14:00",color:"#facc15"},
+  {value:"morning_gym",label:"Morning + Gym",emoji:"🏋️",sub:"Free time → gym",color:"#22d3ee"},
+  {value:"afternoon",label:"Afternoon",emoji:"🌤️",sub:"14:00–22:00",color:"#fb923c"},
+  {value:"afternoon_gym",label:"Afternoon + Gym",emoji:"🏋️",sub:"Gym in the morning",color:"#22d3ee"},
+  {value:"night",label:"Night Shift",emoji:"🌙",sub:"22:00–06:00",color:"#818cf8"},
+  {value:"night_gym",label:"Night + Gym 🔥",emoji:"🔥",sub:"22:00 shift → gym 18:00",color:"#fb923c"},
+  {value:"double",label:"Double",emoji:"💪",sub:"Full day",color:"#f87171"},
+  {value:"babysitting",label:"Babysitting 👶",emoji:"👶",sub:"Kids home",color:"#f472b6"},
+  {value:"custom",label:"Custom",emoji:"⚙️",sub:"Set own time",color:"#a78bfa"},
 ];
 
-/* ─────────────────────────────────────────────────────────────
-   SMART WEEK ASSIGNMENT
-   Rules:
-   - Sat/Sun → family
-   - off_gym         → gym_off (full gym, no shift)
-   - night_gym       → kfc_gym (gym 18–20 before night shift)
-   - morning_gym / afternoon_gym → gym_before_shift
-   - babysitting     → babysitting
-   - night (no gym)  → kfc_gym if a gym slot is needed, else kfc
-   - morning/afternoon/double → kfc
-   - pure off        → active or home (alternating)
-   - 2 gym days auto-assigned on best off/gym days
-───────────────────────────────────────────────────────────── */
-function assignWeek(shifts) {
-  const res = Array(7).fill(null);
-  res[5] = "family"; res[6] = "family";
-
-  // First pass: assign explicitly requested plans Mon–Fri
-  for (let i = 0; i < 5; i++) {
-    const s = shifts[i];
-    if (s === "off_gym")         res[i] = "gym_off";
-    else if (s === "night_gym")  res[i] = "kfc_gym";
-    else if (s === "morning_gym" || s === "afternoon_gym") res[i] = "gym_before_shift";
-    else if (s === "babysitting") res[i] = "babysitting";
-    else if (s === "double")     res[i] = "kfc";
+/* ═══════════════════════════════════════════════
+   UTILS
+═══════════════════════════════════════════════ */
+function assignWeek(shifts){
+  const res=Array(7).fill(null);
+  res[5]="family"; res[6]="family";
+  for(let i=0;i<5;i++){
+    const s=shifts[i];
+    if(s==="off_gym") res[i]="gym_off";
+    else if(s==="night_gym") res[i]="kfc_gym";
+    else if(s==="morning_gym"||s==="afternoon_gym") res[i]="gym_before_shift";
+    else if(s==="babysitting") res[i]="babysitting";
+    else if(s==="double") res[i]="kfc";
   }
-
-  // Count how many gym days are already assigned
-  let gymCount = res.filter(r => r === "gym_off" || r === "kfc_gym" || r === "gym_before_shift").length;
-
-  // Try to auto-assign 2 gym days on plain "off" or "night" days if not enough gym days
-  if (gymCount < 2) {
-    const candidates = [];
-    for (let i = 0; i < 5; i++) {
-      if (res[i] !== null) continue; // already assigned
-      const s = shifts[i];
-      if (s === "off" || s === "night") candidates.push(i);
+  let gymCount=res.filter(r=>r==="gym_off"||r==="kfc_gym"||r==="gym_before_shift").length;
+  if(gymCount<2){
+    const cands=[];
+    for(let i=0;i<5;i++){
+      if(res[i]!==null) continue;
+      const s=shifts[i];
+      if(s==="off"||s==="night") cands.push(i);
     }
-    let g1 = -1, g2 = -1;
-    // pick 2 candidates at least 2 days apart
-    for (let ci = 0; ci < candidates.length; ci++) {
-      if (g1 === -1) { g1 = candidates[ci]; continue; }
-      if (g2 === -1 && candidates[ci] - g1 >= 2) { g2 = candidates[ci]; break; }
+    let g1=-1,g2=-1;
+    for(let ci=0;ci<cands.length;ci++){
+      if(g1===-1){g1=cands[ci];continue;}
+      if(g2===-1&&cands[ci]-g1>=2){g2=cands[ci];break;}
     }
-    if (g1 === -1 && candidates.length > 0) g1 = candidates[0];
-    if (g2 === -1 && candidates.length > 1) g2 = candidates[candidates.length - 1];
-
-    if (gymCount === 0) {
-      if (g1 !== -1) { res[g1] = shifts[g1] === "night" ? "kfc_gym" : "gym1"; gymCount++; }
-      if (g2 !== -1) { res[g2] = shifts[g2] === "night" ? "kfc_gym" : "gym2"; gymCount++; }
-    } else if (gymCount === 1) {
-      // Only need one more
-      const used = g1 !== -1 && res[g1] === null ? g1 : g2;
-      if (used !== -1) res[used] = shifts[used] === "night" ? "kfc_gym" : "gym2";
+    if(g1===-1&&cands.length>0) g1=cands[0];
+    if(g2===-1&&cands.length>1) g2=cands[cands.length-1];
+    if(gymCount===0){
+      if(g1!==-1){res[g1]=shifts[g1]==="night"?"kfc_gym":"gym1";gymCount++;}
+      if(g2!==-1){res[g2]=shifts[g2]==="night"?"kfc_gym":"gym2";gymCount++;}
+    } else if(gymCount===1){
+      const used=g1!==-1&&res[g1]===null?g1:g2;
+      if(used!==-1) res[used]=shifts[used]==="night"?"kfc_gym":"gym2";
     }
   }
-
-  // Second pass: fill remaining unassigned Mon–Fri
-  let altCount = 0;
-  for (let i = 0; i < 5; i++) {
-    if (res[i] !== null) continue;
-    const s = shifts[i];
-    if (s === "night")     res[i] = "kfc";
-    else if (s !== "off")  res[i] = "kfc";
-    else { res[i] = altCount % 2 === 0 ? "active" : "home"; altCount++; }
+  let altCount=0;
+  for(let i=0;i<5;i++){
+    if(res[i]!==null) continue;
+    const s=shifts[i];
+    if(s==="night") res[i]="kfc";
+    else if(s!=="off") res[i]="kfc";
+    else{res[i]=altCount%2===0?"active":"home";altCount++;}
   }
-
   return res;
 }
 
-function getWeekDates(n) {
+function getWeekDates(n){
   const now=new Date(),day=now.getDay(),mon=new Date(now);
   mon.setDate(now.getDate()-(day===0?6:day-1)+(n-1)*7);
   return Array.from({length:7},(_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return d;});
@@ -233,74 +270,478 @@ function fmtElapsed(s){
   if(h>0) return `${h}:${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;
   return `${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;
 }
+function exEmoji(name){
+  if(name==="Brisk Walk") return "🚶";
+  if(name==="Kegel") return "🎯";
+  if(name==="Joint Mobility") return "🔄";
+  if(name==="Plank"||name==="Side Plank") return "🧘";
+  if(name==="Squat"||name==="Bodyweight Squat") return "🦵";
+  if(name==="Leg Raise"||name==="Russian Twist") return "🔥";
+  if(name==="Push-ups") return "💪";
+  return "🏋️";
+}
 
-const LVL = {light:"#34d399",moderate:"#f59e0b",hard:"#f87171"};
-
-/* ── REST TIMER ── */
-function RestTimer({seconds,onClose}){
-  const [rem,setRem]=useState(seconds),[run,setRun]=useState(true);
-  useEffect(()=>{if(!run||rem<=0)return;const t=setTimeout(()=>setRem(r=>r-1),1000);return()=>clearTimeout(t);},[rem,run]);
-  const pct=rem/seconds,R=50,circ=2*Math.PI*R;
+/* ═══════════════════════════════════════════════
+   LOADING SCREEN
+═══════════════════════════════════════════════ */
+function LoadingScreen(){
   return(
-    <div style={{position:"fixed",inset:0,background:"#000d",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9999}}>
-      <div style={{background:"#141414",borderRadius:24,padding:28,textAlign:"center",width:290,border:"1px solid #2a2a2a"}}>
-        <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:14,color:"#555",letterSpacing:3,marginBottom:14}}>REST TIMER</div>
-        <div style={{position:"relative",width:130,height:130,margin:"0 auto 18px"}}>
-          <svg width="130" height="130" style={{transform:"rotate(-90deg)"}}>
-            <circle cx="65" cy="65" r={R} fill="none" stroke="#1e1e1e" strokeWidth="10"/>
-            <circle cx="65" cy="65" r={R} fill="none" stroke={rem<=10?"#f87171":"#b8d44a"}
-              strokeWidth="10" strokeDasharray={circ} strokeDashoffset={circ*(1-pct)}
-              strokeLinecap="round" style={{transition:"stroke-dashoffset 1s linear"}}/>
-          </svg>
-          <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-            <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:48,color:rem<=10?"#f87171":"#b8d44a",lineHeight:1}}>{rem}</div>
-            <div style={{fontSize:9,color:"#444",letterSpacing:2}}>SEC</div>
+    <div style={{position:"fixed",inset:0,background:"#0a0a0a",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",zIndex:9999}}>
+      <div style={{fontFamily:FD,fontSize:42,color:C.accent,letterSpacing:4,marginBottom:8}}>MOE FITNESS</div>
+      <div style={{fontSize:11,color:C.muted,letterSpacing:3,marginBottom:32}}>COMMAND CENTER</div>
+      <div style={{width:36,height:36,borderRadius:"50%",border:`3px solid ${C.dim}`,borderTopColor:C.accent}} className="spin"/>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   AUTH SCREENS
+═══════════════════════════════════════════════ */
+function AuthScreen({onAuth}){
+  const [mode,setMode]=useState("login"); // login | signup
+  const [email,setEmail]=useState("");
+  const [pass,setPass]=useState("");
+  const [confirm,setConfirm]=useState("");
+  const [err,setErr]=useState("");
+  const [loading,setLoading]=useState(false);
+
+  const inp = {width:"100%",background:"#161616",border:"1px solid #2a2a2a",borderRadius:10,color:"#fff",padding:"13px 14px",fontSize:14,fontFamily:FB,marginBottom:10,transition:"border .2s"};
+
+  async function submit(){
+    setErr(""); setLoading(true);
+    try{
+      if(mode==="signup"){
+        if(pass!==confirm){setErr("Passwords don't match");setLoading(false);return;}
+        if(pass.length<6){setErr("Password min 6 characters");setLoading(false);return;}
+        await fbSignUp(email,pass);
+      } else {
+        await fbSignIn(email,pass);
+      }
+    } catch(e){
+      setErr(e.message.replace("Firebase:","").replace(/\(.*\)/,"").trim());
+    }
+    setLoading(false);
+  }
+
+  return(
+    <div style={{minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:20,fontFamily:FB}}>
+      {/* Logo */}
+      <div style={{textAlign:"center",marginBottom:36}}>
+        <div style={{width:72,height:72,borderRadius:"50%",background:`linear-gradient(135deg,${C.accent},${C.accent2})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:32,margin:"0 auto 12px"}}>💪</div>
+        <div style={{fontFamily:FD,fontSize:38,color:C.accent,letterSpacing:4}}>MOE FITNESS</div>
+        <div style={{fontSize:11,color:C.muted,letterSpacing:3,marginTop:2}}>YOUR PERSONAL COMMAND CENTER</div>
+      </div>
+
+      {/* Card */}
+      <div style={{width:"100%",maxWidth:380,background:"#111",borderRadius:18,border:"1px solid #222",padding:26}} className="fade-in">
+        {/* Tabs */}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:22,background:"#0d0d0d",padding:4,borderRadius:10}}>
+          {["login","signup"].map(m=>(
+            <button key={m} onClick={()=>{setMode(m);setErr("");}}
+              style={{padding:"9px",borderRadius:7,background:mode===m?C.accent:"transparent",border:"none",color:mode===m?"#000":C.muted,fontFamily:FD,fontSize:15,letterSpacing:2,cursor:"pointer",transition:"all .2s"}}>
+              {m==="login"?"SIGN IN":"SIGN UP"}
+            </button>
+          ))}
+        </div>
+
+        <input placeholder="Email address" type="email" value={email} onChange={e=>setEmail(e.target.value)}
+          style={{...inp,borderColor:err&&!email?"#f87171":"#2a2a2a"}}/>
+        <input placeholder="Password" type="password" value={pass} onChange={e=>setPass(e.target.value)}
+          style={{...inp,borderColor:err&&!pass?"#f87171":"#2a2a2a"}}/>
+        {mode==="signup"&&(
+          <input placeholder="Confirm password" type="password" value={confirm} onChange={e=>setConfirm(e.target.value)}
+            style={{...inp,borderColor:err&&pass!==confirm?"#f87171":"#2a2a2a"}}/>
+        )}
+        {err&&<div style={{fontSize:12,color:"#f87171",marginBottom:10,padding:"8px 12px",background:"#f8717111",borderRadius:8,border:"1px solid #f8717133"}}>{err}</div>}
+
+        <button onClick={submit} disabled={loading}
+          style={{width:"100%",padding:"14px",background:loading?C.dim:`linear-gradient(135deg,${C.accent},${C.accent2})`,border:"none",borderRadius:11,color:"#000",fontFamily:FD,fontSize:17,letterSpacing:3,cursor:loading?"not-allowed":"pointer",fontWeight:700,transition:"all .2s",marginTop:4}}>
+          {loading?<span className="spin" style={{display:"inline-block",width:18,height:18,border:"2px solid #000",borderTopColor:"transparent",borderRadius:"50%"}}/>:mode==="login"?"LET'S GO →":"CREATE ACCOUNT →"}
+        </button>
+
+        <div style={{textAlign:"center",marginTop:16,fontSize:12,color:C.muted}}>
+          {mode==="login"?"Don't have an account? ":"Already have an account? "}
+          <span onClick={()=>{setMode(mode==="login"?"signup":"login");setErr("");}} style={{color:C.accent,cursor:"pointer",fontWeight:600}}>
+            {mode==="login"?"Sign up":"Sign in"}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   PROFILE SETUP (first login)
+═══════════════════════════════════════════════ */
+function ProfileSetup({user,onComplete}){
+  const [step,setStep]=useState(0);
+  const [data,setData]=useState({
+    name:"",age:"",weight:"",weightUnit:"kg",height:"",heightUnit:"cm",
+    gender:"Male",fitnessGoal:"General Fitness",fitnessLevel:"Beginner",
+    injuries:"",workoutDays:[],workoutTime:"60min",preferredTime:"Morning"
+  });
+  const [saving,setSaving]=useState(false);
+  const [err,setErr]=useState("");
+
+  const set=(k,v)=>setData(d=>({...d,[k]:v}));
+  const toggleDay=d=>set("workoutDays",data.workoutDays.includes(d)?data.workoutDays.filter(x=>x!==d):[...data.workoutDays,d]);
+
+  const inp={width:"100%",background:"#161616",border:"1px solid #2a2a2a",borderRadius:10,color:"#fff",padding:"12px 14px",fontSize:14,fontFamily:FB,marginBottom:0};
+  const sel={...inp,cursor:"pointer"};
+  const label={fontSize:11,color:C.muted,letterSpacing:1,marginBottom:6,display:"block"};
+  const field={marginBottom:16};
+
+  const STEPS = [
+    {title:"PERSONAL INFO",icon:"👤"},
+    {title:"FITNESS GOALS",icon:"🎯"},
+    {title:"YOUR SCHEDULE",icon:"📅"},
+  ];
+
+  async function finish(){
+    setSaving(true); setErr("");
+    try{
+      await fbSetDoc("users", user.uid, {
+        ...data, email:user.email,
+        createdAt:serverTimestamp(),
+        lastLogin:serverTimestamp(),
+        profileComplete:true,
+        weeks:{},completed:{},missed:{}
+      });
+      onComplete(data);
+    } catch(e){setErr(e.message);}
+    setSaving(false);
+  }
+
+  function validateStep(){
+    if(step===0){if(!data.name||!data.age||!data.weight||!data.height){setErr("Please fill all fields");return false;}}
+    if(step===2){if(data.workoutDays.length===0){setErr("Select at least one workout day");return false;}}
+    setErr(""); return true;
+  }
+
+  return(
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:FB,padding:20,paddingBottom:40}}>
+      <div style={{maxWidth:480,margin:"0 auto"}}>
+        <div style={{textAlign:"center",padding:"24px 0 20px"}}>
+          <div style={{fontFamily:FD,fontSize:32,color:C.accent,letterSpacing:3}}>COMPLETE PROFILE</div>
+          <div style={{fontSize:11,color:C.muted,letterSpacing:2,marginTop:2}}>STEP {step+1} OF {STEPS.length}</div>
+        </div>
+
+        {/* Progress */}
+        <div style={{display:"flex",gap:6,marginBottom:24}}>
+          {STEPS.map((s,i)=>(
+            <div key={i} style={{flex:1,height:4,borderRadius:2,background:i<=step?C.accent:C.dim,transition:"background .3s"}}/>
+          ))}
+        </div>
+
+        <div style={{background:"#111",borderRadius:18,border:"1px solid #1e1e1e",padding:22}} className="fade-in">
+          <div style={{fontFamily:FD,fontSize:20,color:C.accent,letterSpacing:2,marginBottom:18}}>{STEPS[step].icon} {STEPS[step].title}</div>
+
+          {step===0&&(
+            <>
+              <div style={field}><label style={label}>FULL NAME</label><input style={inp} value={data.name} onChange={e=>set("name",e.target.value)} placeholder="Your name"/></div>
+              <div style={field}><label style={label}>AGE</label><input style={inp} type="number" value={data.age} onChange={e=>set("age",e.target.value)} placeholder="Years" min="13" max="100"/></div>
+              <div style={{...field,display:"grid",gridTemplateColumns:"1fr auto",gap:8}}>
+                <div><label style={label}>WEIGHT</label><input style={inp} type="number" value={data.weight} onChange={e=>set("weight",e.target.value)} placeholder="Amount"/></div>
+                <div><label style={label}>UNIT</label>
+                  <select style={{...sel,width:70}} value={data.weightUnit} onChange={e=>set("weightUnit",e.target.value)}>
+                    <option>kg</option><option>lbs</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{...field,display:"grid",gridTemplateColumns:"1fr auto",gap:8}}>
+                <div><label style={label}>HEIGHT</label><input style={inp} type="number" value={data.height} onChange={e=>set("height",e.target.value)} placeholder="Amount"/></div>
+                <div><label style={label}>UNIT</label>
+                  <select style={{...sel,width:70}} value={data.heightUnit} onChange={e=>set("heightUnit",e.target.value)}>
+                    <option>cm</option><option>ft</option>
+                  </select>
+                </div>
+              </div>
+              <div style={field}><label style={label}>GENDER</label>
+                <div style={{display:"flex",gap:7}}>
+                  {["Male","Female","Other"].map(g=>(
+                    <button key={g} onClick={()=>set("gender",g)}
+                      style={{flex:1,padding:"10px",background:data.gender===g?`${C.accent}22`:C.dim,border:`1px solid ${data.gender===g?C.accent:"#333"}`,borderRadius:9,color:data.gender===g?C.accent:"#888",fontSize:12,cursor:"pointer",fontFamily:FB,fontWeight:600}}>
+                      {g}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {step===1&&(
+            <>
+              <div style={field}><label style={label}>FITNESS GOAL</label>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
+                  {["Weight Loss","Muscle Gain","Endurance","General Fitness"].map(g=>(
+                    <button key={g} onClick={()=>set("fitnessGoal",g)}
+                      style={{padding:"11px 8px",background:data.fitnessGoal===g?`${C.accent}22`:C.dim,border:`1px solid ${data.fitnessGoal===g?C.accent:"#333"}`,borderRadius:9,color:data.fitnessGoal===g?C.accent:"#888",fontSize:11,cursor:"pointer",fontFamily:FB,fontWeight:600,textAlign:"center"}}>
+                      {g}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div style={field}><label style={label}>FITNESS LEVEL</label>
+                <div style={{display:"flex",gap:7}}>
+                  {["Beginner","Intermediate","Advanced"].map(l=>(
+                    <button key={l} onClick={()=>set("fitnessLevel",l)}
+                      style={{flex:1,padding:"10px 4px",background:data.fitnessLevel===l?`${C.accent}22`:C.dim,border:`1px solid ${data.fitnessLevel===l?C.accent:"#333"}`,borderRadius:9,color:data.fitnessLevel===l?C.accent:"#888",fontSize:11,cursor:"pointer",fontFamily:FB,fontWeight:600}}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div style={field}><label style={label}>INJURIES / LIMITATIONS (optional)</label>
+                <textarea value={data.injuries} onChange={e=>set("injuries",e.target.value)} placeholder="Any injuries or physical limitations?"
+                  style={{...inp,minHeight:80,resize:"none",lineHeight:1.5}}/>
+              </div>
+            </>
+          )}
+
+          {step===2&&(
+            <>
+              <div style={field}><label style={label}>WORKOUT DAYS</label>
+                <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+                  {DAYS_SHORT.map(d=>(
+                    <button key={d} onClick={()=>toggleDay(d)}
+                      style={{padding:"8px 12px",background:data.workoutDays.includes(d)?`${C.accent}22`:C.dim,border:`1px solid ${data.workoutDays.includes(d)?C.accent:"#333"}`,borderRadius:8,color:data.workoutDays.includes(d)?C.accent:"#888",fontSize:11,cursor:"pointer",fontFamily:FD,letterSpacing:1}}>
+                      {d}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div style={field}><label style={label}>AVAILABLE TIME PER DAY</label>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
+                  {["30min","45min","60min","90min+"].map(t=>(
+                    <button key={t} onClick={()=>set("workoutTime",t)}
+                      style={{padding:"10px",background:data.workoutTime===t?`${C.accent}22`:C.dim,border:`1px solid ${data.workoutTime===t?C.accent:"#333"}`,borderRadius:9,color:data.workoutTime===t?C.accent:"#888",fontSize:12,cursor:"pointer",fontFamily:FB,fontWeight:600}}>
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div style={field}><label style={label}>PREFERRED WORKOUT TIME</label>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
+                  {["Morning","Afternoon","Evening","Late Night"].map(t=>(
+                    <button key={t} onClick={()=>set("preferredTime",t)}
+                      style={{padding:"10px",background:data.preferredTime===t?`${C.accent}22`:C.dim,border:`1px solid ${data.preferredTime===t?C.accent:"#333"}`,borderRadius:9,color:data.preferredTime===t?C.accent:"#888",fontSize:11,cursor:"pointer",fontFamily:FB,fontWeight:600}}>
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {err&&<div style={{fontSize:12,color:"#f87171",marginBottom:10,padding:"8px 12px",background:"#f8717111",borderRadius:8,border:"1px solid #f8717133"}}>{err}</div>}
+
+          <div style={{display:"grid",gridTemplateColumns:step>0?"1fr 1fr":"1fr",gap:8,marginTop:8}}>
+            {step>0&&(
+              <button onClick={()=>{setStep(s=>s-1);setErr("");}}
+                style={{padding:"13px",background:C.dim,border:"1px solid #333",borderRadius:11,color:"#aaa",fontFamily:FD,fontSize:15,letterSpacing:2,cursor:"pointer"}}>
+                ← BACK
+              </button>
+            )}
+            <button onClick={()=>{
+              if(!validateStep()) return;
+              if(step<STEPS.length-1) setStep(s=>s+1);
+              else finish();
+            }} disabled={saving}
+              style={{padding:"13px",background:saving?C.dim:`linear-gradient(135deg,${C.accent},${C.accent2})`,border:"none",borderRadius:11,color:"#000",fontFamily:FD,fontSize:15,letterSpacing:2,cursor:saving?"not-allowed":"pointer",fontWeight:700}}>
+              {saving?"SAVING...":(step<STEPS.length-1?"NEXT →":"FINISH & START 🚀")}
+            </button>
           </div>
         </div>
-        {rem===0&&<div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:20,color:"#b8d44a",marginBottom:10,letterSpacing:2}}>✅ GO AGAIN!</div>}
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-          <button onClick={()=>setRun(r=>!r)} style={{padding:"12px",background:"#1e1e1e",border:"1px solid #333",borderRadius:12,color:"#fff",fontFamily:"Bebas Neue,sans-serif",fontSize:17,cursor:"pointer"}}>{run?"⏸ PAUSE":"▶ GO"}</button>
-          <button onClick={onClose} style={{padding:"12px",background:"#b8d44a22",border:"1px solid #b8d44a44",borderRadius:12,color:"#b8d44a",fontFamily:"Bebas Neue,sans-serif",fontSize:17,cursor:"pointer"}}>DONE</button>
-        </div>
       </div>
     </div>
   );
 }
 
-/* ── SESSION TIMER ── */
-function SessionTimer({planColor,label,onClose}){
-  const [elapsed,setElapsed]=useState(0),[run,setRun]=useState(true),[status,setStatus]=useState("IN PROGRESS");
-  useEffect(()=>{if(!run)return;const t=setInterval(()=>setElapsed(e=>e+1),1000);return()=>clearInterval(t);},[run]);
+/* ═══════════════════════════════════════════════
+   REST TIMER (persistent, no auto-close)
+═══════════════════════════════════════════════ */
+function RestTimer({seconds,onClose}){
+  const [rem,setRem]=useState(seconds);
+  const [run,setRun]=useState(true);
+  const [done,setDone]=useState(false);
+  const intervalRef=useRef(null);
+
+  useEffect(()=>{
+    if(run&&rem>0){
+      intervalRef.current=setInterval(()=>{
+        setRem(r=>{
+          if(r<=1){clearInterval(intervalRef.current);setDone(true);setRun(false);return 0;}
+          return r-1;
+        });
+      },1000);
+    }
+    return()=>clearInterval(intervalRef.current);
+  },[run]);
+
+  function toggleRun(){
+    clearInterval(intervalRef.current);
+    setRun(r=>!r);
+  }
+
+  function reset(){
+    clearInterval(intervalRef.current);
+    setRem(seconds);setRun(true);setDone(false);
+  }
+
+  const pct=rem/seconds;
+  const R=52,circ=2*Math.PI*R;
+
   return(
-    <div style={{position:"fixed",inset:0,background:"#000e",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9998}}>
-      <div style={{background:"#141414",borderRadius:24,padding:28,textAlign:"center",width:290,border:`1px solid ${planColor}33`}}>
-        <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:13,color:"#555",letterSpacing:3,marginBottom:6}}>SESSION TIMER</div>
-        <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:15,color:planColor,letterSpacing:2,marginBottom:18}}>{label}</div>
-        <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:68,color:"#fff",lineHeight:1,letterSpacing:4,marginBottom:8}}>{fmtElapsed(elapsed)}</div>
-        <div style={{fontSize:13,color:"#555",marginBottom:22,letterSpacing:1}}>{status}</div>
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:99999,padding:16}} onClick={e=>e.stopPropagation()}>
+      <div style={{background:"#141414",borderRadius:24,padding:30,textAlign:"center",width:"100%",maxWidth:300,border:`1px solid ${done?"#b8d44a33":"#2a2a2a"}`,boxShadow:done?"0 0 40px #b8d44a22":"none",transition:"box-shadow .5s"}}>
+        <div style={{fontFamily:FD,fontSize:13,color:C.muted,letterSpacing:3,marginBottom:4}}>REST TIMER</div>
+        {done&&<div style={{fontFamily:FD,fontSize:18,color:C.accent,letterSpacing:2,marginBottom:8}} className="timer-pop">✅ GO AGAIN!</div>}
+
+        <div style={{position:"relative",width:130,height:130,margin:"0 auto 20px"}}>
+          <svg width="130" height="130" style={{transform:"rotate(-90deg)"}}>
+            <circle cx="65" cy="65" r={R} fill="none" stroke="#1e1e1e" strokeWidth="10"/>
+            <circle cx="65" cy="65" r={R} fill="none" stroke={done?"#b8d44a":rem<=10?"#f87171":"#b8d44a"}
+              strokeWidth="10" strokeDasharray={circ} strokeDashoffset={circ*(1-pct)}
+              strokeLinecap="round" style={{transition:"stroke-dashoffset 1s linear,stroke .5s"}}/>
+          </svg>
+          <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+            <div style={{fontFamily:FD,fontSize:52,color:done?"#b8d44a":rem<=10?"#f87171":"#fff",lineHeight:1,transition:"color .5s"}}>{rem}</div>
+            <div style={{fontSize:10,color:C.muted,letterSpacing:2}}>SEC</div>
+          </div>
+        </div>
+
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:7}}>
+          <button onClick={toggleRun}
+            style={{padding:"11px 6px",background:"#1e1e1e",border:"1px solid #333",borderRadius:10,color:"#fff",fontFamily:FD,fontSize:13,cursor:"pointer"}}>
+            {run?"⏸":"▶"}
+          </button>
+          <button onClick={reset}
+            style={{padding:"11px 6px",background:"#1e1e1e",border:"1px solid #333",borderRadius:10,color:"#aaa",fontFamily:FD,fontSize:13,cursor:"pointer"}}>
+            ↺
+          </button>
+          <button onClick={onClose}
+            style={{padding:"11px 6px",background:"#f8717122",border:"1px solid #f8717155",borderRadius:10,color:"#f87171",fontFamily:FD,fontSize:13,cursor:"pointer"}}>
+            ✕
+          </button>
+        </div>
+        <div style={{fontSize:10,color:C.muted,marginTop:10}}>Tap ✕ to close</div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   SESSION TIMER
+═══════════════════════════════════════════════ */
+function SessionTimer({planColor,label,onClose}){
+  const [elapsed,setElapsed]=useState(0);
+  const [run,setRun]=useState(true);
+  const intervalRef=useRef(null);
+
+  useEffect(()=>{
+    if(run){
+      intervalRef.current=setInterval(()=>setElapsed(e=>e+1),1000);
+    } else {
+      clearInterval(intervalRef.current);
+    }
+    return()=>clearInterval(intervalRef.current);
+  },[run]);
+
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.9)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9998,padding:16}} onClick={e=>e.stopPropagation()}>
+      <div style={{background:"#141414",borderRadius:24,padding:28,textAlign:"center",width:"100%",maxWidth:300,border:`1px solid ${planColor}33`}}>
+        <div style={{fontFamily:FD,fontSize:13,color:C.muted,letterSpacing:3,marginBottom:4}}>SESSION TIMER</div>
+        <div style={{fontFamily:FD,fontSize:14,color:planColor,letterSpacing:2,marginBottom:16}}>{label}</div>
+        <div style={{fontFamily:FD,fontSize:64,color:"#fff",lineHeight:1,letterSpacing:4,marginBottom:6}}>{fmtElapsed(elapsed)}</div>
+        <div style={{fontSize:11,color:run?C.accent:C.muted,letterSpacing:1,marginBottom:20}}>{run?"● IN PROGRESS":"⏸ PAUSED"}</div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-          <button onClick={()=>setRun(r=>!r)} style={{padding:"13px",background:"#1e1e1e",border:"1px solid #333",borderRadius:12,color:"#fff",fontFamily:"Bebas Neue,sans-serif",fontSize:17,cursor:"pointer"}}>{run?"⏸ PAUSE":"▶ GO"}</button>
-          <button onClick={onClose} style={{padding:"13px",background:`${planColor}22`,border:`1px solid ${planColor}44`,borderRadius:12,color:planColor,fontFamily:"Bebas Neue,sans-serif",fontSize:17,cursor:"pointer"}}>FINISH</button>
+          <button onClick={()=>setRun(r=>!r)}
+            style={{padding:"13px",background:"#1e1e1e",border:"1px solid #333",borderRadius:12,color:"#fff",fontFamily:FD,fontSize:16,cursor:"pointer"}}>
+            {run?"⏸ PAUSE":"▶ GO"}
+          </button>
+          <button onClick={onClose}
+            style={{padding:"13px",background:`${planColor}22`,border:`1px solid ${planColor}44`,borderRadius:12,color:planColor,fontFamily:FD,fontSize:16,cursor:"pointer"}}>
+            FINISH
+          </button>
+        </div>
+        <div style={{fontSize:10,color:C.muted,marginTop:10}}>Tap FINISH to close</div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   CARDIO VIDEO SECTION
+═══════════════════════════════════════════════ */
+function CardioSection({planColor}){
+  const [active,setActive]=useState("warmup"); // warmup | hiit
+  const [playing,setPlaying]=useState(false);
+  const VIDEOS={
+    warmup:{id:"mG1CwTmYlwo",title:"15-MIN PRE-GYM CARDIO WARMUP",dur:"15 minutes",desc:"Dynamic warmup before gym session"},
+    hiit:{id:"Ueam-wvYiG8",title:"30-MIN HIIT CARDIO WORKOUT",dur:"30 minutes",desc:"High intensity interval training"}
+  };
+  const vid=VIDEOS[active];
+
+  return(
+    <div style={{marginBottom:14}}>
+      {/* Toggle */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:10,background:"#0d0d0d",padding:4,borderRadius:10}}>
+        {["warmup","hiit"].map(k=>(
+          <button key={k} onClick={()=>{setActive(k);setPlaying(false);}}
+            style={{padding:"8px",borderRadius:7,background:active===k?`${planColor}22`:"transparent",border:`1px solid ${active===k?planColor:"transparent"}`,color:active===k?planColor:C.muted,fontFamily:FD,fontSize:13,letterSpacing:2,cursor:"pointer",transition:"all .2s"}}>
+            {k==="warmup"?"🔥 15 MIN":"⚡ 30 MIN HIIT"}
+          </button>
+        ))}
+      </div>
+
+      <div style={{background:"#111",borderRadius:14,overflow:"hidden",border:`1px solid ${planColor}33`}}>
+        {/* Video area */}
+        {!playing?(
+          <div style={{position:"relative",paddingTop:"56.25%",background:"#000",cursor:"pointer"}} onClick={()=>setPlaying(true)}>
+            <img src={`https://img.youtube.com/vi/${vid.id}/mqdefault.jpg`} alt={vid.title}
+              style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",opacity:.7}}
+              onError={e=>{e.target.style.display="none";}}/>
+            <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:8}}>
+              <div style={{width:56,height:56,borderRadius:"50%",background:"rgba(255,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,paddingLeft:4}}>▶</div>
+              <div style={{fontFamily:FD,fontSize:13,color:"#fff",letterSpacing:2,textAlign:"center",padding:"0 20px"}}>{vid.title}</div>
+              <div style={{fontSize:11,color:"rgba(255,255,255,.6)"}}>{vid.dur}</div>
+            </div>
+          </div>
+        ):(
+          <div style={{position:"relative",paddingTop:"56.25%",background:"#000"}}>
+            <iframe style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",border:"none"}}
+              src={`https://www.youtube-nocookie.com/embed/${vid.id}?autoplay=1&rel=0&modestbranding=1`}
+              allow="autoplay;encrypted-media" allowFullScreen title={vid.title}/>
+          </div>
+        )}
+        <div style={{padding:"11px 13px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div>
+            <div style={{fontFamily:FD,fontSize:14,color:planColor,letterSpacing:1}}>{vid.title}</div>
+            <div style={{fontSize:11,color:C.muted,marginTop:2}}>{vid.desc}</div>
+          </div>
+          {playing&&<button onClick={()=>setPlaying(false)} style={{padding:"5px 10px",background:"#1a1a1a",border:"1px solid #2a2a2a",borderRadius:6,color:C.muted,fontSize:11,cursor:"pointer"}}>✕</button>}
         </div>
       </div>
     </div>
   );
 }
 
-/* ── EXERCISE CARD ── */
+/* ═══════════════════════════════════════════════
+   EXERCISE CARD
+═══════════════════════════════════════════════ */
 function ExCard({name,planColor,onTimer}){
-  const ex=EX[name]; if(!ex)return null;
+  const ex=EX[name]; if(!ex) return null;
   const [open,setOpen]=useState(false);
 
   return(
-    <div style={{background:"#111",borderRadius:14,border:`1px solid ${open?planColor+"44":"#1e1e1e"}`,marginBottom:8,overflow:"hidden",transition:"border-color .2s",boxShadow:open?`0 0 18px ${planColor}0c`:"none"}}>
+    <div style={{background:"#111",borderRadius:14,border:`1px solid ${open?planColor+"44":"#1e1e1e"}`,marginBottom:8,overflow:"hidden",transition:"border-color .2s",boxShadow:open?`0 0 18px ${planColor}0d`:"none"}}>
       <div onClick={()=>setOpen(o=>!o)} style={{display:"flex",gap:10,alignItems:"center",padding:"11px 13px",cursor:"pointer"}}>
-        <div style={{width:48,height:48,borderRadius:9,flexShrink:0,background:"#1a1a1a",border:"1px solid #2a2a2a",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>
-          {name==="Brisk Walk"?"🚶":name==="Kegel"?"🎯":name==="Joint Mobility"?"🔄":name==="Plank"||name==="Side Plank"?"🧘":name==="Squat"||name==="Bodyweight Squat"?"🦵":name==="Leg Raise"||name==="Russian Twist"?"🔥":"💪"}
+        <div style={{width:46,height:46,borderRadius:9,flexShrink:0,background:"#1a1a1a",border:"1px solid #2a2a2a",display:"flex",alignItems:"center",justifyContent:"center",fontSize:19}}>
+          {exEmoji(name)}
         </div>
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:14,fontWeight:700,color:"#fff",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{name}</div>
-          <div style={{fontSize:10,color:"#555",marginBottom:4}}>{ex.muscles}</div>
+          <div style={{fontSize:10,color:"#555",marginBottom:3}}>{ex.muscles}</div>
           <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
             <span style={{fontSize:10,background:`${planColor}22`,color:planColor,borderRadius:4,padding:"2px 7px",fontWeight:600}}>{ex.sets}</span>
             <span style={{fontSize:10,background:"#1a1a1a",color:"#666",borderRadius:4,padding:"2px 7px"}}>⏱ {ex.rest}</span>
@@ -308,33 +749,32 @@ function ExCard({name,planColor,onTimer}){
           </div>
         </div>
         <div style={{textAlign:"center",flexShrink:0}}>
-          <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:16,color:planColor,lineHeight:1}}>{ex.weight.split(" ")[0]}</div>
-          <div style={{fontSize:8,color:"#444",letterSpacing:1,marginBottom:4}}>KG</div>
-          <div style={{color:"#333",fontSize:12}}>{open?"▲":"▼"}</div>
+          <div style={{fontFamily:FD,fontSize:15,color:planColor,lineHeight:1}}>{ex.weight.split(" ")[0]}</div>
+          <div style={{fontSize:8,color:"#444",letterSpacing:1,marginBottom:3}}>KG</div>
+          <div style={{color:"#333",fontSize:11}}>{open?"▲":"▼"}</div>
         </div>
       </div>
       {open&&(
         <div style={{borderTop:"1px solid #1a1a1a",padding:"13px"}} onClick={e=>e.stopPropagation()}>
-          {/* WEIGHT + REST */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:9}}>
             <div style={{background:"#0d0d0d",borderRadius:10,padding:"11px",border:"1px solid #1e1e1e"}}>
               <div style={{fontSize:9,color:"#444",letterSpacing:2,marginBottom:4}}>⚖️ YOUR WEIGHT</div>
-              <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:19,color:planColor,lineHeight:1}}>{ex.weight}</div>
+              <div style={{fontFamily:FD,fontSize:18,color:planColor,lineHeight:1}}>{ex.weight}</div>
               <div style={{fontSize:10,color:"#555",marginTop:3,lineHeight:1.4}}>{ex.wNote}</div>
             </div>
             <div style={{background:"#0d0d0d",borderRadius:10,padding:"11px",border:"1px solid #1e1e1e"}}>
               <div style={{fontSize:9,color:"#444",letterSpacing:2,marginBottom:4}}>⏱ REST TIME</div>
-              <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:19,color:"#38bdf8",lineHeight:1}}>{ex.rest}</div>
+              <div style={{fontFamily:FD,fontSize:18,color:C.blue,lineHeight:1}}>{ex.rest}</div>
               <div style={{fontSize:10,color:"#555",marginTop:3}}>{ex.sets}</div>
             </div>
           </div>
-          {/* TIP */}
           <div style={{background:"#0d0d0d",borderRadius:10,padding:"10px 12px",marginBottom:9,border:"1px solid #1e1e1e"}}>
             <div style={{fontSize:9,color:"#444",letterSpacing:2,marginBottom:3}}>💡 FORM TIP</div>
             <div style={{fontSize:12,color:"#bbb",lineHeight:1.6}}>{ex.tip}</div>
           </div>
           {ex.restSec>0&&(
-            <button onClick={()=>onTimer(ex.restSec)} style={{width:"100%",padding:"12px",background:`linear-gradient(135deg,${planColor}22,${planColor}0d)`,border:`1px solid ${planColor}44`,borderRadius:10,color:planColor,fontFamily:"Bebas Neue,sans-serif",fontSize:16,letterSpacing:2,cursor:"pointer"}}>
+            <button onClick={()=>onTimer(ex.restSec)}
+              style={{width:"100%",padding:"12px",background:`linear-gradient(135deg,${planColor}22,${planColor}0d)`,border:`1px solid ${planColor}44`,borderRadius:10,color:planColor,fontFamily:FD,fontSize:15,letterSpacing:2,cursor:"pointer",transition:"all .2s"}}>
               ⏱ START REST TIMER · {ex.rest}
             </button>
           )}
@@ -344,37 +784,39 @@ function ExCard({name,planColor,onTimer}){
   );
 }
 
-/* ── HOME CARDIO CARD ── */
+/* ═══════════════════════════════════════════════
+   HOME CARDIO CARD
+═══════════════════════════════════════════════ */
 function HomeCardioCard({planColor,onTimer}){
   const [open,setOpen]=useState(false);
   return(
     <div style={{background:"#111",borderRadius:14,border:`1px solid ${open?"#fb923c44":"#1e1e1e"}`,marginBottom:8,overflow:"hidden"}}>
       <div onClick={()=>setOpen(o=>!o)} style={{display:"flex",gap:10,alignItems:"center",padding:"11px 13px",cursor:"pointer"}}>
-        <div style={{width:48,height:48,borderRadius:9,flexShrink:0,background:"#1a1a1a",border:"1px solid #2a2a2a",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>🏃</div>
+        <div style={{width:46,height:46,borderRadius:9,flexShrink:0,background:"#1a1a1a",border:"1px solid #2a2a2a",display:"flex",alignItems:"center",justifyContent:"center",fontSize:19}}>🏃</div>
         <div style={{flex:1}}>
           <div style={{fontSize:14,fontWeight:700,color:"#fff",marginBottom:2}}>Home Cardio Slot</div>
-          <div style={{fontSize:10,color:"#555",marginBottom:4}}>9:30 – 10:00 AM · available most days</div>
+          <div style={{fontSize:10,color:"#555",marginBottom:3}}>9:30 – 10:00 AM · available most days</div>
           <div style={{display:"flex",gap:4}}>
             <span style={{fontSize:10,background:"#fb923c22",color:"#fb923c",borderRadius:4,padding:"2px 7px",fontWeight:600}}>10–20 min</span>
             <span style={{fontSize:10,background:"#f59e0b18",color:"#f59e0b",borderRadius:4,padding:"2px 7px"}}>moderate</span>
           </div>
         </div>
-        <div style={{color:"#333",fontSize:12}}>{open?"▲":"▼"}</div>
+        <div style={{color:"#333",fontSize:11}}>{open?"▲":"▼"}</div>
       </div>
       {open&&(
         <div style={{borderTop:"1px solid #1a1a1a",padding:"13px"}} onClick={e=>e.stopPropagation()}>
           <div style={{background:"#fb923c0e",borderRadius:10,padding:"11px 13px",marginBottom:9,border:"1px solid #fb923c22"}}>
             <div style={{fontSize:10,color:"#fb923c",letterSpacing:1,marginBottom:7}}>📅 YOUR 9:30–10:00 AM CIRCUIT</div>
-            {[["High Knees","2 min on · 30s rest × 5"],["Jumping Jacks","3 min continuous × 3"],["Burpees","10 reps × 4 sets"],["Shadow Boxing","2 min rounds × 4"],["Stair Climbs","10 min continuous"]].map(([a,b])=>(
-              <div key={a} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #1a1a1a"}}>
+            {[["High Knees","2 min × 5"],["Jumping Jacks","3 min × 3"],["Burpees","10 reps × 4"],["Shadow Boxing","2 min × 4"],["Stair Climbs","10 min"]].map(([a,b])=>(
+              <div key={a} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #1a1a1a"}}>
                 <span style={{fontSize:12,color:"#ccc"}}>{a}</span>
                 <span style={{fontSize:11,color:"#555"}}>{b}</span>
               </div>
             ))}
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-            <button onClick={()=>onTimer(600)} style={{padding:"12px",background:"#fb923c1a",border:"1px solid #fb923c44",borderRadius:10,color:"#fb923c",fontFamily:"Bebas Neue,sans-serif",fontSize:14,letterSpacing:1,cursor:"pointer"}}>⏱ 10 MIN TIMER</button>
-            <button onClick={()=>onTimer(1200)} style={{padding:"12px",background:"#fb923c1a",border:"1px solid #fb923c44",borderRadius:10,color:"#fb923c",fontFamily:"Bebas Neue,sans-serif",fontSize:14,letterSpacing:1,cursor:"pointer"}}>⏱ 20 MIN TIMER</button>
+            <button onClick={()=>onTimer(600)} style={{padding:"12px",background:"#fb923c1a",border:"1px solid #fb923c44",borderRadius:10,color:"#fb923c",fontFamily:FD,fontSize:13,letterSpacing:1,cursor:"pointer"}}>⏱ 10 MIN</button>
+            <button onClick={()=>onTimer(1200)} style={{padding:"12px",background:"#fb923c1a",border:"1px solid #fb923c44",borderRadius:10,color:"#fb923c",fontFamily:FD,fontSize:13,letterSpacing:1,cursor:"pointer"}}>⏱ 20 MIN</button>
           </div>
         </div>
       )}
@@ -382,25 +824,100 @@ function HomeCardioCard({planColor,onTimer}){
   );
 }
 
-/* ═══ MAIN APP ═══ */
-function MoeFitness(){
+/* ═══════════════════════════════════════════════
+   ADMIN DASHBOARD
+═══════════════════════════════════════════════ */
+function AdminDashboard({user,onBack}){
+  const [users,setUsers]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [selUser,setSelUser]=useState(null);
+
+  useEffect(()=>{
+    fbGetAll("users").then(snap=>{
+      setUsers(snap.docs.map(d=>({id:d.id,...d.data()})));
+      setLoading(false);
+    }).catch(()=>setLoading(false));
+  },[]);
+
+  const cs={background:"#111",borderRadius:12,border:"1px solid #1e1e1e",padding:"12px 14px",marginBottom:8};
+
+  if(selUser) return(
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:FB,padding:16,paddingBottom:40,maxWidth:480,margin:"0 auto"}}>
+      <button onClick={()=>setSelUser(null)} style={{background:"none",border:"none",color:C.accent,fontFamily:FD,fontSize:16,letterSpacing:2,cursor:"pointer",marginBottom:16}}>← BACK</button>
+      <div style={{fontFamily:FD,fontSize:24,color:"#fff",letterSpacing:2,marginBottom:16}}>{selUser.name||selUser.email}</div>
+      {[["Email",selUser.email],["Age",`${selUser.age} yrs`],["Weight",`${selUser.weight} ${selUser.weightUnit||"kg"}`],["Height",`${selUser.height} ${selUser.heightUnit||"cm"}`],["Goal",selUser.fitnessGoal],["Level",selUser.fitnessLevel],["Days",selUser.workoutDays?.join(", ")||"—"],["Time",selUser.workoutTime],["Joined",selUser.createdAt?.toDate?.()?.toLocaleDateString?.()??"—"]].map(([l,v])=>(
+      <div key={l} style={{...cs,display:"flex",justifyContent:"space-between"}}>
+        <span style={{fontSize:11,color:C.muted}}>{l}</span>
+        <span style={{fontSize:12,color:"#fff",fontWeight:600,maxWidth:"60%",textAlign:"right"}}>{v||"—"}</span>
+      </div>
+      ))}
+      {selUser.injuries&&<div style={cs}><div style={{fontSize:11,color:C.muted,marginBottom:4}}>Injuries/Limitations</div><div style={{fontSize:12,color:"#ccc"}}>{selUser.injuries}</div></div>}
+    </div>
+  );
+
+  return(
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:FB,padding:16,paddingBottom:40,maxWidth:480,margin:"0 auto"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:18}}>
+        <div>
+          <div style={{fontFamily:FD,fontSize:28,color:C.accent,letterSpacing:3}}>ADMIN</div>
+          <div style={{fontSize:10,color:C.muted,letterSpacing:2}}>ALL USERS</div>
+        </div>
+        <button onClick={onBack} style={{padding:"8px 14px",background:C.dim,border:"1px solid #333",borderRadius:9,color:"#aaa",fontFamily:FD,fontSize:13,cursor:"pointer"}}>← APP</button>
+      </div>
+      <div style={cs}>
+        <div style={{fontSize:12,color:C.muted}}>Total registered users</div>
+        <div style={{fontFamily:FD,fontSize:32,color:C.accent}}>{users.length}</div>
+      </div>
+      {loading?<div style={{textAlign:"center",padding:40,color:C.muted}}>Loading...</div>:(
+        users.map(u=>(
+          <div key={u.id} onClick={()=>setSelUser(u)} style={{...cs,cursor:"pointer",display:"flex",alignItems:"center",gap:12}}>
+            <div style={{width:38,height:38,borderRadius:"50%",background:`linear-gradient(135deg,${C.accent},${C.accent2})`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontFamily:FD,fontSize:16,color:"#000"}}>
+              {u.name?.[0]?.toUpperCase()||"?"}
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13,fontWeight:700,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.name||"No name"}</div>
+              <div style={{fontSize:10,color:C.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.email}</div>
+            </div>
+            <div style={{fontSize:9,color:C.accent,background:`${C.accent}18`,padding:"3px 8px",borderRadius:20,whiteSpace:"nowrap"}}>{u.fitnessLevel||"—"}</div>
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   MAIN APP
+═══════════════════════════════════════════════ */
+function MoeFitness({user,profile:initProfile,onSignOut}){
   const [tab,setTab]=useState("today");
   const [now,setNow]=useState(new Date());
   const [restTimer,setRestTimer]=useState(null);
   const [sessionTimer,setSessionTimer]=useState(null);
+  const [showAdmin,setShowAdmin]=useState(false);
 
-  const [db,setDb]=useState(()=>{
-    const d=load();
-    return{
-      profile:d.profile||{name:"Moe",age:37,weight:93,height:168,target:"Burn fat + Build muscle"},
-      weeks:d.weeks||{},completed:d.completed||{},missed:d.missed||{},
-    };
+  const isAdmin=user.email===ADMIN_EMAIL;
+
+  // Local + Firestore data
+  const [appData,setAppData]=useState(()=>{
+    try{return JSON.parse(localStorage.getItem("mf_data_"+user.uid))||{};}catch{return{};}
   });
-  const persist=nd=>{setDb(nd);save(nd);};
+  const [profile,setProfile]=useState(initProfile);
+
+  function persistData(nd){
+    setAppData(nd);
+    try{localStorage.setItem("mf_data_"+user.uid,JSON.stringify(nd));}catch{}
+    // Debounce Firestore save
+    fbUpdateDoc("users", user.uid, {appData:nd}).catch(()=>{});
+  }
+
+  const weeks=appData.weeks||{};
+  const completed=appData.completed||{};
+  const missed=appData.missed||{};
 
   const [week,setWeek]=useState(1);
   const wk=`w${week}`;
-  const wd=db.weeks[wk]||{shifts:Array(7).fill("off"),times:Array(7).fill({start:"",end:""}),assigned:null,saved:false};
+  const wd=weeks[wk]||{shifts:Array(7).fill("off"),times:Array(7).fill({start:"",end:""}),assigned:null,saved:false};
   const wDates=getWeekDates(week);
   const todayIdx=(()=>{const d=new Date().getDay();return d===0?6:d-1;})();
   const todayKey=`${wk}_d${todayIdx}`;
@@ -413,32 +930,44 @@ function MoeFitness(){
   const [missedNote,setMissedNote]=useState("");
   const [toast,setToast]=useState(null);
   const [editProf,setEditProf]=useState(false);
-  const [profDraft,setProfDraft]=useState({...db.profile});
+  const [profDraft,setProfDraft]=useState({...profile});
 
   useEffect(()=>{const t=setInterval(()=>setNow(new Date()),1000);return()=>clearInterval(t);},[]);
-  const showToast=(msg,color="#b8d44a")=>{setToast({msg,color});setTimeout(()=>setToast(null),2600);};
 
-  const upWk=(f,v)=>persist({...db,weeks:{...db.weeks,[wk]:{...wd,[f]:v}}});
-  const saveWeek=()=>{persist({...db,weeks:{...db.weeks,[wk]:{...wd,assigned:assignWeek(wd.shifts),saved:true}}});showToast("✅ Week saved & plan aligned!");};
-  const markDone=i=>{const k=`${wk}_d${i}`;persist({...db,completed:{...db.completed,[k]:!db.completed[k]}});showToast(db.completed[k]?"Unmarked":"💪 Workout logged!",db.completed[k]?"#555":"#b8d44a");};
-  const logMissed=(i,note)=>{const k=`${wk}_d${i}`;persist({...db,missed:{...db.missed,[k]:{missed:true,note,date:new Date().toISOString()}}});setMissedModal(null);setMissedNote("");showToast("⚠️ Missed logged","#f87171");};
-  const saveProf=()=>{persist({...db,profile:profDraft});setEditProf(false);showToast("Profile saved ✅");};
+  function showToast(msg,color=C.accent){setToast({msg,color});setTimeout(()=>setToast(null),2600);}
 
-  const totalDone=Object.keys(db.completed).filter(k=>k.startsWith(wk)&&db.completed[k]).length;
-  const totalMiss=Object.keys(db.missed).filter(k=>k.startsWith(wk)&&db.missed[k]?.missed).length;
+  const upWk=(f,v)=>persistData({...appData,weeks:{...weeks,[wk]:{...wd,[f]:v}}});
+  const saveWeek=()=>{
+    persistData({...appData,weeks:{...weeks,[wk]:{...wd,assigned:assignWeek(wd.shifts),saved:true}}});
+    showToast("✅ Week saved & plan aligned!");
+  };
+  const markDone=i=>{
+    const k=`${wk}_d${i}`;
+    persistData({...appData,completed:{...completed,[k]:!completed[k]}});
+    showToast(completed[k]?"Unmarked":"💪 Workout logged!",completed[k]?C.muted:C.accent);
+  };
+  const logMissed=(i,note)=>{
+    const k=`${wk}_d${i}`;
+    persistData({...appData,missed:{...missed,[k]:{missed:true,note,date:new Date().toISOString()}}});
+    setMissedModal(null);setMissedNote("");showToast("⚠️ Missed logged","#f87171");
+  };
+  const saveProf=()=>{
+    setProfile(profDraft);
+    fbUpdateDoc("users", user.uid, profDraft).catch(()=>{});
+    setEditProf(false);showToast("Profile saved ✅");
+  };
 
-  const C={bg:"#0a0a0a",card:"#111",border:"#1e1e1e",accent:"#b8d44a",text:"#f0ede6",muted:"#666",dim:"#444"};
-  const FD="Bebas Neue,sans-serif",FB="Barlow,sans-serif";
+  const totalDone=Object.keys(completed).filter(k=>k.startsWith(wk)&&completed[k]).length;
+  const totalMiss=Object.keys(missed).filter(k=>k.startsWith(wk)&&missed[k]?.missed).length;
+
   const cs={background:C.card,borderRadius:14,border:`1px solid ${C.border}`,padding:"12px 14px",marginBottom:8};
-
   const selPlan=wd.assigned?PLAN[wd.assigned[selDay]]:null;
   const selKey=`${wk}_d${selDay}`;
 
   const ExList=({plan})=>(
     <>
-      {plan.exercises.map((name)=>(
-        <ExCard key={name} name={name} planColor={plan.color}
-          onTimer={s=>setRestTimer(s)}/>
+      {plan.exercises.map(name=>(
+        <ExCard key={name} name={name} planColor={plan.color} onTimer={s=>setRestTimer(s)}/>
       ))}
       <HomeCardioCard planColor={plan.color} onTimer={s=>setRestTimer(s)}/>
       {plan.cardio&&<div style={{...cs,border:"1px solid #4ade8033",marginBottom:8}}>
@@ -456,60 +985,71 @@ function MoeFitness(){
     <div style={{...cs,border:`1px solid ${plan.color}44`,background:`${plan.color}07`,marginBottom:11}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:plan.note?8:0}}>
         <div>
-          <div style={{fontFamily:FD,fontSize:22,color:plan.color,letterSpacing:2}}>{plan.label}</div>
+          <div style={{fontFamily:FD,fontSize:21,color:plan.color,letterSpacing:2}}>{plan.label}</div>
           <div style={{fontSize:12,color:C.muted}}>{plan.desc}</div>
         </div>
         <span style={{fontSize:10,color:plan.color,background:`${plan.color}22`,padding:"3px 8px",borderRadius:20,whiteSpace:"nowrap",flexShrink:0,marginLeft:8}}>{plan.duration}</span>
       </div>
       {plan.note&&<div style={{fontSize:11,color:"#fb923c",background:"#fb923c0e",borderRadius:8,padding:"7px 10px",marginBottom:8,lineHeight:1.5}}>{plan.note}</div>}
-      <button onClick={()=>setSessionTimer({color:plan.color,label:plan.label})} style={{width:"100%",padding:"10px",background:`${plan.color}14`,border:`1px solid ${plan.color}33`,borderRadius:10,color:plan.color,fontFamily:FD,fontSize:15,letterSpacing:2,cursor:"pointer",marginBottom:8}}>
+      <button onClick={()=>setSessionTimer({color:plan.color,label:plan.label})}
+        style={{width:"100%",padding:"10px",background:`${plan.color}14`,border:`1px solid ${plan.color}33`,borderRadius:10,color:plan.color,fontFamily:FD,fontSize:14,letterSpacing:2,cursor:"pointer",marginBottom:8}}>
         ▶ START SESSION TIMER
       </button>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-        <button onClick={()=>markDone(dayIdx)} style={{padding:"9px",background:db.completed[dKey]?`${C.accent}22`:"#1a1a1a",border:`1px solid ${db.completed[dKey]?C.accent:"#333"}`,borderRadius:9,color:db.completed[dKey]?C.accent:"#aaa",fontFamily:FD,fontSize:14,cursor:"pointer"}}>
-          {db.completed[dKey]?"✅ DONE":"MARK DONE"}
+        <button onClick={()=>markDone(dayIdx)}
+          style={{padding:"9px",background:completed[dKey]?`${C.accent}22`:"#1a1a1a",border:`1px solid ${completed[dKey]?C.accent:"#333"}`,borderRadius:9,color:completed[dKey]?C.accent:"#aaa",fontFamily:FD,fontSize:13,cursor:"pointer"}}>
+          {completed[dKey]?"✅ DONE":"MARK DONE"}
         </button>
-        <button onClick={()=>setMissedModal(dayIdx)} style={{padding:"9px",background:db.missed[dKey]?.missed?"#f8717122":"#1a1a1a",border:`1px solid ${db.missed[dKey]?.missed?"#f87171":"#333"}`,borderRadius:9,color:db.missed[dKey]?.missed?"#f87171":"#aaa",fontFamily:FD,fontSize:14,cursor:"pointer"}}>
-          {db.missed[dKey]?.missed?"⚠️ MISSED":"LOG MISSED"}
+        <button onClick={()=>setMissedModal(dayIdx)}
+          style={{padding:"9px",background:missed[dKey]?.missed?"#f8717122":"#1a1a1a",border:`1px solid ${missed[dKey]?.missed?"#f87171":"#333"}`,borderRadius:9,color:missed[dKey]?.missed?"#f87171":"#aaa",fontFamily:FD,fontSize:13,cursor:"pointer"}}>
+          {missed[dKey]?.missed?"⚠️ MISSED":"LOG MISSED"}
         </button>
       </div>
     </div>
   );
 
+  if(showAdmin) return <AdminDashboard user={user} onBack={()=>setShowAdmin(false)}/>;
+
   return(
     <>
-      <FontLink/>
-      {restTimer&&<RestTimer seconds={restTimer} onClose={()=>setRestTimer(null)}/>}
+      <style>{`body{background:#0a0a0a;}`}</style>
+      {restTimer!==null&&<RestTimer key={restTimer+"_"+Date.now()} seconds={restTimer} onClose={()=>setRestTimer(null)}/>}
       {sessionTimer&&<SessionTimer planColor={sessionTimer.color} label={sessionTimer.label} onClose={()=>setSessionTimer(null)}/>}
 
       <div style={{minHeight:"100vh",background:C.bg,color:C.text,fontFamily:FB,maxWidth:480,margin:"0 auto",paddingBottom:70}}>
 
         {/* HEADER */}
-        <div style={{background:"#0d0d0d",borderBottom:`1px solid ${C.border}`,padding:"11px 18px"}}>
+        <div style={{background:"#0d0d0d",borderBottom:`1px solid ${C.border}`,padding:"10px 16px"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <div>
-              <div style={{fontFamily:FD,fontSize:27,color:C.accent,letterSpacing:3}}>MOE FITNESS</div>
+              <div style={{fontFamily:FD,fontSize:26,color:C.accent,letterSpacing:3}}>MOE FITNESS</div>
               <div style={{fontSize:9,color:C.muted,letterSpacing:3}}>COMMAND CENTER</div>
             </div>
-            <div style={{textAlign:"right"}}>
-              <div style={{fontFamily:FD,fontSize:23,color:"#fff",letterSpacing:2}}>{now.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}</div>
-              <div style={{fontSize:9,color:C.muted}}>{now.toLocaleDateString("en-GB",{weekday:"short",day:"2-digit",month:"short"})}</div>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontFamily:FD,fontSize:22,color:"#fff",letterSpacing:2}}>{now.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}</div>
+                <div style={{fontSize:9,color:C.muted}}>{now.toLocaleDateString("en-GB",{weekday:"short",day:"2-digit",month:"short"})}</div>
+              </div>
+              {isAdmin&&(
+                <button onClick={()=>setShowAdmin(true)} style={{width:32,height:32,borderRadius:"50%",background:`${C.accent}22`,border:`1px solid ${C.accent}44`,color:C.accent,fontSize:14,cursor:"pointer",flexShrink:0}}>👑</button>
+              )}
             </div>
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:5,marginTop:9}}>
-            {[["WEIGHT",`${db.profile.weight}kg`],["SESSIONS",totalDone],["MISSED",totalMiss],["WEEK",week]].map(([l,v])=>(
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:5,marginTop:8}}>
+            {[["WEIGHT",`${profile.weight}${profile.weightUnit||"kg"}`],["SESSIONS",totalDone],["MISSED",totalMiss],["WEEK",week]].map(([l,v])=>(
               <div key={l} style={{textAlign:"center"}}>
-                <div style={{fontFamily:FD,fontSize:20,color:C.accent,lineHeight:1}}>{v}</div>
+                <div style={{fontFamily:FD,fontSize:19,color:C.accent,lineHeight:1}}>{v}</div>
                 <div style={{fontSize:8,color:C.dim,letterSpacing:2,marginTop:2}}>{l}</div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* TOP NAV */}
+        {/* NAV */}
         <div style={{display:"flex",background:"#0d0d0d",borderBottom:`1px solid ${C.border}`}}>
           {[["today","⚡","TODAY"],["schedule","📅","SCHED"],["plan","💪","PLAN"],["progress","📊","PROG"],["profile","👤","ME"]].map(([k,ic,lb])=>(
-            <button key={k} onClick={()=>setTab(k)} style={{flex:1,padding:"8px 2px 6px",background:"none",border:"none",color:tab===k?C.accent:C.dim,cursor:"pointer",borderBottom:`2px solid ${tab===k?C.accent:"transparent"}`,fontSize:8,letterSpacing:1,fontFamily:FB,fontWeight:600}}>
+            <button key={k} onClick={()=>setTab(k)}
+              style={{flex:1,padding:"8px 2px 6px",background:"none",border:"none",color:tab===k?C.accent:C.dim,cursor:"pointer",borderBottom:`2px solid ${tab===k?C.accent:"transparent"}`,fontSize:8,letterSpacing:1,fontFamily:FB,fontWeight:600,transition:"color .2s"}}>
               <div style={{fontSize:14}}>{ic}</div><div style={{marginTop:2}}>{lb}</div>
             </button>
           ))}
@@ -520,7 +1060,7 @@ function MoeFitness(){
           <div style={{padding:16}} className="fade-up">
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:13}}>
               <div>
-                <div style={{fontFamily:FD,fontSize:26,color:"#fff",letterSpacing:2}}>{now.toLocaleDateString("en-GB",{weekday:"long"})}</div>
+                <div style={{fontFamily:FD,fontSize:25,color:"#fff",letterSpacing:2}}>{now.toLocaleDateString("en-GB",{weekday:"long"})}</div>
                 <div style={{fontSize:11,color:C.muted}}>{now.toLocaleDateString("en-GB",{day:"2-digit",month:"long",year:"numeric"})}</div>
               </div>
               <div style={{width:8,height:8,borderRadius:"50%",background:"#4ade80"}} className="live-dot"/>
@@ -528,9 +1068,16 @@ function MoeFitness(){
             {todayPlan?(
               <>
                 <DayHeader plan={todayPlan} dKey={todayKey} dayIdx={todayIdx}/>
-                <div style={{fontFamily:FD,fontSize:16,color:"#fff",letterSpacing:2,marginBottom:9}}>TODAY'S EXERCISES</div>
+                {/* Cardio Videos for gym days */}
+                {(todayPlan.type==="gym"||todayPlan.type==="gym_off"||todayPlan.type==="work_gym"||todayPlan.type==="gym_shift")&&(
+                  <>
+                    <div style={{fontFamily:FD,fontSize:14,color:C.accent,letterSpacing:2,marginBottom:8}}>🔥 CARDIO WARMUP</div>
+                    <CardioSection planColor={todayPlan.color}/>
+                  </>
+                )}
+                <div style={{fontFamily:FD,fontSize:15,color:"#fff",letterSpacing:2,marginBottom:9}}>TODAY'S EXERCISES</div>
                 <ExList plan={todayPlan}/>
-                <div style={{fontFamily:FD,fontSize:16,color:"#fff",letterSpacing:2,marginTop:13,marginBottom:9}}>MEALS</div>
+                <div style={{fontFamily:FD,fontSize:15,color:"#fff",letterSpacing:2,marginTop:13,marginBottom:9}}>MEALS</div>
                 {[["🍳 BREAKFAST","breakfast","8:30 AM"],["🍎 SNACK 1","snack1","11:30"],["🍽️ LUNCH","lunch","13:00"],["🥪 SNACK 2","snack2","16:30"],["🌙 DINNER","dinner","19:30"]].map(([k,mk,t])=>(
                   <div key={k} style={cs}>
                     <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
@@ -555,7 +1102,7 @@ function MoeFitness(){
         {/* ══ SCHEDULE ══ */}
         {tab==="schedule"&&(
           <div style={{padding:16}} className="fade-up">
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
               <button onClick={()=>setWeek(w=>Math.max(1,w-1))} style={{width:36,height:36,borderRadius:"50%",background:"#1a1a1a",border:"1px solid #333",color:"#fff",fontSize:18,cursor:"pointer"}}>‹</button>
               <div style={{textAlign:"center"}}>
                 <div style={{fontFamily:FD,fontSize:22,color:C.accent,letterSpacing:2}}>WEEK {week}</div>
@@ -563,14 +1110,13 @@ function MoeFitness(){
               </div>
               <button onClick={()=>setWeek(w=>w+1)} style={{width:36,height:36,borderRadius:"50%",background:"#1a1a1a",border:"1px solid #333",color:"#fff",fontSize:18,cursor:"pointer"}}>›</button>
             </div>
-            {/* Legend */}
-            <div style={{background:"#0d0d0d",border:"1px solid #1e1e1e",borderRadius:10,padding:"10px 12px",marginBottom:11,fontSize:10,color:"#888",lineHeight:1.8}}>
-              <div style={{color:C.accent,fontWeight:700,marginBottom:4,fontSize:11}}>📋 HOW IT WORKS</div>
+
+            <div style={{background:"#0d0d0d",border:"1px solid #1e1e1e",borderRadius:10,padding:"10px 12px",marginBottom:11,fontSize:10,color:"#888",lineHeight:1.9}}>
+              <div style={{color:C.accent,fontWeight:700,marginBottom:3,fontSize:11}}>📋 HOW IT WORKS</div>
               <div>💪 <b style={{color:"#a78bfa"}}>Off + Gym</b> → Full gym session on your day off</div>
               <div>🔥 <b style={{color:"#fb923c"}}>Night + Gym</b> → Gym 18:00–20:00 before night shift</div>
-              <div>🏋️ <b style={{color:"#22d3ee"}}>Morning/Afternoon + Gym</b> → Light gym in free window</div>
-              <div>👶 <b style={{color:"#f472b6"}}>Babysitting</b> → Kids home, home workout instead</div>
-              <div>😴 <b style={{color:"#4ade80"}}>Day Off</b> → Active rest or home workout auto-assigned</div>
+              <div>🏋️ <b style={{color:"#22d3ee"}}>+Gym options</b> → Light gym in free window</div>
+              <div>👶 <b style={{color:"#f472b6"}}>Babysitting</b> → Home workout instead</div>
             </div>
             <div style={{fontSize:10,color:C.muted,textAlign:"center",marginBottom:10}}>Sat & Sun fixed as family rest days</div>
 
@@ -584,7 +1130,7 @@ function MoeFitness(){
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",cursor:fixed?"default":"pointer"}} onClick={()=>!fixed&&setEditShift(isOpen?null:i)}>
                     <div style={{display:"flex",alignItems:"center",gap:10}}>
                       <div style={{textAlign:"center",minWidth:40}}>
-                        <div style={{fontFamily:FD,fontSize:18,color:"#fff"}}>{DAYS_SHORT[i]}</div>
+                        <div style={{fontFamily:FD,fontSize:17,color:"#fff"}}>{DAYS_SHORT[i]}</div>
                         <div style={{fontSize:9,color:C.muted}}>{fmtDate(wDates[i])}</div>
                       </div>
                       <div>
@@ -593,7 +1139,7 @@ function MoeFitness(){
                         {!fixed&&so.sub&&!td.start&&<div style={{fontSize:9,color:C.dim,marginTop:1}}>{so.sub}</div>}
                       </div>
                     </div>
-                    {!fixed&&<div style={{color:C.dim,fontSize:12}}>{isOpen?"▲":"▼"}</div>}
+                    {!fixed&&<div style={{color:C.dim,fontSize:11}}>{isOpen?"▲":"▼"}</div>}
                   </div>
                   {isOpen&&!fixed&&(
                     <div style={{marginTop:11,paddingTop:11,borderTop:`1px solid ${C.border}`}}>
@@ -601,7 +1147,7 @@ function MoeFitness(){
                       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:5,marginBottom:11}}>
                         {SHIFT_OPTS.map(opt=>(
                           <div key={opt.value} onClick={()=>{const ns=[...wd.shifts];ns[i]=opt.value;upWk("shifts",ns);}}
-                            style={{display:"flex",alignItems:"center",gap:7,padding:"8px 10px",background:sv===opt.value?`${opt.color}22`:"#1a1a1a",border:`1px solid ${sv===opt.value?opt.color:"#2a2a2a"}`,borderRadius:9,cursor:"pointer"}}>
+                            style={{display:"flex",alignItems:"center",gap:7,padding:"8px 10px",background:sv===opt.value?`${opt.color}22`:"#1a1a1a",border:`1px solid ${sv===opt.value?opt.color:"#2a2a2a"}`,borderRadius:9,cursor:"pointer",transition:"all .15s"}}>
                             <span style={{fontSize:14}}>{opt.emoji}</span>
                             <div>
                               <div style={{fontSize:10,color:sv===opt.value?opt.color:"#aaa",fontWeight:600,lineHeight:1.2}}>{opt.label}</div>
@@ -625,10 +1171,11 @@ function MoeFitness(){
                 </div>
               );
             })}
-            <button onClick={saveWeek} style={{width:"100%",padding:"14px",background:`linear-gradient(135deg,${C.accent},#8ba832)`,border:"none",borderRadius:12,color:"#000",fontFamily:FD,fontSize:18,letterSpacing:3,cursor:"pointer",marginTop:4,fontWeight:700}}>
+
+            <button onClick={saveWeek} style={{width:"100%",padding:"14px",background:`linear-gradient(135deg,${C.accent},${C.accent2})`,border:"none",borderRadius:12,color:"#000",fontFamily:FD,fontSize:17,letterSpacing:3,cursor:"pointer",marginTop:4,fontWeight:700}}>
               ⚡ SAVE & ALIGN PLAN
             </button>
-            {wd.saved&&<div style={{textAlign:"center",marginTop:8,fontSize:11,color:C.accent}}>✅ Plan aligned</div>}
+            {wd.saved&&<div style={{textAlign:"center",marginTop:8,fontSize:11,color:C.accent}}>✅ Plan aligned for this week</div>}
           </div>
         )}
 
@@ -643,14 +1190,12 @@ function MoeFitness(){
               </div>
             ):(
               <>
-                {/* Day strip */}
                 <div style={{display:"flex",gap:4,marginBottom:13,overflowX:"auto",paddingBottom:3}}>
                   {DAYS_FULL.map((day,i)=>{
                     const p=PLAN[wd.assigned[i]],dk=`${wk}_d${i}`;
-                    const done=db.completed[dk],miss=db.missed[dk]?.missed;
+                    const done=completed[dk],miss=missed[dk]?.missed;
                     return(
-                      <div key={day} onClick={()=>setSelDay(i)} style={{flex:"0 0 56px",borderRadius:11,padding:"8px 4px",textAlign:"center",cursor:"pointer",
-                        background:selDay===i?`${p.color}1a`:"#0d0d0d",border:`1px solid ${selDay===i?p.color+"66":done?C.accent+"44":miss?"#f8717144":"#1e1e1e"}`}}>
+                      <div key={day} onClick={()=>setSelDay(i)} style={{flex:"0 0 54px",borderRadius:11,padding:"8px 4px",textAlign:"center",cursor:"pointer",background:selDay===i?`${p.color}1a`:"#0d0d0d",border:`1px solid ${selDay===i?p.color+"66":done?C.accent+"44":miss?"#f8717144":"#1e1e1e"}`,transition:"all .2s"}}>
                         <div style={{fontFamily:FD,fontSize:12,color:selDay===i?p.color:"#666",letterSpacing:1}}>{DAYS_SHORT[i]}</div>
                         <div style={{fontSize:15,margin:"3px 0"}}>{TYPE_ICON[p.type]}</div>
                         <div style={{fontSize:7,color:done?C.accent:miss?"#f87171":"#444"}}>{done?"✓":miss?"✗":"·"}</div>
@@ -661,10 +1206,16 @@ function MoeFitness(){
                 {selPlan&&(
                   <>
                     <DayHeader plan={selPlan} dKey={selKey} dayIdx={selDay}/>
-                    {/* Sections */}
+                    {(selPlan.type==="gym"||selPlan.type==="gym_off"||selPlan.type==="work_gym"||selPlan.type==="gym_shift")&&(
+                      <>
+                        <div style={{fontFamily:FD,fontSize:13,color:C.accent,letterSpacing:2,marginBottom:8}}>🔥 CARDIO WARMUP VIDEOS</div>
+                        <CardioSection planColor={selPlan.color}/>
+                      </>
+                    )}
                     <div style={{display:"flex",gap:4,marginBottom:11}}>
                       {["exercises","schedule","nutrition","supplements"].map(s=>(
-                        <button key={s} onClick={()=>setSection(s)} style={{flex:1,padding:"7px 3px",background:section===s?"#1a1a1a":"transparent",border:`1px solid ${section===s?C.accent:C.border}`,borderRadius:8,color:section===s?C.accent:C.muted,fontSize:8,letterSpacing:1,cursor:"pointer",fontFamily:FB,fontWeight:600}}>
+                        <button key={s} onClick={()=>setSection(s)}
+                          style={{flex:1,padding:"7px 3px",background:section===s?"#1a1a1a":"transparent",border:`1px solid ${section===s?C.accent:C.border}`,borderRadius:8,color:section===s?C.accent:C.muted,fontSize:8,letterSpacing:1,cursor:"pointer",fontFamily:FB,fontWeight:600,transition:"all .2s"}}>
                           {s==="exercises"?"🏋️":s==="schedule"?"⏱️":s==="nutrition"?"🍽️":"💊"}<br/>{s.slice(0,5).toUpperCase()}
                         </button>
                       ))}
@@ -672,7 +1223,7 @@ function MoeFitness(){
                     {section==="exercises"&&<ExList plan={selPlan}/>}
                     {section==="schedule"&&selPlan.schedule.map((s,i)=>(
                       <div key={i} style={{display:"flex",gap:11,alignItems:"flex-start",marginBottom:6}}>
-                        <div style={{minWidth:62,fontFamily:FD,fontSize:13,color:selPlan.color,paddingTop:9}}>{s.time}</div>
+                        <div style={{minWidth:60,fontFamily:FD,fontSize:12,color:selPlan.color,paddingTop:9}}>{s.time}</div>
                         <div style={{flex:1,background:"#0e0e0e",borderRadius:8,padding:"8px 11px",fontSize:12,color:"#ccc"}}>{s.activity}</div>
                       </div>
                     ))}
@@ -688,17 +1239,17 @@ function MoeFitness(){
                           </div>
                         ))}
                         <div style={{...cs,border:"1px solid #1e3a5f"}}>
-                          <div style={{fontSize:11,color:"#38bdf8",fontWeight:600,marginBottom:3}}>💧 WATER</div>
+                          <div style={{fontSize:11,color:C.blue,fontWeight:600,marginBottom:3}}>💧 WATER</div>
                           <div style={{fontSize:12,color:"#ccc"}}>2–3 litres throughout the day</div>
                         </div>
                       </>
                     )}
                     {section==="supplements"&&(
                       <>
-                        {[{name:"Whey Protein",dose:"25–30g",when:"After workout",emoji:"🥛",color:"#b8d44a",note:"Mix with water. Within 30min post-workout."},{name:"Creatine",dose:"5g daily",when:"Post workout",emoji:"⚗️",color:"#38bdf8",note:"No loading phase. Take consistently."},{name:"Omega-3",dose:"2 capsules",when:"With meal",emoji:"🐟",color:"#f59e0b",note:"Reduces inflammation. Supports joints."}].map(s=>(
+                        {[{name:"Whey Protein",dose:"25–30g",when:"After workout",emoji:"🥛",color:C.accent,note:"Mix with water. Within 30min post-workout."},{name:"Creatine",dose:"5g daily",when:"Post workout",emoji:"⚗️",color:C.blue,note:"No loading phase. Take consistently."},{name:"Omega-3",dose:"2 capsules",when:"With meal",emoji:"🐟",color:"#f59e0b",note:"Reduces inflammation. Supports joints."}].map(s=>(
                           <div key={s.name} style={{...cs,border:`1px solid ${s.color}33`}}>
                             <div style={{display:"flex",gap:9,alignItems:"center",marginBottom:6}}>
-                              <div style={{fontSize:24}}>{s.emoji}</div>
+                              <div style={{fontSize:22}}>{s.emoji}</div>
                               <div>
                                 <div style={{fontSize:13,color:s.color,fontWeight:700}}>{s.name}</div>
                                 <div style={{fontSize:10,color:C.muted}}>{s.dose} · {s.when}</div>
@@ -723,7 +1274,7 @@ function MoeFitness(){
         {/* ══ PROGRESS ══ */}
         {tab==="progress"&&(
           <div style={{padding:16}} className="fade-up">
-            <div style={{fontFamily:FD,fontSize:24,color:"#fff",letterSpacing:2,marginBottom:3}}>WEEK {week}</div>
+            <div style={{fontFamily:FD,fontSize:23,color:"#fff",letterSpacing:2,marginBottom:3}}>WEEK {week}</div>
             <div style={{fontSize:11,color:C.muted,marginBottom:16}}>{fmtDate(wDates[0])} – {fmtDate(wDates[6])}</div>
             <div style={{display:"flex",justifyContent:"center",marginBottom:18}}>
               <div style={{position:"relative",width:130,height:130}}>
@@ -731,7 +1282,7 @@ function MoeFitness(){
                   <circle cx="65" cy="65" r="52" fill="none" stroke="#1a1a1a" strokeWidth="9"/>
                   <circle cx="65" cy="65" r="52" fill="none" stroke={C.accent} strokeWidth="9"
                     strokeDasharray={`${2*Math.PI*52}`} strokeDashoffset={`${2*Math.PI*52*(1-totalDone/7)}`}
-                    strokeLinecap="round" style={{transition:"stroke-dashoffset 0.9s ease"}}/>
+                    strokeLinecap="round" style={{transition:"stroke-dashoffset .9s ease"}}/>
                 </svg>
                 <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
                   <div style={{fontFamily:FD,fontSize:36,color:C.accent,lineHeight:1}}>{totalDone}</div>
@@ -741,7 +1292,7 @@ function MoeFitness(){
             </div>
             {wd.assigned?DAYS_FULL.map((day,i)=>{
               const p=PLAN[wd.assigned[i]],dk=`${wk}_d${i}`;
-              const done=db.completed[dk],miss=db.missed[dk];
+              const done=completed[dk],miss=missed[dk];
               return(
                 <div key={day} style={{display:"flex",alignItems:"center",gap:9,padding:"10px 12px",background:C.card,borderRadius:11,border:`1px solid ${C.border}`,marginBottom:6}}>
                   <div style={{width:30,height:30,borderRadius:"50%",background:done?C.accent:miss?.missed?"#f87171":"#1a1a1a",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:done?"#000":miss?.missed?"#fff":"#555",flexShrink:0}}>
@@ -757,10 +1308,10 @@ function MoeFitness(){
               );
             }):<div style={{textAlign:"center",padding:"40px 20px",color:C.dim}}>Save your schedule first</div>}
             <div style={{marginTop:12,display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
-              {[["WEIGHT",`${db.profile.weight} kg`,"Current"],["TARGET",db.profile.target||"Fat Loss","Goal"],["AGE",`${db.profile.age} yrs`,"Profile"],["HEIGHT",`${db.profile.height} cm`,"Profile"]].map(([l,v,s])=>(
+              {[["WEIGHT",`${profile.weight} ${profile.weightUnit||"kg"}`,"Current"],["TARGET",profile.fitnessGoal||profile.target||"Fat Loss","Goal"],["AGE",`${profile.age} yrs`,"Profile"],["HEIGHT",`${profile.height} ${profile.heightUnit||"cm"}`,"Profile"]].map(([l,v,s])=>(
                 <div key={l} style={{padding:12,background:"#0d0d0d",borderRadius:10,border:`1px solid ${C.border}`}}>
                   <div style={{fontSize:8,color:C.dim,letterSpacing:2,marginBottom:3}}>{l}</div>
-                  <div style={{fontFamily:FD,fontSize:18,color:C.accent,marginBottom:2}}>{v}</div>
+                  <div style={{fontFamily:FD,fontSize:17,color:C.accent,marginBottom:2}}>{v}</div>
                   <div style={{fontSize:9,color:C.muted}}>{s}</div>
                 </div>
               ))}
@@ -772,46 +1323,65 @@ function MoeFitness(){
         {tab==="profile"&&(
           <div style={{padding:16}} className="fade-up">
             <div style={{textAlign:"center",marginBottom:20}}>
-              <div style={{width:74,height:74,borderRadius:"50%",background:`linear-gradient(135deg,${C.accent},#8ba832)`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 10px",fontFamily:FD,fontSize:34,color:"#000"}}>
-                {db.profile.name?.[0]?.toUpperCase()||"M"}
+              <div style={{width:72,height:72,borderRadius:"50%",background:`linear-gradient(135deg,${C.accent},${C.accent2})`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 10px",fontFamily:FD,fontSize:32,color:"#000"}}>
+                {profile.name?.[0]?.toUpperCase()||"M"}
               </div>
-              <div style={{fontFamily:FD,fontSize:24,color:"#fff",letterSpacing:2}}>{db.profile.name}</div>
-              <div style={{fontSize:10,color:C.muted,marginTop:3}}>FITNESS ATHLETE</div>
+              <div style={{fontFamily:FD,fontSize:23,color:"#fff",letterSpacing:2}}>{profile.name}</div>
+              <div style={{fontSize:10,color:C.muted,marginTop:3}}>
+                {profile.fitnessLevel||"FITNESS"} ATHLETE · {profile.fitnessGoal||"FITNESS"}
+              </div>
             </div>
             {!editProf?(
               <>
-                {[["👤 Full Name",db.profile.name],["🎂 Age",`${db.profile.age} years`],["⚖️ Weight",`${db.profile.weight} kg`],["📏 Height",`${db.profile.height} cm`],["🎯 Target",db.profile.target],["🏃 Activity","KFC Worker · Gym 2×/week"],["💊 Supplements","Whey + Creatine + Omega-3"]].map(([l,v])=>(
-                  <div key={l} style={{...cs,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                    <div style={{fontSize:11,color:C.muted}}>{l}</div>
-                    <div style={{fontSize:12,color:"#fff",fontWeight:600}}>{v}</div>
+                {[["👤 Full Name",profile.name],["🎂 Age",`${profile.age} years`],["⚖️ Weight",`${profile.weight} ${profile.weightUnit||"kg"}`],["📏 Height",`${profile.height} ${profile.heightUnit||"cm"}`],["🎯 Goal",profile.fitnessGoal||profile.target],["🏆 Level",profile.fitnessLevel],["⏰ Best time",profile.preferredTime],["📅 Workout days",profile.workoutDays?.join(", ")],["🩹 Limitations",profile.injuries||"None"]].map(([l,v])=>(
+                  <div key={l} style={{...cs,display:"flex",justifyContent:"space-between",alignItems:"center",gap:12}}>
+                    <div style={{fontSize:11,color:C.muted,whiteSpace:"nowrap"}}>{l}</div>
+                    <div style={{fontSize:12,color:"#fff",fontWeight:600,textAlign:"right"}}>{v||"—"}</div>
                   </div>
                 ))}
-                <button onClick={()=>{setProfDraft({...db.profile});setEditProf(true);}} style={{width:"100%",padding:"12px",background:`${C.accent}1a`,border:`1px solid ${C.accent}44`,borderRadius:11,color:C.accent,fontFamily:FD,fontSize:16,letterSpacing:2,cursor:"pointer",marginTop:4}}>
+                <button onClick={()=>{setProfDraft({...profile});setEditProf(true);}}
+                  style={{width:"100%",padding:"12px",background:`${C.accent}1a`,border:`1px solid ${C.accent}44`,borderRadius:11,color:C.accent,fontFamily:FD,fontSize:16,letterSpacing:2,cursor:"pointer",marginTop:4}}>
                   ✏️ EDIT PROFILE
+                </button>
+                <button onClick={onSignOut}
+                  style={{width:"100%",padding:"12px",background:"#f8717111",border:"1px solid #f8717133",borderRadius:11,color:"#f87171",fontFamily:FD,fontSize:16,letterSpacing:2,cursor:"pointer",marginTop:8}}>
+                  🚪 SIGN OUT
                 </button>
               </>
             ):(
               <>
-                {[["Full Name","name","text"],["Age","age","number"],["Weight (kg)","weight","number"],["Height (cm)","height","number"],["Target","target","text"]].map(([lb,k,t])=>(
-                  <div key={k} style={{marginBottom:10}}>
+                {[["Full Name","name","text"],["Age","age","number"],["Weight","weight","number"],["Height","height","number"]].map(([lb,k,t])=>(
+                  <div key={k} style={{marginBottom:12}}>
                     <div style={{fontSize:9,color:C.muted,letterSpacing:1,marginBottom:4}}>{lb.toUpperCase()}</div>
                     <input type={t} value={profDraft[k]||""} onChange={e=>setProfDraft(p=>({...p,[k]:e.target.value}))}
                       style={{width:"100%",background:"#1a1a1a",border:"1px solid #333",borderRadius:8,color:"#fff",padding:"10px 12px",fontSize:12}}/>
                   </div>
                 ))}
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7,marginTop:6}}>
-                  <button onClick={()=>setEditProf(false)} style={{padding:"11px",background:"#1a1a1a",border:"1px solid #333",borderRadius:10,color:"#aaa",fontFamily:FD,fontSize:15,cursor:"pointer"}}>CANCEL</button>
-                  <button onClick={saveProf} style={{padding:"11px",background:`linear-gradient(135deg,${C.accent},#8ba832)`,border:"none",borderRadius:10,color:"#000",fontFamily:FD,fontSize:15,cursor:"pointer",fontWeight:700}}>SAVE</button>
+                <div style={{marginBottom:12}}>
+                  <div style={{fontSize:9,color:C.muted,letterSpacing:1,marginBottom:4}}>FITNESS GOAL</div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                    {["Weight Loss","Muscle Gain","Endurance","General Fitness"].map(g=>(
+                      <button key={g} onClick={()=>setProfDraft(p=>({...p,fitnessGoal:g}))}
+                        style={{padding:"9px 6px",background:profDraft.fitnessGoal===g?`${C.accent}22`:C.dim,border:`1px solid ${profDraft.fitnessGoal===g?C.accent:"#333"}`,borderRadius:8,color:profDraft.fitnessGoal===g?C.accent:"#888",fontSize:10,cursor:"pointer",fontFamily:FB}}>
+                        {g}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7,marginTop:8}}>
+                  <button onClick={()=>setEditProf(false)} style={{padding:"11px",background:"#1a1a1a",border:"1px solid #333",borderRadius:10,color:"#aaa",fontFamily:FD,fontSize:14,cursor:"pointer"}}>CANCEL</button>
+                  <button onClick={saveProf} style={{padding:"11px",background:`linear-gradient(135deg,${C.accent},${C.accent2})`,border:"none",borderRadius:10,color:"#000",fontFamily:FD,fontSize:14,cursor:"pointer",fontWeight:700}}>SAVE</button>
                 </div>
               </>
             )}
           </div>
         )}
 
-        {/* BOTTOM NAV */}
+        {/* BOTTOM NAV (mobile) */}
         <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:"#0d0d0d",borderTop:`1px solid ${C.border}`,display:"flex"}}>
           {[["today","⚡","TODAY"],["schedule","📅","SCHED"],["plan","💪","PLAN"],["progress","📊","PROG"],["profile","👤","ME"]].map(([k,ic,lb])=>(
-            <button key={k} onClick={()=>setTab(k)} style={{flex:1,padding:"8px 4px",background:"none",border:"none",color:tab===k?C.accent:C.dim,cursor:"pointer",borderTop:`2px solid ${tab===k?C.accent:"transparent"}`}}>
+            <button key={k} onClick={()=>setTab(k)}
+              style={{flex:1,padding:"8px 4px",background:"none",border:"none",color:tab===k?C.accent:C.dim,cursor:"pointer",borderTop:`2px solid ${tab===k?C.accent:"transparent"}`,transition:"color .2s"}}>
               <div style={{fontSize:15}}>{ic}</div>
               <div style={{fontSize:8,letterSpacing:1,marginTop:1}}>{lb}</div>
             </button>
@@ -820,15 +1390,15 @@ function MoeFitness(){
 
         {/* MISSED MODAL */}
         {missedModal!==null&&(
-          <div style={{position:"fixed",inset:0,background:"#000b",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:100}}>
-            <div style={{width:"100%",maxWidth:480,background:"#141414",borderRadius:"18px 18px 0 0",padding:20,border:"1px solid #2a2a2a"}}>
-              <div style={{fontFamily:FD,fontSize:19,color:"#f87171",letterSpacing:2,marginBottom:3}}>LOG MISSED</div>
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.8)",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:1000}} onClick={()=>setMissedModal(null)}>
+            <div style={{width:"100%",maxWidth:480,background:"#141414",borderRadius:"18px 18px 0 0",padding:20,border:"1px solid #2a2a2a"}} onClick={e=>e.stopPropagation()}>
+              <div style={{fontFamily:FD,fontSize:18,color:"#f87171",letterSpacing:2,marginBottom:3}}>LOG MISSED</div>
               <div style={{fontSize:11,color:C.muted,marginBottom:11}}>{DAYS_FULL[missedModal]}</div>
               <textarea value={missedNote} onChange={e=>setMissedNote(e.target.value)} placeholder="Why? (optional)"
                 style={{width:"100%",background:"#1a1a1a",border:"1px solid #333",borderRadius:9,color:"#fff",padding:10,fontSize:12,minHeight:64,resize:"none"}}/>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7,marginTop:9}}>
-                <button onClick={()=>setMissedModal(null)} style={{padding:"11px",background:"#1a1a1a",border:"1px solid #333",borderRadius:9,color:"#aaa",fontFamily:FD,fontSize:14,cursor:"pointer"}}>CANCEL</button>
-                <button onClick={()=>logMissed(missedModal,missedNote)} style={{padding:"11px",background:"#f8717122",border:"1px solid #f87171",borderRadius:9,color:"#f87171",fontFamily:FD,fontSize:14,cursor:"pointer"}}>LOG IT</button>
+                <button onClick={()=>setMissedModal(null)} style={{padding:"11px",background:"#1a1a1a",border:"1px solid #333",borderRadius:9,color:"#aaa",fontFamily:FD,fontSize:13,cursor:"pointer"}}>CANCEL</button>
+                <button onClick={()=>logMissed(missedModal,missedNote)} style={{padding:"11px",background:"#f8717122",border:"1px solid #f87171",borderRadius:9,color:"#f87171",fontFamily:FD,fontSize:13,cursor:"pointer"}}>LOG IT</button>
               </div>
             </div>
           </div>
@@ -836,7 +1406,7 @@ function MoeFitness(){
 
         {/* TOAST */}
         {toast&&(
-          <div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",background:toast.color,color:"#000",padding:"8px 18px",borderRadius:26,fontFamily:FD,fontSize:14,letterSpacing:1,zIndex:9999,fontWeight:700,whiteSpace:"nowrap"}}>
+          <div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",background:toast.color,color:"#000",padding:"8px 18px",borderRadius:26,fontFamily:FD,fontSize:13,letterSpacing:1,zIndex:9999,fontWeight:700,whiteSpace:"nowrap",pointerEvents:"none"}}>
             {toast.msg}
           </div>
         )}
@@ -845,8 +1415,70 @@ function MoeFitness(){
   );
 }
 
+/* ═══════════════════════════════════════════════
+   ROOT APP (auth controller)
+═══════════════════════════════════════════════ */
+function App(){
+  const [authState,setAuthState]=useState("loading"); // loading | auth | setup | app
+  const [user,setUser]=useState(null);
+  const [profile,setProfile]=useState(null);
+
+  useEffect(()=>{
+    const unsub=fbOnAuth(async fireUser=>{
+      if(!fireUser){setAuthState("auth");return;}
+      setUser(fireUser);
+      // Check if profile complete
+      try{
+        const docSnap=await fbGetDoc("users", fireUser.uid);
+        if(docSnap.exists()&&docSnap.data().profileComplete){
+          const data=docSnap.data();
+          setProfile(data);
+          // Merge appData if exists
+          if(data.appData){
+            try{
+              const existing=JSON.parse(localStorage.getItem("mf_data_"+fireUser.uid))||{};
+              if(!Object.keys(existing).length){
+                localStorage.setItem("mf_data_"+fireUser.uid,JSON.stringify(data.appData));
+              }
+            }catch{}
+          }
+          setAuthState("app");
+        } else {
+          setAuthState("setup");
+        }
+        // Update last login
+        fbUpdateDoc("users", fireUser.uid, {lastLogin:serverTimestamp()}).catch(()=>{});
+      } catch(e){
+        // New user, no doc
+        setAuthState("setup");
+      }
+    });
+    return()=>unsub();
+  },[]);
+
+  async function handleSignOut(){
+    await fbSignOut();
+    setUser(null);setProfile(null);setAuthState("auth");
+  }
+
+  if(authState==="loading") return <LoadingScreen/>;
+  if(authState==="auth")    return <AuthScreen/>;
+  if(authState==="setup")   return <ProfileSetup user={user} onComplete={p=>{setProfile(p);setAuthState("app");}}/>;
+  return <MoeFitness user={user} profile={profile} onSignOut={handleSignOut}/>;
+}
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<MoeFitness />);
-  </script>
+root.render(<ErrorBoundary><App/></ErrorBoundary>);
+} // end startApp()
+
+// ── Wire startup ──
+if (window._fbReady) {
+  startApp();
+} else {
+  document.addEventListener("firebase-ready", () => { window._fbReady=true; startApp(); }, {once:true});
+  document.addEventListener("firebase-error", () => startApp(), {once:true});
+  setTimeout(() => { if(!window._fbReady) startApp(); }, 12000);
+}
+</script>
 </body>
 </html>
